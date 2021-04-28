@@ -14,4 +14,16 @@ Prototyping rendering framework served as a playground for my experiments
 * Heterogeneous Multi-GPU
 * Render graph
 * Minimal dependencies
-* C++17
+* C++ latest
+
+## External tools and libraries
+* Premake (https://premake.github.io/)
+
+## Quick Guide
+### Prerequisites
+1. Visual Studio 2019
+
+### How to Build
+1. Run GenerateProject.bat from repository root.
+2. Open Development/HeadlessDroidEngine.sln
+3. Press F5 or click Run.

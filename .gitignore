@@ -1,5 +1,7 @@
 # Binaries
-bin/
+Bin/
+Development/Build/
+Development/Lib/
 
 # Visual Studio
 *.sdf
