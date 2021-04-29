@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdint.h>
 #include "Engine/Foundation/Memory/LinearAllocator.h"
 
 namespace hd
@@ -19,9 +18,9 @@ namespace hd
             void Reset(size_t marker) override;
 
         private:
-            uint8_t* m_MemoryBegin;
-            uint8_t* m_MemoryEnd;
-            uint8_t* m_MemoryPointer;
+            std::byte* m_MemoryBegin;
+            std::byte* m_MemoryEnd;
+            std::byte* m_MemoryPointer;
         };
     }
 }

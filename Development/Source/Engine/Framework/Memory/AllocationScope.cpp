@@ -1,3 +1,5 @@
+#include "Engine/Config/Bootstrap.h"
+
 #include "Engine/Framework/Memory/AllocationScope.h"
 
 namespace hd

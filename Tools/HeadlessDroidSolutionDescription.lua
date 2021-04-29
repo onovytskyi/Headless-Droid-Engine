@@ -80,6 +80,8 @@ project "Engine"
 	   ["04_Engine/*"] = {"../Development/Source/Engine/Engine/**.h", "../Development/Source/Engine/Engine/**.hpp", "../Development/Source/Engine/Engine/**.cpp" },
 	   ["05_Shaders/*"] = {"../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli"}
 	}
+	pchheader ("Engine/Config/Bootstrap.h")
+	pchsource ("../Development/Source/Engine/Config/Bootstrap.cpp")
 	buildoptions { "/bigobj" }
 	
 project "Game"

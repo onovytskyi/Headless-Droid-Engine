@@ -1,6 +1,5 @@
 #pragma once
 
-#include <new.h>
 #include "Engine/Foundation/Memory/LinearAllocator.h"
 
 namespace hd

@@ -1,3 +1,5 @@
+#include "Engine/Config/Bootstrap.h"
+
 #include "Engine/Foundation/Memory/Utils.h"
 
 namespace hd
