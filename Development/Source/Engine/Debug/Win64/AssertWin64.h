@@ -18,9 +18,6 @@ namespace hd
         template<typename... Args>
         void AssertHandlerInternal(HRESULT errorCode, char8_t const* assertion, char8_t const* file, uint32_t line, char8_t const* format, Args... args);
         void AssertHandlerInternal(HRESULT errorCode, char8_t const* assertion, char8_t const* file, uint32_t line);
-
-        void ShowErrorMessage(char8_t const* message);
-        void BreakIntoDebugger();
     }
 }
 

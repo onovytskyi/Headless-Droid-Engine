@@ -5,6 +5,7 @@
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Foundation/String/StringConverter.h"
 #include "Engine/Foundation/String/StringFormatter.h"
+#include "Engine/Debug/Log.h"
 
 static const size_t g_AssertAllocatorSize = hd::mem::MB(2);
 std::byte g_AssertAllocatorArena[g_AssertAllocatorSize];
@@ -23,11 +24,11 @@ namespace hd
         {
             size_t marker = g_AssertAllocator.GetMarker();
 
-            const char8_t* errorFormat = u8"Assertion string: %\n    %\n    In % : %\n";
+            const char8_t* errorFormat = u8"[ASSERT FAILED] %\n\t\tCondition: %, File: %(%)";
             size_t errorBufferSize = str::CalculateBufferSize(
                 errorFormat,
-                assertion,
                 message != nullptr ? message : u8"No message",
+                assertion,
                 file,
                 line);
 
@@ -35,12 +36,12 @@ namespace hd
             str::Format(
                 error,
                 errorFormat,
-                assertion,
                 message != nullptr ? message : u8"No message",
+                assertion,
                 file,
                 line);
 
-            ShowErrorMessage(error);
+            hdLogError(error);
 
             g_AssertAllocator.Reset(marker);
 

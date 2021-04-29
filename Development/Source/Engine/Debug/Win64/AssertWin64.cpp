@@ -26,19 +26,6 @@ namespace hd
             g_AssertAllocator.Reset(marker);
         }
 
-        void ShowErrorMessage(char8_t const* message)
-        {
-            size_t marker = g_AssertAllocator.GetMarker();
-
-            size_t errorWideBufferSize = str::SizeAsWide(message);
-            wchar_t* errorWide = reinterpret_cast<wchar_t*>(g_AssertAllocator.Allocate(errorWideBufferSize, 1));
-            str::ToWide(message, errorWide, errorWideBufferSize);
-
-            ::MessageBoxW(nullptr, errorWide, L"Assertion", MB_OK);
-
-            g_AssertAllocator.Reset(marker);
-        }
-
         void BreakIntoDebugger()
         {
             if (::IsDebuggerPresent())

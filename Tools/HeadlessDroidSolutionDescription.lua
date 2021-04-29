@@ -9,6 +9,7 @@ solution "HeadlessDroidEngine"
 		system "Windows"
 		architecture "x64"
 		defines { "HD_PLATFORM_WIN64", "WIN32", "_HAS_ITERATOR_DEBUGGING=0", "_CRT_NO_VA_START_VALIDATION" }
+		linkoptions { "/ENTRY:mainCRTStartup" }
 		
 	filter { "configurations:Debug" }
 		targetsuffix "-Debug"
@@ -98,10 +99,10 @@ project "Game"
     buildoptions { "/Zm256" }
 	
 	configuration "Debug"
-		kind "ConsoleApp"
+		kind "WindowedApp"
 		
 	configuration "Development"
-		kind "ConsoleApp"
+		kind "WindowedApp"
 		
 	configuration "Profile"
 		kind "WindowedApp"

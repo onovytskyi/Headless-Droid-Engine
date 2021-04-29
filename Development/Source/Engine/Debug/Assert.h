@@ -17,6 +17,8 @@ namespace hd
         void AssertHandlerInternal(char8_t const* assertion, char8_t const* file, uint32_t line, char8_t const* format, Args... args);
         void AssertHandlerInternal(char8_t const* assertion, char8_t const* file, uint32_t line);
         void AssertHandlerFinal(char8_t const* assertion, char8_t const* file, uint32_t line, char8_t const* message);
+
+        void BreakIntoDebugger();
     }
 }
 

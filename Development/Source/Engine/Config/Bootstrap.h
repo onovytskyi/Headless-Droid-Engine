@@ -5,6 +5,9 @@
 #include "Engine/Config/Win64/PlatformIncludesWin64.h"
 
 #include <cmath>
+#include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <new.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -15,3 +18,5 @@
 
 #define hdConcat2( first, second ) first##second
 #define hdConcat( first, second ) hdConcat2(first, second)
+
+#include "Engine/Config/EngineConfiguration.h"
