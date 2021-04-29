@@ -1,5 +1,7 @@
 #include "Engine/Config/Bootstrap.h"
 
+#if defined(HD_PLATFORM_WIN64)
+
 #include "Engine/Foundation/String/StringConverter.h"
 
 namespace hd
@@ -37,3 +39,5 @@ namespace hd
         }
     }
 }
+
+#endif
