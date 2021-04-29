@@ -4,6 +4,8 @@
 
 #include "Engine/Config/Win64/PlatformIncludes.h"
 
-#include <cstddef>
+#include <cmath>
 #include <new.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
