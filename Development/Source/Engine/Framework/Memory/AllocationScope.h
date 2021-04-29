@@ -34,29 +34,7 @@ namespace hd
             size_t m_ResetMarker;
             Finalizer* m_NextFinalizer;
         };
-
-        template<typename T, typename... Args>
-        T* hd::mem::AllocationScope::AllocateObject(Args... args)
-        {
-            void* allocation = m_Allocator.AllocateWithOffset(sizeof(Finalizer), sizeof(T), alignof(T));
-
-            T* result = new(allocation)T(args...);
-
-            Finalizer* finalizer = reinterpret_cast<Finalizer*>(allocation) - 1;
-            finalizer->m_OnDestroy = &CallDestructor<T>;
-            finalizer->m_NextFinalizer = m_NextFinalizer;
-            m_NextFinalizer = finalizer;
-
-            return result;   
-        }
-
-        template<typename T>
-        T* hd::mem::AllocationScope::AllocatePOD()
-        {
-            void* allocation = m_Allocator.Allocate(sizeof(T), alignof(T));
-            T* result = new(allocation)T;
-
-            return result;
-        }
     }
 }
+
+#include "Engine/Framework/Memory/AllocationScope.hpp"
