@@ -8,10 +8,12 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <new.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <thread>
 
 #define hdMakeString2( text ) #text
 #define hdMakeString( text ) hdMakeString2( text )
