@@ -12,6 +12,8 @@ namespace hd
             LinearAllocatorConcurrentAdaper(LinearAllocator& hostAllocator);
             ~LinearAllocatorConcurrentAdaper();
 
+            hdNoncopyable(LinearAllocatorConcurrentAdaper)
+
             void* Allocate(size_t size, size_t align) override;
             void* AllocateWithOffset(size_t offset, size_t size, size_t align) override;
             size_t GetMarker() const override;

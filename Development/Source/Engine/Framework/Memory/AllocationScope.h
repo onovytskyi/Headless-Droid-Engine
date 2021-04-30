@@ -12,6 +12,8 @@ namespace hd
             AllocationScope(LinearAllocator& allocator);
             ~AllocationScope();
 
+            hdNoncopyable(AllocationScope)
+
             template<typename T, typename... Args>
             T* AllocateObject(Args... args);
 

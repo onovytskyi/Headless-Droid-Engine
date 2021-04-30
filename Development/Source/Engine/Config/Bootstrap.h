@@ -21,4 +21,10 @@
 #define hdConcat2( first, second ) first##second
 #define hdConcat( first, second ) hdConcat2(first, second)
 
+#define hdNoncopyable(classname) \
+            classname(classname const&) = delete; \
+            classname(classname &&) = delete; \
+            classname& operator = (classname const&) = delete; \
+            classname& operator = (classname &&) = delete;
+
 #include "Engine/Config/EngineConfiguration.h"

@@ -11,6 +11,8 @@ namespace hd
         public:
             FixedLinearAllocator(void* memory, size_t size);
 
+            hdNoncopyable(FixedLinearAllocator)
+
             void* Allocate(size_t size, size_t align) override;
             void* AllocateWithOffset(size_t offset, size_t size, size_t align) override;
             size_t GetMarker() const override;
