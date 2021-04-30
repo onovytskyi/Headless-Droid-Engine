@@ -71,7 +71,7 @@ project "Engine"
 	cppdialect "C++latest"
 	targetdir "../Development/Lib"
 	includedirs { "$(SolutionDir)/Source/" }
-	files { "../Development/Source/Engine/**.h", "../Development/Source/Engine/**.cpp", "../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli" }
+	files { "../Development/Source/Engine/**.h", "../Development/Source/Engine/**.cpp", "../Development/Source/Engine/**.hpp", "../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli" }
 	removefiles { "SystemWindowLinux.cpp" }
 	vpaths {
 	   ["00_Config/*"] = {"../Development/Source/Engine/Config/**.h", "../Development/Source/Engine/Config/**.hpp", "../Development/Source/Engine/Config/**.cpp" },
@@ -96,6 +96,8 @@ project "Game"
 	libdirs { "../Development/Lib/", }
 	links { "Externals", "Engine" }
 	files { "../Development/Source/Game/**.h", "../Development/Source/Game/**.hpp", "../Development/Source/Game/**.cpp" }
+	pchheader ("Game/Bootstrap.h")
+	pchsource ("../Development/Source/Game/Bootstrap.cpp")
     buildoptions { "/Zm256" }
 	
 	configuration "Debug"
