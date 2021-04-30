@@ -1,3 +1,5 @@
+#include "Engine/Debug/Assert.h"
+
 namespace hd
 {
     namespace mem
@@ -8,6 +10,8 @@ namespace hd
             void* allocation = m_Allocator.AllocateWithOffset(sizeof(Finalizer), sizeof(T), alignof(T));
 
             T* result = new(allocation)T(args...);
+
+            hdAssert(result != nullptr, u8"Cannot allocate memory. Allocator is full.");
 
             Finalizer* finalizer = reinterpret_cast<Finalizer*>(allocation) - 1;
             finalizer->m_OnDestroy = &CallDestructor<T>;
@@ -22,6 +26,8 @@ namespace hd
         {
             void* allocation = m_Allocator.Allocate(sizeof(T), alignof(T));
             T* result = new(allocation)T;
+
+            hdAssert(result != nullptr, u8"Cannot allocate memory. Allocator is full.");
 
             return result;
         }
