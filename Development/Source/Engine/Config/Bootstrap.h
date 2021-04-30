@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <thread>
+#include <type_traits>
 
 #define hdMakeString2( text ) #text
 #define hdMakeString( text ) hdMakeString2( text )
