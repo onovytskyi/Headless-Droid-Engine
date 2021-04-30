@@ -1,6 +1,6 @@
 #include "Engine/Config/Bootstrap.h"
 
-#include "Engine/Engine/Memory/LinearAllocatorConcurrentAdapter.h"
+#include "Engine/Framework/Memory/LinearAllocatorConcurrentAdapter.h"
 #include "Engine/Debug/Assert.h"
 
 namespace hd
