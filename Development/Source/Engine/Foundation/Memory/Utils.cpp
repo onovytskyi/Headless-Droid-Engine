@@ -33,5 +33,15 @@ namespace hd
         {
             return reinterpret_cast<void*>(AlignAbove(reinterpret_cast<size_t>(pointer), alignment));
         }
+
+        bool IsAligned(size_t value, size_t align)
+        {
+            return (value % align) == 0;
+        }
+
+        bool IsAligned(void* memory, size_t align)
+        {
+            return IsAligned(reinterpret_cast<size_t>(memory), align);
+        }
     }
 }

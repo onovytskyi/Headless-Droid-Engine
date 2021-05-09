@@ -19,5 +19,8 @@ namespace hd
 
         size_t AlignAbove(size_t value, size_t alignment);
         void* AlignAbove(void* pointer, size_t alignment);
+
+        bool IsAligned(size_t value, size_t align);
+        bool IsAligned(void* memory, size_t align);
     }
 }
