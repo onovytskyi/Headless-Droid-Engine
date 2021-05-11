@@ -14,29 +14,23 @@ namespace hd
 
             hdNoncopyable(CommandQueue)
 
-            template<typename Command>
-            Command& PushCommand();
+            template<typename T>
+            T& Push();
 
-            std::byte* PushData(size_t size);
+            template<typename T>
+            T& Pop();
 
-            uint32_t PopCommandID();
+            template<typename T>
+            T& Push(size_t count);
 
-            template<typename Command>
-            Command& PopCommand();
-
-            std::byte* PopData(size_t size);
+            template<typename T>
+            T& Pop(size_t count);
 
             bool HasCommands() const;
 
             void Clear();
 
         private:
-            template<typename T>
-            T* WriteToVirtualBuffer();
-
-            template<typename T>
-            T* ReadFromVirtualBuffer();
-
             std::byte* WriteToVirtualBuffer(size_t size);
             std::byte* ReadFromVirtualBuffer(size_t size);
 

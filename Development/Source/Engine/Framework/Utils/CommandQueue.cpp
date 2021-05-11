@@ -20,21 +20,6 @@ namespace hd
 
         }
 
-        std::byte* CommandQueue::PushData(size_t size)
-        {
-            return WriteToVirtualBuffer(size);
-        }
-
-        uint32_t CommandQueue::PopCommandID()
-        {
-            return *ReadFromVirtualBuffer<uint32_t>();
-        }
-
-        std::byte* CommandQueue::PopData(size_t size)
-        {
-            return ReadFromVirtualBuffer(size);
-        }
-
         bool CommandQueue::HasCommands() const
         {
             return m_ReadOffset < m_Buffer.GetSize();

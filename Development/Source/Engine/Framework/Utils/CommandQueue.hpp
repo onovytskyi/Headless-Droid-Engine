@@ -2,35 +2,32 @@ namespace hd
 {
     namespace util
     {
-        template<typename Command>
-        inline Command& CommandQueue::PushCommand()
+        template<typename T>
+        inline T& CommandQueue::Push()
         {
-            uint32_t* commandID = WriteToVirtualBuffer<uint32_t>();
-            *commandID = uint32_t(Command::ID);
-
-            Command* command = WriteToVirtualBuffer<Command>();
-
-            return *command;
-        }
-
-        template<typename Command>
-        inline Command& CommandQueue::PopCommand()
-        {
-            Command* command = ReadFromVirtualBuffer<Command>();
-
-            return *command;
+            return Push<T>(1);
         }
 
         template<typename T>
-        inline T* CommandQueue::WriteToVirtualBuffer()
+        inline T& CommandQueue::Pop()
         {
-            return reinterpret_cast<T*>(WriteToVirtualBuffer(sizeof(T)));
+            return Pop<T>(1);
         }
 
         template<typename T>
-        inline T* CommandQueue::ReadFromVirtualBuffer()
+        inline T& CommandQueue::Push(size_t count)
         {
-            return reinterpret_cast<T*>(ReadFromVirtualBuffer(sizeof(T)));
+            T* data = reinterpret_cast<T*>(WriteToVirtualBuffer(sizeof(T) * count));
+
+            return *data;
+        }
+
+        template<typename T>
+        inline T& CommandQueue::Pop(size_t count)
+        {
+            T* data = reinterpret_cast<T*>(ReadFromVirtualBuffer(sizeof(T) * count));
+
+            return *data;
         }
     }
 }

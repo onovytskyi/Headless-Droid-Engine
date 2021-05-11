@@ -127,7 +127,7 @@ namespace hd
             {
             case WM_ACTIVATE:
             {
-                WindowActivateCommand& command = params->Commands->PushCommand<WindowActivateCommand>();
+                WindowActivateCommand& command = WindowActivateCommand::PushTo(*params->Commands);
                 command.Active = !(LOWORD(wParameter) == WA_INACTIVE);
 
                 return 0;
@@ -142,7 +142,7 @@ namespace hd
                 {
                     params->IsMinimized = true;
 
-                    WindowActivateCommand& command = params->Commands->PushCommand<WindowActivateCommand>();
+                    WindowActivateCommand& command = WindowActivateCommand::PushTo(*params->Commands);
                     command.Active = false;
                 }
                 else if (wParameter == SIZE_MAXIMIZED)
@@ -151,11 +151,11 @@ namespace hd
                     {
                         params->IsMinimized = false;
 
-                        WindowActivateCommand& command = params->Commands->PushCommand<WindowActivateCommand>();
+                        WindowActivateCommand& command = WindowActivateCommand::PushTo(*params->Commands);
                         command.Active = true;
                     }
 
-                    WindowResizeCommand& command = params->Commands->PushCommand<WindowResizeCommand>();
+                    WindowResizeCommand& command = WindowResizeCommand::PushTo(*params->Commands);
                     command.Width = newClientWidth;
                     command.Height = newClientHeight;
 
@@ -176,12 +176,12 @@ namespace hd
                         {
                             params->IsMinimized = false;
 
-                            WindowActivateCommand& command = params->Commands->PushCommand<WindowActivateCommand>();
+                            WindowActivateCommand& command = WindowActivateCommand::PushTo(*params->Commands);
                             command.Active = true;
                         }
                         else
                         {
-                            WindowResizeCommand& command = params->Commands->PushCommand<WindowResizeCommand>();
+                            WindowResizeCommand& command = WindowResizeCommand::PushTo(*params->Commands);
                             command.Width = newClientWidth;
                             command.Height = newClientHeight;
 
@@ -205,7 +205,7 @@ namespace hd
                 {
                     params->WasResized = false;
 
-                    WindowResizeCommand& command = params->Commands->PushCommand<WindowResizeCommand>();
+                    WindowResizeCommand& command = WindowResizeCommand::PushTo(*params->Commands);
                     command.Width = params->StoredWidth;
                     command.Height = params->StoredHeight;
                 }
@@ -214,7 +214,7 @@ namespace hd
 
             case WM_CLOSE:
             {
-                params->Commands->PushCommand<WindowClosedCommand>();
+                WindowClosedCommand::PushTo(*params->Commands);
                 return 0;
             }
 
@@ -232,7 +232,7 @@ namespace hd
 
             case WM_LBUTTONDOWN:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 0;
@@ -242,7 +242,7 @@ namespace hd
 
             case WM_MBUTTONDOWN:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 1;
@@ -252,7 +252,7 @@ namespace hd
 
             case WM_RBUTTONDOWN:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 2;
@@ -262,7 +262,7 @@ namespace hd
 
             case WM_LBUTTONUP:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 0;
@@ -272,7 +272,7 @@ namespace hd
 
             case WM_MBUTTONUP:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 1;
@@ -282,7 +282,7 @@ namespace hd
 
             case WM_RBUTTONUP:
             {
-                MouseButtonCommand& command = params->Commands->PushCommand<MouseButtonCommand>();
+                MouseButtonCommand& command = MouseButtonCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.ButtonID = 2;
@@ -292,7 +292,7 @@ namespace hd
 
             case WM_MOUSEMOVE:
             {
-                MouseMoveCommand& command = params->Commands->PushCommand<MouseMoveCommand>();
+                MouseMoveCommand& command = MouseMoveCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 return 0;
@@ -300,7 +300,7 @@ namespace hd
 
             case WM_MOUSEWHEEL:
             {
-                MouseWheelCommand& command = params->Commands->PushCommand<MouseWheelCommand>();
+                MouseWheelCommand& command = MouseWheelCommand::PushTo(*params->Commands);
                 command.X = GET_X_LPARAM(lParameter);
                 command.Y = GET_Y_LPARAM(lParameter);
                 command.Offset = GET_WHEEL_DELTA_WPARAM(wParameter) / 120;
@@ -311,7 +311,7 @@ namespace hd
             {
                 if ((lParameter & (1 << 30)) == 0)
                 {
-                    KeyboardCommand& command = params->Commands->PushCommand<KeyboardCommand>();
+                    KeyboardCommand& command = KeyboardCommand::PushTo(*params->Commands);
                     command.KeyID = static_cast<uint8_t>(wParameter);
                     command.Pressed = true;
                 }
@@ -320,7 +320,7 @@ namespace hd
 
             case WM_KEYUP:
             {
-                KeyboardCommand& command = params->Commands->PushCommand<KeyboardCommand>();
+                KeyboardCommand& command = KeyboardCommand::PushTo(*params->Commands);
                 command.KeyID = static_cast<uint8_t>(wParameter);
                 command.Pressed = false;
                 return 0;

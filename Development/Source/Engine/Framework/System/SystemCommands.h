@@ -2,6 +2,11 @@
 
 namespace hd
 {
+    namespace util
+    {
+        class CommandQueue;
+    }
+
     namespace sys
     {
         enum class SystemCommandType : uint32_t
@@ -17,18 +22,22 @@ namespace hd
 
         struct WindowActivateCommand
         {
-            static const SystemCommandType ID = SystemCommandType::WindowActivate;
+            static WindowActivateCommand& PushTo(util::CommandQueue& commandQueue);
+            static WindowActivateCommand& PopFrom(util::CommandQueue& commandQueue);
+
             bool Active;
         };
 
         struct WindowClosedCommand
         {
-            static const SystemCommandType ID = SystemCommandType::WindowClosed;
+            static WindowClosedCommand& PushTo(util::CommandQueue& commandQueue);
+            static WindowClosedCommand& PopFrom(util::CommandQueue& commandQueue);
         };
 
         struct WindowResizeCommand
         {
-            static const SystemCommandType ID = SystemCommandType::WindowResize;
+            static WindowResizeCommand& PushTo(util::CommandQueue& commandQueue);
+            static WindowResizeCommand& PopFrom(util::CommandQueue& commandQueue);
 
             uint32_t Width;
             uint32_t Height;
@@ -36,7 +45,8 @@ namespace hd
 
         struct MouseButtonCommand
         {
-            static const SystemCommandType ID = SystemCommandType::MouseButton;
+            static MouseButtonCommand& PushTo(util::CommandQueue& commandQueue);
+            static MouseButtonCommand& PopFrom(util::CommandQueue& commandQueue);
 
             uint32_t X;
             uint32_t Y;
@@ -46,7 +56,8 @@ namespace hd
 
         struct MouseMoveCommand
         {
-            static const SystemCommandType ID = SystemCommandType::MouseMove;
+            static MouseMoveCommand& PushTo(util::CommandQueue& commandQueue);
+            static MouseMoveCommand& PopFrom(util::CommandQueue& commandQueue);
 
             uint32_t X;
             uint32_t Y;
@@ -54,7 +65,8 @@ namespace hd
 
         struct MouseWheelCommand
         {
-            static const SystemCommandType ID = SystemCommandType::MouseWheel;
+            static MouseWheelCommand& PushTo(util::CommandQueue& commandQueue);
+            static MouseWheelCommand& PopFrom(util::CommandQueue& commandQueue);
 
             uint32_t X;
             uint32_t Y;
@@ -63,7 +75,8 @@ namespace hd
 
         struct KeyboardCommand
         {
-            static const SystemCommandType ID = SystemCommandType::Keyboard;
+            static KeyboardCommand& PushTo(util::CommandQueue& commandQueue);
+            static KeyboardCommand& PopFrom(util::CommandQueue& commandQueue);
 
             uint8_t KeyID;
             bool Pressed;

@@ -27,44 +27,44 @@ int main(int argc, char* argv[])
         // Events processing
         while (systemCommands.HasCommands())
         {
-            hd::sys::SystemCommandType commandType = hd::sys::SystemCommandType(systemCommands.PopCommandID());
+            hd::sys::SystemCommandType& commandType = systemCommands.Pop<hd::sys::SystemCommandType>();
 
             switch (commandType)
             {
             case hd::sys::SystemCommandType::WindowActivate:
             {
-                systemCommands.PopCommand<hd::sys::WindowActivateCommand>();
+                hd::sys::WindowActivateCommand::PopFrom(systemCommands);
             }
                 break;
             case hd::sys::SystemCommandType::WindowClosed:
             {
-                systemCommands.PopCommand<hd::sys::WindowClosedCommand>();
+                hd::sys::WindowClosedCommand::PopFrom(systemCommands);
                 isRunning = false;
             }
                 break;
             case hd::sys::SystemCommandType::WindowResize:
             {
-                systemCommands.PopCommand<hd::sys::WindowResizeCommand>();
+                hd::sys::WindowResizeCommand::PopFrom(systemCommands);
             }
                 break;
             case hd::sys::SystemCommandType::MouseButton:
             {
-                systemCommands.PopCommand<hd::sys::MouseButtonCommand>();
+                hd::sys::MouseButtonCommand::PopFrom(systemCommands);
             }
                 break;
             case hd::sys::SystemCommandType::MouseMove:
             {
-                systemCommands.PopCommand<hd::sys::MouseMoveCommand>();
+                hd::sys::MouseMoveCommand::PopFrom(systemCommands);
             }
                 break;
             case hd::sys::SystemCommandType::MouseWheel:
             {
-                systemCommands.PopCommand<hd::sys::MouseWheelCommand>();
+                hd::sys::MouseWheelCommand::PopFrom(systemCommands);
             }
                 break;
             case hd::sys::SystemCommandType::Keyboard:
             {
-                hd::sys::KeyboardCommand& command = systemCommands.PopCommand<hd::sys::KeyboardCommand>();
+                hd::sys::KeyboardCommand& command = hd::sys::KeyboardCommand::PopFrom(systemCommands);
                 if (command.Pressed && command.KeyID == VK_ESCAPE)
                 {
                     isRunning = false;
