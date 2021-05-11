@@ -49,7 +49,7 @@ namespace hd
             str::Format(message, format, hours, minutes, seconds, milliseconds, ToString(severity), text);
 
             size_t messagWideSize = str::SizeAsWide(message);
-            wchar_t* messageWide = reinterpret_cast<wchar_t*>(g_LogAllocator.Allocate(messagWideSize, 1));
+            wchar_t* messageWide = reinterpret_cast<wchar_t*>(g_LogAllocator.Allocate(messagWideSize, alignof(wchar_t)));
             str::ToWide(message, messageWide, messagWideSize);
 
 #if defined(HD_ENABLE_CONSOLE_LOG)
@@ -73,7 +73,7 @@ namespace hd
                 size_t marker = g_LogAllocator.GetMarker();
 
                 size_t filepathWideSize = str::SizeAsWide(cfg::LogFilepath());
-                wchar_t* filepathWide = reinterpret_cast<wchar_t*>(g_LogAllocator.Allocate(filepathWideSize, 1));
+                wchar_t* filepathWide = reinterpret_cast<wchar_t*>(g_LogAllocator.Allocate(filepathWideSize, alignof(wchar_t)));
 
                 str::ToWide(cfg::LogFilepath(), filepathWide, filepathWideSize);
 

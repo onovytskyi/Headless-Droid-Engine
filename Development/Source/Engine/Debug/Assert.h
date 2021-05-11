@@ -31,4 +31,4 @@ namespace hd
 #	define hdAssert( test, ... ) ((void)0)
 #endif
 
-#define hdEnsure( test, ... ) do{hd::dbg:::AssertHandler(test, (char8_t const*)hdMakeString(test), (char8_t const*)__FILE__, __LINE__, __VA_ARGS__);}while(0)
+#define hdEnsure( test, ... ) do{hd::dbg::AssertHandler(test, (char8_t const*)hdMakeString(test), (char8_t const*)__FILE__, __LINE__, __VA_ARGS__);}while(0)
