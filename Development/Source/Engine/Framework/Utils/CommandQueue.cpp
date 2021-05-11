@@ -35,6 +35,11 @@ namespace hd
             return ReadFromVirtualBuffer(size);
         }
 
+        bool CommandQueue::HasCommands() const
+        {
+            return m_ReadOffset < m_Buffer.GetSize();
+        }
+
         void CommandQueue::Clear()
         {
             m_Buffer.Resize(0);

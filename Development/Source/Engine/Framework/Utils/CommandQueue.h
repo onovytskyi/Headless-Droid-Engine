@@ -26,6 +26,8 @@ namespace hd
 
             std::byte* PopData(size_t size);
 
+            bool HasCommands() const;
+
             void Clear();
 
         private:
