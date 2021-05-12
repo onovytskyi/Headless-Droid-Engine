@@ -2,6 +2,7 @@
 Bin/
 Development/Build/
 Development/Lib/
+Development/packages/
 
 # Visual Studio
 *.sdf

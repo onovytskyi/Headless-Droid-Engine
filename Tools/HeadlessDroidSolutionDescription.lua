@@ -70,7 +70,7 @@ project "Engine"
 	language "C++"
 	cppdialect "C++latest"
 	targetdir "../Development/Lib"
-	includedirs { "$(SolutionDir)/Source/" }
+	includedirs { "$(SolutionDir)/Source/", "$(SolutionDir)/packages/Microsoft.Direct3D.D3D12.1.4.9/build/native/include/" }
 	files { "../Development/Source/Engine/**.h", "../Development/Source/Engine/**.cpp", "../Development/Source/Engine/**.hpp", "../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli" }
 	removefiles { "SystemWindowLinux.cpp" }
 	vpaths {
@@ -84,6 +84,8 @@ project "Engine"
 	pchheader ("Engine/Config/Bootstrap.h")
 	pchsource ("../Development/Source/Engine/Config/Bootstrap.cpp")
 	buildoptions { "/bigobj" }
+	defines { "HD_ENGINE_PROJECT" }
+	nuget { "Microsoft.Direct3D.D3D12:1.4.9" }
 	
 project "Game"
 	location "../Development/Source/Game"
