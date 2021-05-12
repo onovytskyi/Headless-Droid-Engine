@@ -15,7 +15,7 @@ namespace hd
             hdNoncopyable(AllocationScope)
 
             template<typename T, typename... Args>
-            T* AllocateObject(Args... args);
+            T* AllocateObject(Args&&... args);
 
             template<typename T>
             T* AllocatePOD();
