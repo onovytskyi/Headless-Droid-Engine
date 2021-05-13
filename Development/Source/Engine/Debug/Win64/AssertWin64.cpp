@@ -13,6 +13,10 @@ namespace hd
         {
             size_t marker = g_AssertAllocator.GetMarker();
 
+#if defined(HD_GRAPHICS_API_DX12)
+            errorCode = ConvertToGfxDeviceResult(errorCode);
+#endif
+
             _com_error error(errorCode);
             wchar_t const* messageWide = error.ErrorMessage();
 
@@ -25,6 +29,33 @@ namespace hd
 
             g_AssertAllocator.Reset(marker);
         }
+
+#if defined(HD_GRAPHICS_API_DX12)
+        static ID3D12Device* g_DebugDevice = nullptr;
+        void SetDebugDevice(ID3D12Device* device)
+        {
+            g_DebugDevice = device;
+        }
+
+        HRESULT ConvertToGfxDeviceResult(HRESULT errorCode)
+        {
+            if (errorCode == DXGI_ERROR_DEVICE_REMOVED)
+            {
+                if (g_DebugDevice)
+                {
+                    errorCode = g_DebugDevice->GetDeviceRemovedReason();
+                }
+            }
+
+            return errorCode;
+        }
+
+        void D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severiry, D3D12_MESSAGE_ID id, LPCSTR description, void* context)
+        {
+
+        }
+
+#endif
 
         void BreakIntoDebugger()
         {
