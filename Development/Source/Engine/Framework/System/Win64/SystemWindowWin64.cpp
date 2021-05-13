@@ -79,6 +79,11 @@ namespace hd
             ::DestroyWindow(m_Handle);
         }
 
+        HWND SystemWindowPlatform::GetNativeHandle() const
+        {
+            return m_Handle;
+        }
+
         void SystemWindow::SetVisible(bool value)
         {
             ::ShowWindow(m_Handle, value ? SW_SHOW : SW_HIDE);

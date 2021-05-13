@@ -17,6 +17,8 @@ namespace hd
             SystemWindowPlatform(char8_t const* title, uint32_t width, uint32_t height);
             ~SystemWindowPlatform();
 
+            HWND GetNativeHandle() const;
+
         protected:
             static LRESULT CALLBACK HandleMessageInternal(HWND windowHandle, UINT messageCode, WPARAM wParameter, LPARAM lParameter);
 
