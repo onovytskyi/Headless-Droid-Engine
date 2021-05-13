@@ -8,6 +8,11 @@
 
 #include "d3d12.h"
 
+#if defined(HD_ENABLE_GFX_DEBUG)
+#   include <dxgidebug.h>
+#   pragma comment(lib, "dxguid.lib")
+#endif
+
 #include <dxgi1_6.h>
 #include <wrl/client.h>
 using Microsoft::WRL::ComPtr;
