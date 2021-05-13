@@ -9,6 +9,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <mutex>
 #include <new.h>
 #include <stddef.h>

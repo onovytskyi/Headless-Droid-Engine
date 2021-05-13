@@ -69,7 +69,7 @@ namespace hd
 
         void VirtualLinearAllocator::Reset(size_t marker)
         {
-            hdAssert(marker < m_UsedSize, u8"Invalid marker to reset to.");
+            hdAssert(marker <= m_UsedSize, u8"Invalid marker to reset to.");
             m_UsedSize = marker;
 
             if (m_AutoShrink)

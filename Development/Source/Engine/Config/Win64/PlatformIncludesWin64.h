@@ -6,7 +6,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Windowsx.h>
-
 #include <comdef.h>
+
+#undef CreateWindow
+#undef WriteConsole
+#undef LoadImage
+#undef min
+#undef max
+#undef near
+#undef far
 
 #endif
