@@ -9,33 +9,26 @@ namespace hd
         class CommandBuffer
         {
         public:
+            friend class CommandBufferReader;
+
             CommandBuffer(size_t maxSizeInBytes);
             ~CommandBuffer();
 
             hdNoncopyable(CommandBuffer)
 
             template<typename T>
-            T& Push();
+            T& Write();
 
             template<typename T>
-            T& Pop();
-
-            template<typename T>
-            T& Push(size_t count);
-
-            template<typename T>
-            T& Pop(size_t count);
-
-            bool HasCommands() const;
+            T& Write(size_t count);
 
             void Clear();
 
         private:
             std::byte* WriteToVirtualBuffer(size_t size);
-            std::byte* ReadFromVirtualBuffer(size_t size);
+            std::byte* ReadFromVirtualBuffer(size_t size, size_t& offset);
 
             mem::VirtualBuffer m_Buffer;
-            size_t m_ReadOffset;
         };
     }
 }

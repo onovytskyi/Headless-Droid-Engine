@@ -5,6 +5,7 @@ namespace hd
     namespace util
     {
         class CommandBuffer;
+        class CommandBufferReader;
     }
 
     namespace sys
@@ -22,22 +23,22 @@ namespace hd
 
         struct WindowActivateCommand
         {
-            static WindowActivateCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static WindowActivateCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static WindowActivateCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static WindowActivateCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             bool Active;
         };
 
         struct WindowClosedCommand
         {
-            static WindowClosedCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static WindowClosedCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static WindowClosedCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static WindowClosedCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
         };
 
         struct WindowResizeCommand
         {
-            static WindowResizeCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static WindowResizeCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static WindowResizeCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static WindowResizeCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             uint32_t Width;
             uint32_t Height;
@@ -45,8 +46,8 @@ namespace hd
 
         struct MouseButtonCommand
         {
-            static MouseButtonCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static MouseButtonCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static MouseButtonCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static MouseButtonCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             uint32_t X;
             uint32_t Y;
@@ -56,8 +57,8 @@ namespace hd
 
         struct MouseMoveCommand
         {
-            static MouseMoveCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static MouseMoveCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static MouseMoveCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static MouseMoveCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             uint32_t X;
             uint32_t Y;
@@ -65,8 +66,8 @@ namespace hd
 
         struct MouseWheelCommand
         {
-            static MouseWheelCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static MouseWheelCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static MouseWheelCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static MouseWheelCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             uint32_t X;
             uint32_t Y;
@@ -75,8 +76,8 @@ namespace hd
 
         struct KeyboardCommand
         {
-            static KeyboardCommand& PushTo(util::CommandBuffer& commandBuffer);
-            static KeyboardCommand& PopFrom(util::CommandBuffer& commandBuffer);
+            static KeyboardCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static KeyboardCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
             uint8_t KeyID;
             bool Pressed;

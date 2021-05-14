@@ -6,6 +6,7 @@
 #include "Engine/Engine/Memory/EngineMemoryInterface.h"
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
+#include "Engine/Framework/Utils/CommandBufferReader.h"
 
 SampleGame::SampleGame()
     : m_IsRunning{ false }
@@ -54,47 +55,49 @@ void SampleGame::RequestExit()
 
 void SampleGame::ProcessSystemCommands()
 {
-    while (m_SystemCommands.HasCommands())
+    hd::util::CommandBufferReader systemCommandsReader{ m_SystemCommands };
+
+    while (systemCommandsReader.HasCommands())
     {
-        hd::sys::SystemCommandType& commandType = m_SystemCommands.Pop<hd::sys::SystemCommandType>();
+        hd::sys::SystemCommandType& commandType = systemCommandsReader.Read<hd::sys::SystemCommandType>();
 
         switch (commandType)
         {
         case hd::sys::SystemCommandType::WindowActivate:
         {
-            hd::sys::WindowActivateCommand::PopFrom(m_SystemCommands);
+            hd::sys::WindowActivateCommand::ReadFrom(systemCommandsReader);
         }
         break;
         case hd::sys::SystemCommandType::WindowClosed:
         {
-            hd::sys::WindowClosedCommand::PopFrom(m_SystemCommands);
+            hd::sys::WindowClosedCommand::ReadFrom(systemCommandsReader);
             RequestExit();
         }
         break;
         case hd::sys::SystemCommandType::WindowResize:
         {
-            hd::sys::WindowResizeCommand& command = hd::sys::WindowResizeCommand::PopFrom(m_SystemCommands);
+            hd::sys::WindowResizeCommand& command = hd::sys::WindowResizeCommand::ReadFrom(systemCommandsReader);
             m_GfxSwapchain->Resize(command.Width, command.Height);
         }
         break;
         case hd::sys::SystemCommandType::MouseButton:
         {
-            hd::sys::MouseButtonCommand::PopFrom(m_SystemCommands);
+            hd::sys::MouseButtonCommand::ReadFrom(systemCommandsReader);
         }
         break;
         case hd::sys::SystemCommandType::MouseMove:
         {
-            hd::sys::MouseMoveCommand::PopFrom(m_SystemCommands);
+            hd::sys::MouseMoveCommand::ReadFrom(systemCommandsReader);
         }
         break;
         case hd::sys::SystemCommandType::MouseWheel:
         {
-            hd::sys::MouseWheelCommand::PopFrom(m_SystemCommands);
+            hd::sys::MouseWheelCommand::ReadFrom(systemCommandsReader);
         }
         break;
         case hd::sys::SystemCommandType::Keyboard:
         {
-            hd::sys::KeyboardCommand& command = hd::sys::KeyboardCommand::PopFrom(m_SystemCommands);
+            hd::sys::KeyboardCommand& command = hd::sys::KeyboardCommand::ReadFrom(systemCommandsReader);
             if (command.Pressed && command.KeyID == VK_ESCAPE)
             {
                 RequestExit();
@@ -112,6 +115,9 @@ void SampleGame::ProcessSystemCommands()
 
 void SampleGame::RenderFrame()
 {
+     hd::gfx::TextureHandle framebuffer{};
+     framebuffer = m_GfxSwapchain->GetActiveFramebuffer();
+
     m_GfxSwapchain->Flip();
 
     m_GfxDevice->RecycleResources(m_GfxSwapchain->GetCPUFrame(), m_GfxSwapchain->GetGPUFrame());

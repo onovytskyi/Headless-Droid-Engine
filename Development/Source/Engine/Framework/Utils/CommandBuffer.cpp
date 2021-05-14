@@ -10,7 +10,6 @@ namespace hd
     {
         CommandBuffer::CommandBuffer(size_t maxSizeInBytes)
             : m_Buffer{ maxSizeInBytes, 1 }
-            , m_ReadOffset{}
         {
 
         }
@@ -20,15 +19,9 @@ namespace hd
 
         }
 
-        bool CommandBuffer::HasCommands() const
-        {
-            return m_ReadOffset < m_Buffer.GetSize();
-        }
-
         void CommandBuffer::Clear()
         {
             m_Buffer.Resize(0);
-            m_ReadOffset = 0;
         }
 
         std::byte* CommandBuffer::WriteToVirtualBuffer(size_t size)
@@ -39,12 +32,12 @@ namespace hd
             return memory;
         }
 
-        std::byte* CommandBuffer::ReadFromVirtualBuffer(size_t size)
+        std::byte* CommandBuffer::ReadFromVirtualBuffer(size_t size, size_t& offset)
         {
-            hdAssert(m_ReadOffset + size <= m_Buffer.GetSize(), u8"Cannot read past command queue memory.");
+            hdAssert(offset + size <= m_Buffer.GetSize(), u8"Cannot read past command queue memory.");
 
-            std::byte* memory = m_Buffer.GetData() + m_ReadOffset;
-            m_ReadOffset += size;
+            std::byte* memory = m_Buffer.GetData() + offset;
+            offset += size;
 
             return memory;
         }

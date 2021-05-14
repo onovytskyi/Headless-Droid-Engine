@@ -3,6 +3,7 @@
 #include "Engine/Framework/System/SystemCommands.h"
 
 #include "Engine/Framework/Utils/CommandBuffer.h"
+#include "Engine/Framework/Utils/CommandBufferReader.h"
 
 namespace hd
 {
@@ -11,80 +12,80 @@ namespace hd
         template<typename Command>
         Command& PushSystemCommand(util::CommandBuffer& commandBuffer, SystemCommandType commandType)
         {
-            SystemCommandType& commandID = commandBuffer.Push<SystemCommandType>();
+            SystemCommandType& commandID = commandBuffer.Write<SystemCommandType>();
             commandID = commandType;
 
-            return commandBuffer.Push<Command>();
+            return commandBuffer.Write<Command>();
         }
 
-        WindowActivateCommand& WindowActivateCommand::PushTo(util::CommandBuffer& commandBuffer)
+        WindowActivateCommand& WindowActivateCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<WindowActivateCommand>(commandBuffer, SystemCommandType::WindowActivate);
         }
 
-        WindowActivateCommand& WindowActivateCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        WindowActivateCommand& WindowActivateCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<WindowActivateCommand>();
+            return commandBuffer.Read<WindowActivateCommand>();
         }
 
-        WindowClosedCommand& WindowClosedCommand::PushTo(util::CommandBuffer& commandBuffer)
+        WindowClosedCommand& WindowClosedCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<WindowClosedCommand>(commandBuffer, SystemCommandType::WindowClosed);
         }
 
-        WindowClosedCommand& WindowClosedCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        WindowClosedCommand& WindowClosedCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<WindowClosedCommand>();
+            return commandBuffer.Read<WindowClosedCommand>();
         }
 
-        WindowResizeCommand& WindowResizeCommand::PushTo(util::CommandBuffer& commandBuffer)
+        WindowResizeCommand& WindowResizeCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<WindowResizeCommand>(commandBuffer, SystemCommandType::WindowResize);
         }
 
-        WindowResizeCommand& WindowResizeCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        WindowResizeCommand& WindowResizeCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<WindowResizeCommand>();
+            return commandBuffer.Read<WindowResizeCommand>();
         }
 
-        MouseButtonCommand& MouseButtonCommand::PushTo(util::CommandBuffer& commandBuffer)
+        MouseButtonCommand& MouseButtonCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<MouseButtonCommand>(commandBuffer, SystemCommandType::MouseButton);
         }
 
-        MouseButtonCommand& MouseButtonCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        MouseButtonCommand& MouseButtonCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<MouseButtonCommand>();
+            return commandBuffer.Read<MouseButtonCommand>();
         }
 
-        MouseMoveCommand& MouseMoveCommand::PushTo(util::CommandBuffer& commandBuffer)
+        MouseMoveCommand& MouseMoveCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<MouseMoveCommand>(commandBuffer, SystemCommandType::MouseMove);
         }
 
-        MouseMoveCommand& MouseMoveCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        MouseMoveCommand& MouseMoveCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<MouseMoveCommand>();
+            return commandBuffer.Read<MouseMoveCommand>();
         }
 
-        MouseWheelCommand& MouseWheelCommand::PushTo(util::CommandBuffer& commandBuffer)
+        MouseWheelCommand& MouseWheelCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<MouseWheelCommand>(commandBuffer, SystemCommandType::MouseWheel);
         }
 
-        MouseWheelCommand& MouseWheelCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        MouseWheelCommand& MouseWheelCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<MouseWheelCommand>();
+            return commandBuffer.Read<MouseWheelCommand>();
         }
 
-        KeyboardCommand& KeyboardCommand::PushTo(util::CommandBuffer& commandBuffer)
+        KeyboardCommand& KeyboardCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return PushSystemCommand<KeyboardCommand>(commandBuffer, SystemCommandType::Keyboard);
         }
 
-        KeyboardCommand& KeyboardCommand::PopFrom(util::CommandBuffer& commandBuffer)
+        KeyboardCommand& KeyboardCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Pop<KeyboardCommand>();
+            return commandBuffer.Read<KeyboardCommand>();
         }
 
     }
