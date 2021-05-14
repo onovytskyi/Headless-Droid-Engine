@@ -19,7 +19,7 @@ SampleGame::SampleGame()
 {
     m_MainWindow = m_PersistentScope.AllocateObject<hd::sys::SystemWindow>(u8"Droid Engine : Sample Game", 1280, 720);
     m_GfxBackend = m_PersistentScope.AllocateObject<hd::gfx::Backend>();
-    m_GfxDevice = m_PersistentScope.AllocateObject<hd::gfx::Device>(*m_GfxBackend);
+    m_GfxDevice = m_PersistentScope.AllocateObject<hd::gfx::Device>(*m_GfxBackend, m_PersistentScope);
     m_GfxQueue = m_PersistentScope.AllocateObject<hd::gfx::Queue>(*m_GfxDevice, hd::gfx::QueueType::Graphics, m_PersistentScope);
     m_GfxSwapchain = m_PersistentScope.AllocateObject<hd::gfx::Swapchain>(*m_GfxBackend, *m_GfxDevice, *m_GfxQueue, *m_MainWindow, hd::gfx::GraphicFormat::RGBA8UNorm_Srgb, m_PersistentScope);
 }
@@ -113,4 +113,6 @@ void SampleGame::ProcessSystemCommands()
 void SampleGame::RenderFrame()
 {
     m_GfxSwapchain->Flip();
+
+    m_GfxDevice->RecycleResources(m_GfxSwapchain->GetCPUFrame(), m_GfxSwapchain->GetGPUFrame());
 }
