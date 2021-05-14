@@ -6,6 +6,11 @@
 
 namespace hd
 {
+    namespace mem
+    {
+        class AllocationScope;
+    }
+
     namespace gfx
     {
         class Backend;
@@ -13,7 +18,7 @@ namespace hd
         class Device : public DevicePlatform
         {
         public:
-            Device(Backend& backend);
+            Device(Backend& backend, mem::AllocationScope& allocationScope);
             ~Device();
 
             hdNoncopyable(Device)
@@ -21,6 +26,8 @@ namespace hd
             TextureHandle CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension, float clearValue[4]);
             void DestroyTexture(TextureHandle handle);
             void DestroyTextureImmediate(TextureHandle handle);
+
+            void RecycleResources(uint64_t currentMarker, uint64_t completedMarker);
         };
     }
 }

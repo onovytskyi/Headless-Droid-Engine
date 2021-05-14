@@ -8,14 +8,19 @@
 #include "Engine/Debug/Log.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
+#include "Engine/Framework/Graphics/Queue.h"
 
 namespace hd
 {
     namespace gfx
     {
-        DevicePlatform::DevicePlatform(Backend& backend)
+        DevicePlatform::DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope)
             : m_Backend{ &backend }
             , m_MessageCallbackCookie{}
+            , m_GraphicsCommandListManager{ *this, allocationScope }
+            , m_ComputeCommandListManager{ *this, allocationScope }
+            , m_CopyCommandListManager{ *this, allocationScope }
+            , m_ResourceStateTracker{ allocationScope }
         {
             m_Adapter = backend.GetBestAdapter();
 
@@ -70,9 +75,27 @@ namespace hd
             Texture* texture{};
             TextureHandle result = TextureHandle(m_Backend->GetTextureAllocator().Allocate(&texture));
 
-            new(texture)Texture(resource);
+            new(texture)Texture(resource, state);
 
             return result;
+        }
+
+        void DevicePlatform::PresentOnQueue(Queue& queue, TextureHandle framebuffer)
+        {
+            Texture& framebufferTexture = m_Backend->GetTextureAllocator().Get(uint64_t(framebuffer));
+
+            // #TODO #Optimization Minor optimization possible to prevent allocating separate command list for a single barrier
+            ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager.GetCommandList(nullptr);
+
+            m_ResourceStateTracker.RequestTransition(framebufferTexture.GetStateTrackedData(), D3D12_RESOURCE_STATE_PRESENT);
+            m_ResourceStateTracker.ApplyTransitions(*commandList);
+
+            commandList->Close();
+
+            ID3D12CommandList* listsToExecute[] = { commandList };
+            queue.GetNativeQueue()->ExecuteCommandLists(1, listsToExecute);
+
+            m_GraphicsCommandListManager.FreeCommandList(commandList);
         }
 
         TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,
@@ -95,6 +118,13 @@ namespace hd
             Texture& texture = textureAllocator.Get(uint64_t(handle));
             texture.GetNativeResource()->Release();
             textureAllocator.Free(uint64_t(handle));
+        }
+
+        void Device::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
+        {
+            m_GraphicsCommandListManager.RecycleResources(currentMarker, completedMarker);
+            m_ComputeCommandListManager.RecycleResources(currentMarker, completedMarker);
+            m_CopyCommandListManager.RecycleResources(currentMarker, completedMarker);
         }
     }
 }

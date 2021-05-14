@@ -6,8 +6,8 @@ namespace hd
 {
     namespace gfx
     {
-        Device::Device(Backend& backend)
-            : DevicePlatform{ backend }
+        Device::Device(Backend& backend, mem::AllocationScope& allocationScope)
+            : DevicePlatform{ backend, allocationScope }
         {
 
         }
