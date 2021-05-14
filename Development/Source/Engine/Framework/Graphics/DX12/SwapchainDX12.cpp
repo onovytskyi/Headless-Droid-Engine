@@ -105,8 +105,7 @@ namespace hd
         {
             TextureHandle framebuffer;
             framebuffer = GetActiveFramebuffer();
-            //dx12::Texture& backbufferTexture = dx12::GetTexture(*swapchain.Owner, backbufferHandle);
-            //dx12::SetResourceState(*swapchain.Owner, backbufferTexture, D3D12_RESOURCE_STATE_PRESENT);
+            m_FlipQueue->PresentFrom(framebuffer);
 
             m_CPUFrame += 1;
             m_FlipQueue->Signal(*m_FrameFence, m_CPUFrame);
@@ -136,6 +135,16 @@ namespace hd
         TextureHandle Swapchain::GetActiveFramebuffer() const
         {
             return m_FramebufferTextures[m_FramebufferIndex];
+        }
+
+        uint64_t Swapchain::GetCPUFrame() const
+        {
+            return m_CPUFrame;
+        }
+
+        uint64_t Swapchain::GetGPUFrame() const
+        {
+            return m_GPUFrame;
         }
     }
 }

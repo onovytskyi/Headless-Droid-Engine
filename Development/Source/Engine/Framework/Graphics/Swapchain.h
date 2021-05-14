@@ -34,6 +34,9 @@ namespace hd
             void Resize(uint32_t width, uint32_t height);
 
             TextureHandle GetActiveFramebuffer() const;
+
+            uint64_t GetCPUFrame() const;
+            uint64_t GetGPUFrame() const;
         };
     }
 }
