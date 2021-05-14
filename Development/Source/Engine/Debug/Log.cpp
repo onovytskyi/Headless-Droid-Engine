@@ -77,7 +77,7 @@ namespace hd
 
                 str::ToWide(cfg::LogFilepath(), filepathWide, filepathWideSize);
 
-                //#TODO std filesystem makes allocations internally
+                //#TODO #Memory std filesystem makes allocations internally
                 //Replace it with platform solution?
                 if (!std::filesystem::path(filepathWide).parent_path().empty())
                 {

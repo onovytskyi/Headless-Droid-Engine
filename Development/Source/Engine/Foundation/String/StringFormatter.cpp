@@ -17,7 +17,7 @@ namespace hd
 
             size_t CalculateSize(char8_t const* text)
             {
-                //#TODO strlen is not really working for UTF8 strings.
+                //#HACK strlen is not really working for UTF8 strings.
                 //But currently we're only using ASCII symbols
                 return strlen(reinterpret_cast<char const*>(text));
             }
