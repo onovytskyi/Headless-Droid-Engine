@@ -3,19 +3,19 @@ namespace hd
     namespace util
     {
         template<typename T>
-        inline T& CommandQueue::Push()
+        inline T& CommandBuffer::Push()
         {
             return Push<T>(1);
         }
 
         template<typename T>
-        inline T& CommandQueue::Pop()
+        inline T& CommandBuffer::Pop()
         {
             return Pop<T>(1);
         }
 
         template<typename T>
-        inline T& CommandQueue::Push(size_t count)
+        inline T& CommandBuffer::Push(size_t count)
         {
             T* data = reinterpret_cast<T*>(WriteToVirtualBuffer(sizeof(T) * count));
 
@@ -23,7 +23,7 @@ namespace hd
         }
 
         template<typename T>
-        inline T& CommandQueue::Pop(size_t count)
+        inline T& CommandBuffer::Pop(size_t count)
         {
             T* data = reinterpret_cast<T*>(ReadFromVirtualBuffer(sizeof(T) * count));
 

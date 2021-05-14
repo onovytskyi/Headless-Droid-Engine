@@ -6,7 +6,7 @@ namespace hd
 {
     namespace util
     {
-        class CommandQueue;
+        class CommandBuffer;
     }
 
     namespace sys
@@ -21,7 +21,7 @@ namespace hd
 
             void SetVisible(bool value);
 
-            void ProcessSystemEvents(util::CommandQueue& systemCommands);
+            void ProcessSystemEvents(util::CommandBuffer& systemCommands);
 
             uint32_t const& GetWidth();
             uint32_t const& GetHeight();

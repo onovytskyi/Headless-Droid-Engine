@@ -6,13 +6,13 @@ namespace hd
 {
     namespace util
     {
-        class CommandQueue
+        class CommandBuffer
         {
         public:
-            CommandQueue(size_t maxSizeInBytes);
-            ~CommandQueue();
+            CommandBuffer(size_t maxSizeInBytes);
+            ~CommandBuffer();
 
-            hdNoncopyable(CommandQueue)
+            hdNoncopyable(CommandBuffer)
 
             template<typename T>
             T& Push();
@@ -40,4 +40,4 @@ namespace hd
     }
 }
 
-#include "Engine/Framework/Utils/CommandQueue.hpp"
+#include "Engine/Framework/Utils/CommandBuffer.hpp"

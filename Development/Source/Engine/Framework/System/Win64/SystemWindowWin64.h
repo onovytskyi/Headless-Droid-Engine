@@ -6,7 +6,7 @@ namespace hd
 {
     namespace util
     {
-        class CommandQueue;
+        class CommandBuffer;
     }
 
     namespace sys
@@ -31,7 +31,7 @@ namespace hd
                 bool IsMinimized;
                 uint32_t StoredWidth;
                 uint32_t StoredHeight;
-                util::CommandQueue* Commands;
+                util::CommandBuffer* Commands;
             };
 
             HWND m_Handle;

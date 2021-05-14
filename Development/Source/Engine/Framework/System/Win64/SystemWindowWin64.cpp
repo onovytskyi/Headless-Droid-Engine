@@ -9,7 +9,7 @@
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 #include "Engine/Framework/String/String.h"
 #include "Engine/Framework/System/SystemCommands.h"
-#include "Engine/Framework/Utils/CommandQueue.h"
+#include "Engine/Framework/Utils/CommandBuffer.h"
 
 namespace hd
 {
@@ -90,7 +90,7 @@ namespace hd
             ::UpdateWindow(m_Handle);
         }
 
-        void SystemWindow::ProcessSystemEvents(util::CommandQueue& systemCommands)
+        void SystemWindow::ProcessSystemEvents(util::CommandBuffer& systemCommands)
         {
             m_Params.Commands = &systemCommands;
 

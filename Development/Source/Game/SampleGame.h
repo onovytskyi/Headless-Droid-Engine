@@ -7,7 +7,7 @@
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/System/SystemCommands.h"
 #include "Engine/Framework/System/SystemWindow.h"
-#include "Engine/Framework/Utils/CommandQueue.h"
+#include "Engine/Framework/Utils/CommandBuffer.h"
 
 class SampleGame
 {
@@ -27,7 +27,7 @@ private:
     hd::mem::AllocationScope m_PersistentScope;
 
     hd::sys::SystemWindow* m_MainWindow;
-    hd::util::CommandQueue m_SystemCommands;
+    hd::util::CommandBuffer m_SystemCommands;
 
     hd::gfx::Backend* m_GfxBackend;
     hd::gfx::Device* m_GfxDevice;
