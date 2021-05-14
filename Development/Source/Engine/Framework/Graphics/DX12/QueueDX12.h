@@ -18,7 +18,10 @@ namespace hd
 
             ID3D12CommandQueue* GetNativeQueue() const;
 
+            void PresentFrom(TextureHandle framebuffer);
+
         protected:
+            Device* m_OwnerDevice;
             ComPtr<ID3D12CommandQueue> m_Queue;
         };
     }

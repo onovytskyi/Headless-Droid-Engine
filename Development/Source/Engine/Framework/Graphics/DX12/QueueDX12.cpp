@@ -28,6 +28,7 @@ namespace hd
         }
 
         QueuePlatform::QueuePlatform(Device& device, QueueType type)
+            : m_OwnerDevice{ &device }
         {
             D3D12_COMMAND_QUEUE_DESC queueDesc{};
             queueDesc.NodeMask = 0;
@@ -45,6 +46,11 @@ namespace hd
         ID3D12CommandQueue* QueuePlatform::GetNativeQueue() const
         {
             return m_Queue.Get();
+        }
+
+        void QueuePlatform::PresentFrom(TextureHandle framebuffer)
+        {
+            m_OwnerDevice->PresentOnQueue(*static_cast<Queue*>(this), framebuffer);
         }
 
         void Queue::Signal(Fence& fence, uint64_t value)
