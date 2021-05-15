@@ -110,7 +110,7 @@ namespace hd
             m_CPUFrame += 1;
             m_FlipQueue->Signal(*m_FrameFence, m_CPUFrame);
 
-            m_SwapChain->Present(1, 0);
+            m_SwapChain->Present(0, 0);
             m_FramebufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
             UpdateGPUFrame();
