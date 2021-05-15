@@ -57,6 +57,11 @@ namespace hd
         {
             m_Queue->Signal(fence.GetNativeFence(), value);
         }
+
+        void Queue::Submit(util::CommandBuffer& commandBuffer)
+        {
+            m_OwnerDevice->SubmitToQueue(*static_cast<Queue*>(this), commandBuffer);
+        }
     }
 }
 

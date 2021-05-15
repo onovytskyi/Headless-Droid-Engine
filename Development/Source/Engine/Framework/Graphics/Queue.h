@@ -11,6 +11,11 @@ namespace hd
         class AllocationScope;
     }
 
+    namespace util
+    {
+        class CommandBuffer;
+    }
+
     namespace gfx
     {
         class Device;
@@ -25,6 +30,8 @@ namespace hd
             hdNoncopyable(Queue)
 
             void Signal(Fence& fence, uint64_t value);
+
+            void Submit(util::CommandBuffer& commandBuffer);
 
             void Flush();
 
