@@ -5,6 +5,7 @@
 #include "Engine/Debug/Log.h"
 #include "Engine/Engine/Memory/EngineMemoryInterface.h"
 #include "Engine/Foundation/Memory/Utils.h"
+#include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Utils/CommandBufferReader.h"
 
@@ -17,6 +18,7 @@ SampleGame::SampleGame()
     , m_GfxDevice{}
     , m_GfxQueue{}
     , m_GfxSwapchain{}
+    , m_GraphicCommands{ hd::mem::MB(64) }
 {
     m_MainWindow = m_PersistentScope.AllocateObject<hd::sys::SystemWindow>(u8"Droid Engine : Sample Game", 1280, 720);
     m_GfxBackend = m_PersistentScope.AllocateObject<hd::gfx::Backend>();
@@ -115,10 +117,23 @@ void SampleGame::ProcessSystemCommands()
 
 void SampleGame::RenderFrame()
 {
-     hd::gfx::TextureHandle framebuffer{};
-     framebuffer = m_GfxSwapchain->GetActiveFramebuffer();
+    RecordFrame(m_GraphicCommands);
+
+     m_GfxQueue->Submit(m_GraphicCommands);
+     m_GraphicCommands.Clear();
+
 
     m_GfxSwapchain->Flip();
 
     m_GfxDevice->RecycleResources(m_GfxSwapchain->GetCPUFrame(), m_GfxSwapchain->GetGPUFrame());
+}
+
+void SampleGame::RecordFrame(hd::util::CommandBuffer& commandBuffer)
+{
+    hd::gfx::TextureHandle framebuffer{};
+    framebuffer = m_GfxSwapchain->GetActiveFramebuffer();
+
+    hd::gfx::ClearRenderTargetCommandCommand& clearCmd = hd::gfx::ClearRenderTargetCommandCommand::WriteTo(m_GraphicCommands);
+    clearCmd.Tagert = framebuffer;
+    clearCmd.Color = { 0.0f, 0.0f, 1.0f, 1.0f };
 }

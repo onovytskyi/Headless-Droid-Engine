@@ -21,6 +21,7 @@ public:
 private:
     void ProcessSystemCommands();
     void RenderFrame();
+    void RecordFrame(hd::util::CommandBuffer& commandBuffer);
 
     bool m_IsRunning;
 
@@ -33,4 +34,6 @@ private:
     hd::gfx::Device* m_GfxDevice;
     hd::gfx::Queue* m_GfxQueue;
     hd::gfx::Swapchain* m_GfxSwapchain;
+
+    hd::util::CommandBuffer m_GraphicCommands;
 };
