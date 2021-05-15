@@ -8,7 +8,9 @@
 #include "Engine/Debug/Log.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
+#include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Graphics/Queue.h"
+#include "Engine/Framework/Utils/CommandBufferReader.h"
 
 namespace hd
 {
@@ -17,10 +19,11 @@ namespace hd
         DevicePlatform::DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope)
             : m_Backend{ &backend }
             , m_MessageCallbackCookie{}
-            , m_GraphicsCommandListManager{ *this, allocationScope }
-            , m_ComputeCommandListManager{ *this, allocationScope }
-            , m_CopyCommandListManager{ *this, allocationScope }
-            , m_ResourceStateTracker{ allocationScope }
+            , m_GraphicsCommandListManager{}
+            , m_ComputeCommandListManager{}
+            , m_CopyCommandListManager{}
+            , m_ResourceStateTracker{}
+            , m_DescriptorManager{}
         {
             m_Adapter = backend.GetBestAdapter();
 
@@ -50,6 +53,12 @@ namespace hd
                 }
             }
 #endif
+
+            m_GraphicsCommandListManager = allocationScope.AllocateObject<CommandListManager<D3D12_COMMAND_LIST_TYPE_DIRECT, 16, 24>>(*this, allocationScope);
+            m_ComputeCommandListManager = allocationScope.AllocateObject<CommandListManager<D3D12_COMMAND_LIST_TYPE_COMPUTE, 16, 24>>(*this, allocationScope);
+            m_CopyCommandListManager = allocationScope.AllocateObject<CommandListManager<D3D12_COMMAND_LIST_TYPE_COPY, 16, 24>>(*this, allocationScope);
+            m_ResourceStateTracker = allocationScope.AllocateObject<ResourceStateTracker>(allocationScope);
+            m_DescriptorManager = allocationScope.AllocateObject<DescriptorManager>(*this, allocationScope);
         }
 
         DevicePlatform::~DevicePlatform()
@@ -75,7 +84,7 @@ namespace hd
             Texture* texture{};
             TextureHandle result = TextureHandle(m_Backend->GetTextureAllocator().Allocate(&texture));
 
-            new(texture)Texture(resource, state);
+            new(texture)Texture(*static_cast<Device*>(this), resource, state, format, flags);
 
             return result;
         }
@@ -85,17 +94,62 @@ namespace hd
             Texture& framebufferTexture = m_Backend->GetTextureAllocator().Get(uint64_t(framebuffer));
 
             // #TODO #Optimization Minor optimization possible to prevent allocating separate command list for a single barrier
-            ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager.GetCommandList(nullptr);
+            ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager->GetCommandList(nullptr);
 
-            m_ResourceStateTracker.RequestTransition(framebufferTexture.GetStateTrackedData(), D3D12_RESOURCE_STATE_PRESENT);
-            m_ResourceStateTracker.ApplyTransitions(*commandList);
+            m_ResourceStateTracker->RequestTransition(framebufferTexture.GetStateTrackedData(), D3D12_RESOURCE_STATE_PRESENT);
+            m_ResourceStateTracker->ApplyTransitions(*commandList);
 
             commandList->Close();
 
             ID3D12CommandList* listsToExecute[] = { commandList };
             queue.GetNativeQueue()->ExecuteCommandLists(1, listsToExecute);
 
-            m_GraphicsCommandListManager.FreeCommandList(commandList);
+            m_GraphicsCommandListManager->FreeCommandList(commandList);
+        }
+
+        void DevicePlatform::SubmitToQueue(Queue& queue, util::CommandBuffer& commandBuffer)
+        {
+            // #TODO #HACK As of right now we're submitting commands to queue right away, but this will not work for multithreaded recording.
+            util::CommandBufferReader commandBufferReader{ commandBuffer };
+
+            ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager->GetCommandList(nullptr);
+
+            while (commandBufferReader.HasCommands())
+            {
+                GraphicCommandType& commandType = commandBufferReader.Read<GraphicCommandType>();
+
+                switch (commandType)
+                {
+
+                case GraphicCommandType::ClearRenderTarget:
+                {
+                     ClearRenderTargetCommandCommand& command = ClearRenderTargetCommandCommand::ReadFrom(commandBufferReader);
+                     Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.Tagert));
+
+                     m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+                     m_ResourceStateTracker->ApplyTransitions(*commandList);
+                     commandList->ClearRenderTargetView(target.GetRTV().HandleCPU, command.Color.data(), 0, nullptr);
+                }
+                break;
+                
+
+                default:
+                    hdAssert(false, u8"Cannot process command. Unknown command type.");
+                    break;
+                }
+            }
+
+            commandList->Close();
+
+            ID3D12CommandList* listsToExecute[] = { commandList };
+            queue.GetNativeQueue()->ExecuteCommandLists(1, listsToExecute);
+
+            m_GraphicsCommandListManager->FreeCommandList(commandList);
+        }
+
+        DescriptorManager& DevicePlatform::GetDescriptorManager()
+        {
+            return *m_DescriptorManager;
         }
 
         TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,
@@ -117,14 +171,15 @@ namespace hd
 
             Texture& texture = textureAllocator.Get(uint64_t(handle));
             texture.GetNativeResource()->Release();
+            texture.FreeDescriptors(*this);
             textureAllocator.Free(uint64_t(handle));
         }
 
         void Device::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
         {
-            m_GraphicsCommandListManager.RecycleResources(currentMarker, completedMarker);
-            m_ComputeCommandListManager.RecycleResources(currentMarker, completedMarker);
-            m_CopyCommandListManager.RecycleResources(currentMarker, completedMarker);
+            m_GraphicsCommandListManager->RecycleResources(currentMarker, completedMarker);
+            m_ComputeCommandListManager->RecycleResources(currentMarker, completedMarker);
+            m_CopyCommandListManager->RecycleResources(currentMarker, completedMarker);
         }
     }
 }

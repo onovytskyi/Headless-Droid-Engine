@@ -3,6 +3,7 @@
 #if defined(HD_GRAPHICS_API_DX12)
 
 #include "Engine/Framework/Graphics/DX12/CommandListManagerDX12.h"
+#include "Engine/Framework/Graphics/DX12/DescriptorManagerDX12.h"
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 
@@ -11,6 +12,11 @@ namespace hd
     namespace mem
     {
         class AllocationScope;
+    }
+
+    namespace util
+    {
+        class CommandBuffer;
     }
 
     namespace gfx
@@ -29,6 +35,9 @@ namespace hd
             TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags);
 
             void PresentOnQueue(Queue& queue, TextureHandle framebuffer);
+            void SubmitToQueue(Queue& queue, util::CommandBuffer& commandBuffer);
+
+            DescriptorManager& GetDescriptorManager();
 
         protected:
             Backend* m_Backend;
@@ -38,11 +47,12 @@ namespace hd
 #if defined(HD_ENABLE_GFX_DEBUG)
             DWORD m_MessageCallbackCookie;
 #endif
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_DIRECT, 16, 24> m_GraphicsCommandListManager;
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_COMPUTE, 16, 24> m_ComputeCommandListManager;
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_COPY, 16, 24> m_CopyCommandListManager;
+            CommandListManager<D3D12_COMMAND_LIST_TYPE_DIRECT, 16, 24>* m_GraphicsCommandListManager;
+            CommandListManager<D3D12_COMMAND_LIST_TYPE_COMPUTE, 16, 24>* m_ComputeCommandListManager;
+            CommandListManager<D3D12_COMMAND_LIST_TYPE_COPY, 16, 24>* m_CopyCommandListManager;
 
-            ResourceStateTracker m_ResourceStateTracker;
+            ResourceStateTracker* m_ResourceStateTracker;
+            DescriptorManager* m_DescriptorManager;
         };
     }
 }
