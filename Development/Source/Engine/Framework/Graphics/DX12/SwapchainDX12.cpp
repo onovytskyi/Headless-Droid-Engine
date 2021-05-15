@@ -31,7 +31,7 @@ namespace hd
             DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
             swapChainDesc.Width = window.GetWidth();
             swapChainDesc.Height = window.GetHeight();
-            swapChainDesc.Format = dx12::ConvertToResourceFormat(m_Format);
+            swapChainDesc.Format = ConvertToResourceFormat(m_Format);
             swapChainDesc.SampleDesc.Count = 1;
             swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             swapChainDesc.BufferCount = cfg::MaxFrameLatency();

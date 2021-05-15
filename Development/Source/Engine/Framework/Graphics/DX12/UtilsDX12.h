@@ -8,12 +8,14 @@ namespace hd
 {
     namespace gfx
     {
-        namespace dx12
-        {
-            DXGI_FORMAT ConvertToResourceFormat(GraphicFormat format);
-            DXGI_FORMAT ConvertToWriteableFormat(GraphicFormat format);
-            DXGI_FORMAT ConvertToReadableFormat(GraphicFormat format);
-        }
+        DXGI_FORMAT ConvertToResourceFormat(GraphicFormat format);
+        DXGI_FORMAT ConvertToWriteableFormat(GraphicFormat format);
+        DXGI_FORMAT ConvertToReadableFormat(GraphicFormat format);
+
+        D3D12_SRV_DIMENSION ResourceDimensionToSRV(D3D12_RESOURCE_DIMENSION dimension, bool isCube);
+        D3D12_UAV_DIMENSION ResourceDimensionToUAV(D3D12_RESOURCE_DIMENSION dimension);
+        D3D12_RTV_DIMENSION ResourceDimensionToRTV(D3D12_RESOURCE_DIMENSION dimension);
+        D3D12_DSV_DIMENSION ResourceDimensionToDSV(D3D12_RESOURCE_DIMENSION dimension);
     }
 }
 
