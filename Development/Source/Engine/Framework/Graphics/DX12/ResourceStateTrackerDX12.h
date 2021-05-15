@@ -45,7 +45,7 @@ namespace hd
                 uint32_t Subresource;
             };
 
-            util::Array<StateTransitionRequest, 128> m_TransitionRequests;
+            util::Array<StateTransitionRequest> m_TransitionRequests;
             uint32_t m_TransitionRequestsUsed;
         };
     }

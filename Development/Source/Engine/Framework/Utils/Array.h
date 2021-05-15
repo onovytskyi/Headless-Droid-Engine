@@ -11,11 +11,11 @@ namespace hd
 
     namespace util
     {
-        template<typename T, size_t Size>
+        template<typename T>
         class Array
         {
         public:
-            Array(mem::AllocationScope& allocationScope);
+            Array(mem::AllocationScope& allocationScope, size_t size);
 
             T& operator[](size_t index);
             T const& operator[](size_t index) const;

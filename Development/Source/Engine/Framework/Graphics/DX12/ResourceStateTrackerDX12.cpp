@@ -12,7 +12,7 @@ namespace hd
     namespace gfx
     {
         ResourceStateTracker::ResourceStateTracker(mem::AllocationScope& allocationScope)
-            : m_TransitionRequests{ allocationScope }
+            : m_TransitionRequests{ allocationScope, cfg::MaxTransitionRequests() }
             , m_TransitionRequestsUsed{ 0 }
         {
 

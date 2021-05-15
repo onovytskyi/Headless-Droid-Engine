@@ -15,7 +15,7 @@ namespace hd
     {
         class DevicePlatform;
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, uint32_t MaxLists, uint32_t MaxAllocators>
+        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
         class CommandListManager
         {
         public:
@@ -33,7 +33,7 @@ namespace hd
 
             DevicePlatform* m_OwnerDevice;
 
-            util::Array<ID3D12GraphicsCommandList*, MaxLists> m_CommandLists;
+            util::Array<ID3D12GraphicsCommandList*> m_CommandLists;
             uint32_t m_CommandListsInUse;
 
             struct CommandAllocatorHolder
@@ -43,7 +43,7 @@ namespace hd
                 std::thread::id Thread;
             };
 
-            util::Array<CommandAllocatorHolder, MaxAllocators> m_CommandAllocators;
+            util::Array<CommandAllocatorHolder> m_CommandAllocators;
             uint64_t m_CommandAllocatorsInUse;
         };
     }

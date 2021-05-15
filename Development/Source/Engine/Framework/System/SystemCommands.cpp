@@ -10,7 +10,7 @@ namespace hd
     namespace sys
     {
         template<typename Command>
-        Command& PushSystemCommand(util::CommandBuffer& commandBuffer, SystemCommandType commandType)
+        Command& WriteSystemCommand(util::CommandBuffer& commandBuffer, SystemCommandType commandType)
         {
             SystemCommandType& commandID = commandBuffer.Write<SystemCommandType>();
             commandID = commandType;
@@ -20,7 +20,7 @@ namespace hd
 
         WindowActivateCommand& WindowActivateCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<WindowActivateCommand>(commandBuffer, SystemCommandType::WindowActivate);
+            return WriteSystemCommand<WindowActivateCommand>(commandBuffer, SystemCommandType::WindowActivate);
         }
 
         WindowActivateCommand& WindowActivateCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -30,7 +30,7 @@ namespace hd
 
         WindowClosedCommand& WindowClosedCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<WindowClosedCommand>(commandBuffer, SystemCommandType::WindowClosed);
+            return WriteSystemCommand<WindowClosedCommand>(commandBuffer, SystemCommandType::WindowClosed);
         }
 
         WindowClosedCommand& WindowClosedCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -40,7 +40,7 @@ namespace hd
 
         WindowResizeCommand& WindowResizeCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<WindowResizeCommand>(commandBuffer, SystemCommandType::WindowResize);
+            return WriteSystemCommand<WindowResizeCommand>(commandBuffer, SystemCommandType::WindowResize);
         }
 
         WindowResizeCommand& WindowResizeCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -50,7 +50,7 @@ namespace hd
 
         MouseButtonCommand& MouseButtonCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<MouseButtonCommand>(commandBuffer, SystemCommandType::MouseButton);
+            return WriteSystemCommand<MouseButtonCommand>(commandBuffer, SystemCommandType::MouseButton);
         }
 
         MouseButtonCommand& MouseButtonCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -60,7 +60,7 @@ namespace hd
 
         MouseMoveCommand& MouseMoveCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<MouseMoveCommand>(commandBuffer, SystemCommandType::MouseMove);
+            return WriteSystemCommand<MouseMoveCommand>(commandBuffer, SystemCommandType::MouseMove);
         }
 
         MouseMoveCommand& MouseMoveCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -70,7 +70,7 @@ namespace hd
 
         MouseWheelCommand& MouseWheelCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<MouseWheelCommand>(commandBuffer, SystemCommandType::MouseWheel);
+            return WriteSystemCommand<MouseWheelCommand>(commandBuffer, SystemCommandType::MouseWheel);
         }
 
         MouseWheelCommand& MouseWheelCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
@@ -80,13 +80,12 @@ namespace hd
 
         KeyboardCommand& KeyboardCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return PushSystemCommand<KeyboardCommand>(commandBuffer, SystemCommandType::Keyboard);
+            return WriteSystemCommand<KeyboardCommand>(commandBuffer, SystemCommandType::Keyboard);
         }
 
         KeyboardCommand& KeyboardCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
             return commandBuffer.Read<KeyboardCommand>();
         }
-
     }
 }

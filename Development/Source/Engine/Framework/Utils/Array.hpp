@@ -4,29 +4,29 @@ namespace hd
 {
     namespace util
     {
-        template<typename T, size_t Size>
-        Array<T, Size>::Array(mem::AllocationScope& allocationScope)
-            : m_Memory{ allocationScope, sizeof(T) * Size }
+        template<typename T>
+        Array<T>::Array(mem::AllocationScope& allocationScope, size_t size)
+            : m_Memory{ allocationScope, sizeof(T) * size }
         {
             memset(m_Memory.GetData(), 0, m_Memory.GetSize());
         }
 
-        template<typename T, size_t Size>
-        T& Array<T, Size>::operator[](size_t index)
+        template<typename T>
+        T& Array<T>::operator[](size_t index)
         {
             return *(m_Memory.GetDataAs<T*>() + index);
         }
 
-        template<typename T, size_t Size>
-        T const& Array<T, Size>::operator[](size_t index) const
+        template<typename T>
+        T const& Array<T>::operator[](size_t index) const
         {
             return *(m_Memory.GetDataAs<T*>() + index);
         }
 
-        template<typename T, size_t Size>
-        size_t Array<T, Size>::GetSize() const
+        template<typename T>
+        size_t Array<T>::GetSize() const
         {
-            return Size;
+            return m_Memory.GetSize() / sizeof(T);
         }
     }
 }
