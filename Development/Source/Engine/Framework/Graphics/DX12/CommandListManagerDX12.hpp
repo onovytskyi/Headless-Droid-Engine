@@ -103,6 +103,9 @@ namespace hd
                     {
                         holder.Marker = 0;
 
+                        //Reset allocator
+                        hdEnsure(holder.Allocator->Reset());
+
                         // Move free allocator after allocators in use
                         std::swap(m_CommandAllocators[allocatorIdx], m_CommandAllocators[m_CommandAllocatorsInUse - 1]);
                         m_CommandAllocatorsInUse -= 1;
