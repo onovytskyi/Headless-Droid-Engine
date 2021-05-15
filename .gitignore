@@ -2,7 +2,10 @@
 Bin/
 Development/Build/
 Development/Lib/
+
+# Nuget packages
 Development/packages/
+packages.config
 
 # Visual Studio
 *.sdf

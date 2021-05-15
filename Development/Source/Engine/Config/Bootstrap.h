@@ -5,6 +5,7 @@
 #include "Engine/Config/DX12/PlatformIncludesDX12.h"
 #include "Engine/Config/Win64/PlatformIncludesWin64.h"
 
+#include <array>
 #include <cmath>
 #include <chrono>
 #include <filesystem>
