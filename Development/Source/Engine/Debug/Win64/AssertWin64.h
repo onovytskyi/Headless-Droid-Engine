@@ -19,7 +19,7 @@ namespace hd
         void AssertHandlerInternal(HRESULT errorCode, char8_t const* assertion, char8_t const* file, uint32_t line, char8_t const* format, Args... args);
         void AssertHandlerInternal(HRESULT errorCode, char8_t const* assertion, char8_t const* file, uint32_t line);
 
-#if defined(HD_GRAPHICS_API_DX12)
+#if defined(HD_GRAPHICS_API_DX12) && defined(HD_ENABLE_GFX_DEBUG)
         void SetDebugDevice(ID3D12Device* device);
         HRESULT ConvertToGfxDeviceResult(HRESULT errorCode);
         void D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severiry, D3D12_MESSAGE_ID id, LPCSTR description, void* context);

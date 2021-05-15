@@ -13,7 +13,7 @@ namespace hd
         {
             size_t marker = g_AssertAllocator.GetMarker();
 
-#if defined(HD_GRAPHICS_API_DX12)
+#if defined(HD_GRAPHICS_API_DX12) && defined(HD_ENABLE_GFX_DEBUG)
             errorCode = ConvertToGfxDeviceResult(errorCode);
 #endif
 
@@ -30,7 +30,7 @@ namespace hd
             g_AssertAllocator.Reset(marker);
         }
 
-#if defined(HD_GRAPHICS_API_DX12)
+#if defined(HD_GRAPHICS_API_DX12) && defined(HD_ENABLE_GFX_DEBUG)
         static ID3D12Device* g_DebugDevice = nullptr;
         void SetDebugDevice(ID3D12Device* device)
         {

@@ -18,7 +18,9 @@ namespace hd
     {
         DevicePlatform::DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope)
             : m_Backend{ &backend }
+#if defined(HD_ENABLE_GFX_DEBUG)
             , m_MessageCallbackCookie{}
+#endif
             , m_GraphicsCommandListManager{}
             , m_ComputeCommandListManager{}
             , m_CopyCommandListManager{}
@@ -139,7 +141,7 @@ namespace hd
                 }
             }
 
-            commandList->Close();
+            hdEnsure(commandList->Close());
 
             ID3D12CommandList* listsToExecute[] = { commandList };
             queue.GetNativeQueue()->ExecuteCommandLists(1, listsToExecute);
