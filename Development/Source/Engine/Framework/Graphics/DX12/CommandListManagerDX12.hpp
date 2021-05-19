@@ -10,7 +10,6 @@ namespace hd
             , m_CommandLists{ allocationScope, MaxLists }
             , m_CommandListsInUse{ 0 }
             , m_CommandAllocators{ allocationScope, MaxAllocators }
-            , m_CommandAllocatorsInUse{ 0 }
         {
 
         }
@@ -38,21 +37,20 @@ namespace hd
         template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
         inline ID3D12GraphicsCommandList* CommandListManager<CommandListType, MaxLists, MaxAllocators>::GetCommandList(ID3D12PipelineState* pipelineState)
         {
-            hdAssert(m_CommandListsInUse < m_CommandLists.GetSize(), u8"All command lists are in use. Consider increase lists count.");
-
             ID3D12CommandAllocator* commandAllocator = GetCommandAllocator();
 
-            ID3D12GraphicsCommandList*& result = m_CommandLists[m_CommandListsInUse];
-            m_CommandListsInUse += 1;
-
-            if (result == nullptr)
+            ID3D12GraphicsCommandList* result{};
+            if (m_CommandListsInUse == m_CommandLists.GetSize())
             {
                 hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandList(0, CommandListType, commandAllocator, pipelineState, IID_PPV_ARGS(&result)));
+                m_CommandLists.Add(result);
             }
             else
             {
+                result = m_CommandLists[m_CommandListsInUse];
                 result->Reset(commandAllocator, pipelineState);
             }
+            m_CommandListsInUse += 1;
 
             return result;
         }
@@ -62,7 +60,7 @@ namespace hd
         {
             hdAssert(m_CommandListsInUse > 0, u8"Cannot free command list. No command lists are in use.");
 
-            uint32_t swapWithIdx = m_CommandListsInUse;
+            uint32_t swapWithIdx = m_CommandListsInUse - 1;
             for (uint32_t commandListIdx = 0; commandListIdx < m_CommandListsInUse; ++commandListIdx)
             {
                 if (m_CommandLists[commandListIdx] == commandList)
@@ -85,7 +83,7 @@ namespace hd
         {
             m_CommandListsInUse = 0;
 
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocatorsInUse; ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
             {
                 CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
 
@@ -105,10 +103,6 @@ namespace hd
 
                         //Reset allocator
                         hdEnsure(holder.Allocator->Reset());
-
-                        // Move free allocator after allocators in use
-                        std::swap(m_CommandAllocators[allocatorIdx], m_CommandAllocators[m_CommandAllocatorsInUse - 1]);
-                        m_CommandAllocatorsInUse -= 1;
                     }
                 }
             }
@@ -119,35 +113,35 @@ namespace hd
         {
             std::thread::id currentThread = std::this_thread::get_id();
 
-            CommandAllocatorHolder* allocatorToUse = nullptr;
-
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocatorsInUse; ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
             {
                 CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
 
                 // Check if allocator is not pending and used for current thread
                 if (holder.Marker == 0 && holder.Thread == currentThread)
                 {
-                    allocatorToUse = &holder;
-                    break;
+                    return holder.Allocator;
                 }
             }
 
-            if (allocatorToUse == nullptr)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
             {
-                hdAssert(m_CommandAllocatorsInUse < m_CommandAllocators.GetSize(), u8"All command allocators are in use. Consider increase allocators count.");
-                CommandAllocatorHolder& holder = m_CommandAllocators[m_CommandAllocatorsInUse];
-                m_CommandAllocatorsInUse += 1;
-                allocatorToUse = &holder;
-                allocatorToUse->Thread = currentThread;
+                CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
+
+                // Find free allocator
+                if (holder.Marker == 0 && holder.Thread == std::thread::id{})
+                {
+                    return holder.Allocator;
+                }
             }
 
-            if (allocatorToUse->Allocator == nullptr)
-            {
-                hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandAllocator(CommandListType, IID_PPV_ARGS(&allocatorToUse->Allocator)));
-            }
+            CommandAllocatorHolder holder{};
+            hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandAllocator(CommandListType, IID_PPV_ARGS(&holder.Allocator)));
+            holder.Thread = currentThread;
 
-            return allocatorToUse->Allocator;
+            m_CommandAllocators.Add(holder);
+
+            return holder.Allocator;
         }
     }
 }

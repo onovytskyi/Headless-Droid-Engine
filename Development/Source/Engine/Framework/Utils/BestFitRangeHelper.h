@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Engine/Framework/Utils/Array.h"
+#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
@@ -21,6 +21,8 @@ namespace hd
             size_t BindRange(size_t count);
             void UnbindRange(size_t index, size_t count);
 
+            bool Empty();
+
         private:
             struct Range
             {
@@ -28,8 +30,8 @@ namespace hd
                 size_t Count;
             };
 
-            Array<Range> m_FreeRanges;
-            size_t m_FreeRangesCount;
+            BufferArray<Range> m_FreeRanges;
+            size_t m_Size;
         };
     }
 }

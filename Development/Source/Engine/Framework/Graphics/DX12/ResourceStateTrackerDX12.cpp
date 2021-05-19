@@ -13,7 +13,6 @@ namespace hd
     {
         ResourceStateTracker::ResourceStateTracker(mem::AllocationScope& allocationScope)
             : m_TransitionRequests{ allocationScope, cfg::MaxTransitionRequests() }
-            , m_TransitionRequestsUsed{ 0 }
         {
 
         }
@@ -25,15 +24,7 @@ namespace hd
 
         void ResourceStateTracker::RequestSubresourceTransition(StateTrackedData& data, uint32_t subresource, D3D12_RESOURCE_STATES toState)
         {
-            hdAssert(m_TransitionRequestsUsed < m_TransitionRequests.GetSize(), u8"Cannot request transition. Transition requests full. Consider increase request count.");
-
-            StateTransitionRequest& request = m_TransitionRequests[m_TransitionRequestsUsed];
-            m_TransitionRequestsUsed += 1;
-
-            request = {};
-            request.Data = &data;
-            request.Subresource = subresource;
-            request.TargetState = toState;
+            m_TransitionRequests.Add({ &data, toState, subresource });
         }
 
         bool IsReadOnlyState(D3D12_RESOURCE_STATES state)
@@ -83,11 +74,11 @@ namespace hd
         {
             mem::AllocationScope scratchScope(mem::GetScratchAllocator());
 
-            size_t transitionsAllocationSize = sizeof(D3D12_RESOURCE_BARRIER) * m_TransitionRequestsUsed * StateTrackedData::MAX_SUBRESOURCES;
+            size_t transitionsAllocationSize = sizeof(D3D12_RESOURCE_BARRIER) * m_TransitionRequests.GetSize() * StateTrackedData::MAX_SUBRESOURCES;
             D3D12_RESOURCE_BARRIER* transitionBarriers = reinterpret_cast<D3D12_RESOURCE_BARRIER*>(scratchScope.AllocateMemory(transitionsAllocationSize, alignof(D3D12_RESOURCE_BARRIER)));
 
             uint32_t barriersCount = 0;
-            for (uint32_t requestIdx = 0; requestIdx < m_TransitionRequestsUsed; ++requestIdx)
+            for (uint32_t requestIdx = 0; requestIdx < m_TransitionRequests.GetSize(); ++requestIdx)
             {
                 StateTransitionRequest& request = m_TransitionRequests[requestIdx];
                 ID3D12Resource* nativeResource = request.Data->Resource;
@@ -141,7 +132,7 @@ namespace hd
                 commandList.ResourceBarrier(barriersCount, transitionBarriers);
             }
 
-            m_TransitionRequestsUsed = 0;
+            m_TransitionRequests.Clear();
         }
     }
 }

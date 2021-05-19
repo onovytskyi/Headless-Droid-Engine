@@ -2,7 +2,7 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
-#include "Engine/Framework/Utils/Array.h"
+#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
@@ -45,8 +45,7 @@ namespace hd
                 uint32_t Subresource;
             };
 
-            util::Array<StateTransitionRequest> m_TransitionRequests;
-            uint32_t m_TransitionRequestsUsed;
+            util::BufferArray<StateTransitionRequest> m_TransitionRequests;
         };
     }
 }

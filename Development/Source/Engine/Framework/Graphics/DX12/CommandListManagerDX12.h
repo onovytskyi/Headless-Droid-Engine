@@ -2,7 +2,7 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
-#include "Engine/Framework/Utils/Array.h"
+#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
@@ -33,7 +33,7 @@ namespace hd
 
             DevicePlatform* m_OwnerDevice;
 
-            util::Array<ID3D12GraphicsCommandList*> m_CommandLists;
+            util::BufferArray<ID3D12GraphicsCommandList*> m_CommandLists;
             uint32_t m_CommandListsInUse;
 
             struct CommandAllocatorHolder
@@ -42,9 +42,7 @@ namespace hd
                 uint64_t Marker;
                 std::thread::id Thread;
             };
-
-            util::Array<CommandAllocatorHolder> m_CommandAllocators;
-            uint64_t m_CommandAllocatorsInUse;
+            util::BufferArray<CommandAllocatorHolder> m_CommandAllocators;
         };
     }
 }

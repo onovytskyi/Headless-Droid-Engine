@@ -9,20 +9,18 @@ namespace hd
 
         BestFitRangeHelper::BestFitRangeHelper(mem::AllocationScope& allocationScope, size_t size, size_t maxRanges)
             : m_FreeRanges{ allocationScope, maxRanges }
-            , m_FreeRangesCount{ 1 }
+            , m_Size{ size }
         {
-            Range& initialRange = m_FreeRanges[0];
-            initialRange.Start = 0;
-            initialRange.Count = size;
+            m_FreeRanges.Add({ 0, size });
         }
 
         size_t BestFitRangeHelper::BindRange(size_t count)
         {
-            if (m_FreeRangesCount != 0)
+            if (m_FreeRanges.GetSize() != 0)
             {
                 size_t bestFitRangeIdx = INVALID_INDEX;
                 size_t bestFitRangeDiff = std::numeric_limits<size_t>::max();
-                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRangesCount; ++freeRangeIdx)
+                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRanges.GetSize(); ++freeRangeIdx)
                 {
                     Range& candidateFreeRange = m_FreeRanges[freeRangeIdx];
 
@@ -56,8 +54,7 @@ namespace hd
                     // Remove range if it is fully occupied
                     if (bestFreeRange.Count == 0)
                     {
-                        m_FreeRanges[bestFitRangeIdx] = m_FreeRanges[m_FreeRangesCount - 1];
-                        m_FreeRangesCount -= 1;
+                        m_FreeRanges.RemoveFast(bestFitRangeIdx);
                     }
 
                     return result;
@@ -69,14 +66,14 @@ namespace hd
 
         void BestFitRangeHelper::UnbindRange(size_t index, size_t count)
         {
-            if (m_FreeRangesCount != 0)
+            if (m_FreeRanges.GetSize() != 0)
             {
                 size_t unbindBegin = index;
                 size_t unbindEnd = unbindBegin + count;
 
 #if defined(HD_ENABLE_ASSERTS)
                 // Check if range to unbind does not intersect existing free ranges
-                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRangesCount; ++freeRangeIdx)
+                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRanges.GetSize(); ++freeRangeIdx)
                 {
                     Range& range = m_FreeRanges[freeRangeIdx];
 
@@ -88,7 +85,7 @@ namespace hd
                 }
 #endif
 
-                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRangesCount; ++freeRangeIdx)
+                for (size_t freeRangeIdx = 0; freeRangeIdx < m_FreeRanges.GetSize(); ++freeRangeIdx)
                 {
                     Range& candidateFreeRange = m_FreeRanges[freeRangeIdx];
 
@@ -112,13 +109,12 @@ namespace hd
                 }
             }
 
-            hdAssert(m_FreeRangesCount < m_FreeRanges.GetSize(), u8"Cannot store another free range. Consider increase free ranges capacity.");
-
-            m_FreeRanges[m_FreeRangesCount].Start = index;
-            m_FreeRanges[m_FreeRangesCount].Count = count;
-
-            m_FreeRangesCount += 1;
+            m_FreeRanges.Add({ index, count });
         }
 
+        bool BestFitRangeHelper::Empty()
+        {
+            return m_FreeRanges.GetSize() == 1 && m_FreeRanges[0].Start == 0 && m_FreeRanges[0].Count == m_Size;
+        }
     }
 }
