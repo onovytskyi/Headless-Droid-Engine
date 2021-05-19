@@ -18,6 +18,7 @@ Prototyping rendering framework served as a playground for my experiments
 
 ## External tools and libraries
 * Premake (https://premake.github.io/)
+* ImGUI (https://github.com/ocornut/imgui/)
 
 ## Quick Guide
 ### Prerequisites
