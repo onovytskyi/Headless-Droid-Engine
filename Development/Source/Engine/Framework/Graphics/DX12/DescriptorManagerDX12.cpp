@@ -104,13 +104,13 @@ namespace hd
 
         uint32_t DescriptorManager::DescriptorAllocator::Allocate()
         {
-            return uint32_t(m_Allocator.BindRange(1));
+            return uint32_t(m_Allocator.Allocate(1));
         }
 
         void DescriptorManager::DescriptorAllocator::Free(D3D12_CPU_DESCRIPTOR_HANDLE handleCPU)
         {
             size_t index = (handleCPU.ptr - m_Heap->GetCPUDescriptorHandleForHeapStart().ptr) / m_HandleIncrementSize;
-            m_Allocator.UnbindRange(index, 1);
+            m_Allocator.Deallocate(index, 1);
         }
 
         ID3D12DescriptorHeap* DescriptorManager::DescriptorAllocator::GetDescriptorHeap()

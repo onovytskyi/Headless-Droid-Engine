@@ -2,7 +2,7 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
-#include "Engine/Framework/Utils/BestFitRangeHelper.h"
+#include "Engine/Framework/Utils/BestFitAllocatorHelper.h"
 
 namespace hd
 {
@@ -75,7 +75,7 @@ namespace hd
                 D3D12_GPU_DESCRIPTOR_HANDLE ResolveGPU(uint32_t index);
 
             private:
-                util::BestFitRangeHelper m_Allocator;
+                util::BestFitAllocatorHelper m_Allocator;
                 ComPtr<ID3D12DescriptorHeap> m_Heap;
                 uint32_t m_HandleIncrementSize;
             };
