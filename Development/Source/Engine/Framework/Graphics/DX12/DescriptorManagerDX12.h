@@ -31,6 +31,7 @@ namespace hd
 
         struct DescriptorSRV
         {
+            uint32_t HeapIndex;
             D3D12_CPU_DESCRIPTOR_HANDLE HandleCPU;
             D3D12_GPU_DESCRIPTOR_HANDLE HandleGPU;
 
@@ -39,6 +40,7 @@ namespace hd
 
         struct DescriptorSampler
         {
+            uint32_t HeapIndex;
             D3D12_CPU_DESCRIPTOR_HANDLE HandleCPU;
             D3D12_GPU_DESCRIPTOR_HANDLE HandleGPU;
 

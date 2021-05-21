@@ -22,8 +22,10 @@ namespace hd
             CreateViews(device, format, flags, resource->GetDesc().Dimension, false);
         }
 
-        void Texture::FreeDescriptors(Device& device)
+        void Texture::Free(Device& device)
         {
+            m_Data.Resource->Release();
+
             DescriptorManager& descriptorManager = device.GetDescriptorManager();
 
             if (m_RTV)

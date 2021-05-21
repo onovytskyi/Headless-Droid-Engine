@@ -6,6 +6,7 @@
 #include "Engine/Framework/Graphics/DX12/DescriptorManagerDX12.h"
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
+#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
@@ -47,12 +48,25 @@ namespace hd
 #if defined(HD_ENABLE_GFX_DEBUG)
             DWORD m_MessageCallbackCookie;
 #endif
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_DIRECT, 16, 24>* m_GraphicsCommandListManager;
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_COMPUTE, 16, 24>* m_ComputeCommandListManager;
-            CommandListManager<D3D12_COMMAND_LIST_TYPE_COPY, 16, 24>* m_CopyCommandListManager;
+            CommandListManager* m_GraphicsCommandListManager;
+            CommandListManager* m_ComputeCommandListManager;
+            CommandListManager* m_CopyCommandListManager;
 
             ResourceStateTracker* m_ResourceStateTracker;
             DescriptorManager* m_DescriptorManager;
+
+            template<typename T>
+            struct ResourceHolder
+            {
+                size_t FrameMarker;
+                T Resource;
+            };
+
+            util::BufferArray<ResourceHolder<BufferHandle>> m_BuffersToFree;
+            util::BufferArray<ResourceHolder<TextureHandle>> m_TexturesToFree;
+
+            util::BufferArray<BufferHandle> m_RecentBufferToFree;
+            util::BufferArray<TextureHandle> m_RecentTexturesToFree;
         };
     }
 }

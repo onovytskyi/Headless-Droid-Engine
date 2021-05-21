@@ -50,6 +50,7 @@ namespace hd
             uint32_t descriptorIdx = m_SRV.Allocate();
 
             DescriptorSRV descriptor{};
+            descriptor.HeapIndex = descriptorIdx;
             descriptor.HandleCPU = m_SRV.ResolveCPU(descriptorIdx);
             descriptor.HandleGPU = m_SRV.ResolveGPU(descriptorIdx);
 
@@ -61,6 +62,7 @@ namespace hd
             uint32_t descriptorIdx = m_Sampler.Allocate();
 
             DescriptorSampler descriptor{};
+            descriptor.HeapIndex = descriptorIdx;
             descriptor.HandleCPU = m_Sampler.ResolveCPU(descriptorIdx);
             descriptor.HandleGPU = m_Sampler.ResolveGPU(descriptorIdx);
 

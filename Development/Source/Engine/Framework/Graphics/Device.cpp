@@ -14,7 +14,7 @@ namespace hd
 
         Device::~Device()
         {
-
+            RecycleResources(std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max());
         }
     }
 }

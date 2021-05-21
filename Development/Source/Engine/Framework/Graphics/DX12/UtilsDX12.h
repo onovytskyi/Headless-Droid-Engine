@@ -16,6 +16,8 @@ namespace hd
         D3D12_UAV_DIMENSION ResourceDimensionToUAV(D3D12_RESOURCE_DIMENSION dimension);
         D3D12_RTV_DIMENSION ResourceDimensionToRTV(D3D12_RESOURCE_DIMENSION dimension);
         D3D12_DSV_DIMENSION ResourceDimensionToDSV(D3D12_RESOURCE_DIMENSION dimension);
+
+        D3D12_RESOURCE_DIMENSION ConvertToResourceDimension(TextureDimenstion dimension);
     }
 }
 

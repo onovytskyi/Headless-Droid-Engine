@@ -8,6 +8,8 @@ namespace hd
 {
     namespace gfx
     {
+        class Device;
+
         class Buffer
         {
         public:
@@ -15,6 +17,8 @@ namespace hd
             Buffer(ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState);
 
             hdNoncopyable(Buffer)
+
+            void Free(Device& device);
 
             ID3D12Resource* GetNativeResource() const;
             ResourceStateTracker::StateTrackedData& GetStateTrackedData();

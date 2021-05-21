@@ -4,6 +4,8 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Framework/Graphics/Device.h"
+
 namespace hd
 {
     namespace gfx
@@ -18,6 +20,11 @@ namespace hd
         {
             m_Data.Resource = resource;
             m_Data.State = initialState;
+        }
+
+        void Buffer::Free(Device& device)
+        {
+            m_Data.Resource->Release();
         }
 
         ID3D12Resource* Buffer::GetNativeResource() const

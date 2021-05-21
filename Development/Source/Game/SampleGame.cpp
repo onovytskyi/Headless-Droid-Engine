@@ -29,7 +29,7 @@ SampleGame::SampleGame()
 
 SampleGame::~SampleGame()
 {
-
+    m_GfxQueue->Flush();
 }
 
 void SampleGame::Run()
@@ -119,9 +119,8 @@ void SampleGame::RenderFrame()
 {
     RecordFrame(m_GraphicCommands);
 
-     m_GfxQueue->Submit(m_GraphicCommands);
-     m_GraphicCommands.Clear();
-
+    m_GfxQueue->Submit(m_GraphicCommands);
+    m_GraphicCommands.Clear();
 
     m_GfxSwapchain->Flip();
 

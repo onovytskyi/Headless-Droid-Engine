@@ -98,6 +98,22 @@ namespace hd
 
             return D3D12_DSV_DIMENSION_UNKNOWN;
         }
+
+        D3D12_RESOURCE_DIMENSION ConvertToResourceDimension(TextureDimenstion dimension)
+        {
+            switch (dimension)
+            {
+            case hd::gfx::TextureDimenstion::Texture1D: return D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+            case hd::gfx::TextureDimenstion::Texture2D: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            case hd::gfx::TextureDimenstion::Texture3D: return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+            case hd::gfx::TextureDimenstion::TextureCube: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            default:
+                hdAssert(u8"Unknown texture resoure dimension");
+                break;
+            }
+
+            return D3D12_RESOURCE_DIMENSION_UNKNOWN;
+        }
     }
 }
 

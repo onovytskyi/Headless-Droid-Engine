@@ -15,11 +15,10 @@ namespace hd
     {
         class DevicePlatform;
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
         class CommandListManager
         {
         public:
-            CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope);
+            CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_COMMAND_LIST_TYPE type, size_t maxLists, size_t maxAllocators);
             ~CommandListManager();
 
             hdNoncopyable(CommandListManager)
@@ -32,6 +31,7 @@ namespace hd
             ID3D12CommandAllocator* GetCommandAllocator();
 
             DevicePlatform* m_OwnerDevice;
+            D3D12_COMMAND_LIST_TYPE m_Type;
 
             util::BufferArray<ID3D12GraphicsCommandList*> m_CommandLists;
             uint32_t m_CommandListsInUse;
@@ -46,7 +46,5 @@ namespace hd
         };
     }
 }
-
-#include "Engine/Framework/Graphics/DX12/CommandListManagerDX12.hpp"
 
 #endif

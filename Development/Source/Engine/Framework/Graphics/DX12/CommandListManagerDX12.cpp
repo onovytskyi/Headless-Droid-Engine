@@ -1,21 +1,25 @@
+#include "Engine/Config/Bootstrap.h"
+
+#include "Engine/Framework/Graphics/DX12/CommandListManagerDX12.h"
+
 #include "Engine/Debug/Assert.h"
+#include "Engine/Framework/Graphics/Device.h"
 
 namespace hd
 {
     namespace gfx
     {
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline CommandListManager<CommandListType, MaxLists, MaxAllocators>::CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope)
+        CommandListManager::CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_COMMAND_LIST_TYPE type, size_t maxLists, size_t maxAllocators)
             : m_OwnerDevice{ &device }
-            , m_CommandLists{ allocationScope, MaxLists }
+            , m_Type{ type }
+            , m_CommandLists{ allocationScope, maxLists }
             , m_CommandListsInUse{ 0 }
-            , m_CommandAllocators{ allocationScope, MaxAllocators }
+            , m_CommandAllocators{ allocationScope, maxAllocators }
         {
 
         }
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline CommandListManager<CommandListType, MaxLists, MaxAllocators>::~CommandListManager()
+        CommandListManager::~CommandListManager()
         {
             for (uint32_t commandListIdx = 0; commandListIdx < m_CommandLists.GetSize(); ++commandListIdx)
             {
@@ -34,15 +38,14 @@ namespace hd
             }
         }
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline ID3D12GraphicsCommandList* CommandListManager<CommandListType, MaxLists, MaxAllocators>::GetCommandList(ID3D12PipelineState* pipelineState)
+        ID3D12GraphicsCommandList* CommandListManager::GetCommandList(ID3D12PipelineState* pipelineState)
         {
             ID3D12CommandAllocator* commandAllocator = GetCommandAllocator();
 
             ID3D12GraphicsCommandList* result{};
             if (m_CommandListsInUse == m_CommandLists.GetSize())
             {
-                hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandList(0, CommandListType, commandAllocator, pipelineState, IID_PPV_ARGS(&result)));
+                hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandList(0, m_Type, commandAllocator, pipelineState, IID_PPV_ARGS(&result)));
                 m_CommandLists.Add(result);
             }
             else
@@ -55,8 +58,7 @@ namespace hd
             return result;
         }
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline void CommandListManager<CommandListType, MaxLists, MaxAllocators>::FreeCommandList(ID3D12GraphicsCommandList* commandList)
+        void CommandListManager::FreeCommandList(ID3D12GraphicsCommandList* commandList)
         {
             hdAssert(m_CommandListsInUse > 0, u8"Cannot free command list. No command lists are in use.");
 
@@ -78,8 +80,7 @@ namespace hd
             hdAssert(false, u8"Cannot free comand list. No such entry exists in this command list manager.");
         }
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline void CommandListManager<CommandListType, MaxLists, MaxAllocators>::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
+        void CommandListManager::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
         {
             m_CommandListsInUse = 0;
 
@@ -108,8 +109,7 @@ namespace hd
             }
         }
 
-        template<D3D12_COMMAND_LIST_TYPE CommandListType, size_t MaxLists, size_t MaxAllocators>
-        inline ID3D12CommandAllocator* CommandListManager<CommandListType, MaxLists, MaxAllocators>::GetCommandAllocator()
+        ID3D12CommandAllocator* CommandListManager::GetCommandAllocator()
         {
             std::thread::id currentThread = std::this_thread::get_id();
 
@@ -136,7 +136,7 @@ namespace hd
             }
 
             CommandAllocatorHolder holder{};
-            hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandAllocator(CommandListType, IID_PPV_ARGS(&holder.Allocator)));
+            hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandAllocator(m_Type, IID_PPV_ARGS(&holder.Allocator)));
             holder.Thread = currentThread;
 
             m_CommandAllocators.Add(holder);

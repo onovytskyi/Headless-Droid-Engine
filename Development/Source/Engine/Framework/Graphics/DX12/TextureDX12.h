@@ -19,7 +19,7 @@ namespace hd
 
             hdNoncopyable(Texture)
 
-            void FreeDescriptors(Device& device);
+            void Free(Device& device);
 
             ID3D12Resource* GetNativeResource() const;
             ResourceStateTracker::StateTrackedData& GetStateTrackedData();
