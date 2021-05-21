@@ -7,6 +7,7 @@
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/System/SystemCommands.h"
 #include "Engine/Framework/System/SystemWindow.h"
+#include "Engine/Framework/System/Timer.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
 
 class SampleGame
@@ -26,6 +27,8 @@ private:
     bool m_IsRunning;
 
     hd::mem::AllocationScope m_PersistentScope;
+
+    hd::sys::Timer* m_FrameTimer;
 
     hd::sys::SystemWindow* m_MainWindow;
     hd::util::CommandBuffer m_SystemCommands;

@@ -27,10 +27,10 @@ namespace hd
             , m_CopyCommandListManager{}
             , m_ResourceStateTracker{}
             , m_DescriptorManager{}
-            , m_BuffersToFree{ allocationScope, 64 }
-            , m_TexturesToFree{ allocationScope, 64 }
-            , m_RecentBufferToFree{ allocationScope, 32 }
-            , m_RecentTexturesToFree{ allocationScope, 32 }
+            , m_BuffersToFree{ allocationScope, cfg::MaxBuffersToFreeInQueue() }
+            , m_TexturesToFree{ allocationScope, cfg::MaxTexturesToFreeInQueue() }
+            , m_RecentBufferToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
+            , m_RecentTexturesToFree{ allocationScope, cfg::MaxTexturesToFreePerFrame() }
         {
             m_Adapter = backend.GetBestAdapter();
 

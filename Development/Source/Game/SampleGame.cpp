@@ -20,6 +20,7 @@ SampleGame::SampleGame()
     , m_GfxSwapchain{}
     , m_GraphicCommands{ hd::mem::MB(64) }
 {
+    m_FrameTimer = m_PersistentScope.AllocateObject<hd::sys::Timer>();
     m_MainWindow = m_PersistentScope.AllocateObject<hd::sys::SystemWindow>(u8"Droid Engine : Sample Game", 1280, 720);
     m_GfxBackend = m_PersistentScope.AllocateObject<hd::gfx::Backend>();
     m_GfxDevice = m_PersistentScope.AllocateObject<hd::gfx::Device>(*m_GfxBackend, m_PersistentScope);
@@ -30,6 +31,9 @@ SampleGame::SampleGame()
 SampleGame::~SampleGame()
 {
     m_GfxQueue->Flush();
+
+    m_FrameTimer->Tick();
+    hdLogInfo(u8"Engine shutdown took % seconds.", m_FrameTimer->GetDeltaSeconds());
 }
 
 void SampleGame::Run()
@@ -38,9 +42,14 @@ void SampleGame::Run()
 
     m_MainWindow->SetVisible(true);
 
+    m_FrameTimer->Tick();
+    hdLogInfo(u8"Engine initialization took % seconds.", m_FrameTimer->GetDeltaSeconds());
+
     m_IsRunning = true;
     while (m_IsRunning)
     {
+        m_FrameTimer->Tick();
+
         hd::mem::AllocationScope frameScope(hd::mem::GetFrameAllocator());
 
         m_MainWindow->ProcessSystemEvents(m_SystemCommands);
@@ -53,6 +62,9 @@ void SampleGame::Run()
 void SampleGame::RequestExit()
 {
     m_IsRunning = false;
+
+    // Update timer here so we can measure engine shutdown time
+    m_FrameTimer->Tick();
 }
 
 void SampleGame::ProcessSystemCommands()

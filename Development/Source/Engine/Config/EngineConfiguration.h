@@ -20,6 +20,10 @@ namespace hd
         inline constexpr uint32_t MaxComputeCommandAllocators() { return 24; }
         inline constexpr uint32_t MaxCopyCommandLists() { return 16; }
         inline constexpr uint32_t MaxCopyCommandAllocators() { return 24; }
+        inline constexpr uint32_t MaxBuffersToFreePerFrame() { return 32; }
+        inline constexpr uint32_t MaxBuffersToFreeInQueue() { return 64; }
+        inline constexpr uint32_t MaxTexturesToFreePerFrame() { return 32; }
+        inline constexpr uint32_t MaxTexturesToFreeInQueue() { return 64; }
 #endif
     }
 }
