@@ -12,10 +12,10 @@ namespace hd
     namespace gfx
     {
         DescriptorManager::DescriptorManager(DevicePlatform& device, mem::AllocationScope& allocationScope)
-            : m_RTV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, cfg::MaxDescriptorsRTV(), 128 }
-            , m_DSV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, cfg::MaxDescriptorsDSV(), 128 }
-            , m_SRV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cfg::MaxDescriptorsSRV(), 128 }
-            , m_Sampler{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, cfg::MaxDescriptorsSampler(), 32 }
+            : m_RTV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, cfg::MaxDescriptorsRTV() }
+            , m_DSV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, cfg::MaxDescriptorsDSV() }
+            , m_SRV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cfg::MaxDescriptorsSRV() }
+            , m_Sampler{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, cfg::MaxDescriptorsSampler() }
         {
 
         }
@@ -89,9 +89,8 @@ namespace hd
             m_Sampler.Free(descriptor.HandleCPU);
         }
 
-        DescriptorManager::DescriptorAllocator::DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors, 
-            size_t maxRanges)
-            : m_Allocator{ allocationScope, maxDescriptors, maxRanges }
+        DescriptorManager::DescriptorAllocator::DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors)
+            : m_Allocator{ allocationScope, maxDescriptors }
             , m_HandleIncrementSize{}
         {
             m_HandleIncrementSize = device.GetNativeDevice()->GetDescriptorHandleIncrementSize(type);
@@ -106,7 +105,7 @@ namespace hd
 
         uint32_t DescriptorManager::DescriptorAllocator::Allocate()
         {
-            return uint32_t(m_Allocator.Allocate(1));
+            return uint32_t(m_Allocator.Allocate(1, 1));
         }
 
         void DescriptorManager::DescriptorAllocator::Free(D3D12_CPU_DESCRIPTOR_HANDLE handleCPU)

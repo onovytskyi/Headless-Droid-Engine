@@ -24,6 +24,9 @@ namespace hd
         inline constexpr uint32_t MaxBuffersToFreeInQueue() { return 64; }
         inline constexpr uint32_t MaxTexturesToFreePerFrame() { return 32; }
         inline constexpr uint32_t MaxTexturesToFreeInQueue() { return 64; }
+        inline constexpr size_t GPUHeapSize() { return 64 * 1024 * 1024; }
+        inline constexpr uint32_t MaxGPUHeaps() { return 128; }
+        inline constexpr uint32_t KeepHeapsAliveForFrames() { return 10; }
 #endif
     }
 }

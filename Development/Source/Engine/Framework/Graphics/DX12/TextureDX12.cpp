@@ -12,19 +12,68 @@ namespace hd
 {
     namespace gfx
     {
-        Texture::Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags)
+        Texture::Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
             : m_Data{}
+            , m_HeapAllocation{}
             , m_Format{ format }
+            , m_RTV{}
+            , m_DSV{}
+            , m_SRV{}
+            , m_UAV{}
+            , m_SubresourceSRV{}
+            , m_SubresourceUAV{}
         {
             m_Data.Resource = resource;
             m_Data.State = initialState;
 
-            CreateViews(device, format, flags, resource->GetDesc().Dimension, false);
+            CreateViews(device, format, flags, dimension);
+        }
+
+        Texture::Texture(Device& device, HeapAllocator::Allocation const& heapAllocation, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
+            : m_Data{}
+            , m_HeapAllocation{ heapAllocation }
+            , m_Format{ format }
+            , m_RTV{}
+            , m_DSV{}
+            , m_SRV{}
+            , m_UAV{}
+            , m_SubresourceSRV{}
+            , m_SubresourceUAV{}
+        {
+            hdAssert(heapAllocation.ResourceData->Resource, u8"No resource bound to heap allocation.");
+
+            CreateViews(device, format, flags, dimension);
+        }
+
+        Texture::Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, 
+            TextureDimenstion dimension)
+            : m_Data{}
+            , m_HeapAllocation{ heapAllocation }
+            , m_Format{ format }
+            , m_RTV{}
+            , m_DSV{}
+            , m_SRV{}
+            , m_UAV{}
+            , m_SubresourceSRV{}
+            , m_SubresourceUAV{}
+        {
+            m_Data.Resource = resource;
+            m_Data.State = initialState;
+
+            CreateViews(device, format, flags, dimension);
         }
 
         void Texture::Free(Device& device)
         {
-            m_Data.Resource->Release();
+            if (m_Data.Resource)
+            {
+                m_Data.Resource->Release();
+            }
+
+            if (m_HeapAllocation.IsValid())
+            {
+                device.GetHeapAllocator().Free(m_HeapAllocation);
+            }
 
             DescriptorManager& descriptorManager = device.GetDescriptorManager();
 
@@ -181,7 +230,7 @@ namespace hd
             return m_SubresourceUAV[subresourceIdx];
         }
 
-        void Texture::CreateViews(Device& device, GraphicFormat format, uint32_t flags, D3D12_RESOURCE_DIMENSION dimension, bool isCube)
+        void Texture::CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
         {
             DescriptorManager& descriptorManager = device.GetDescriptorManager();
 
@@ -190,7 +239,7 @@ namespace hd
                 m_RTV = descriptorManager.AllocateRTV();
 
                 D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-                rtvDesc.ViewDimension = ResourceDimensionToRTV(dimension);
+                rtvDesc.ViewDimension = ResourceDimensionToRTV(ConvertToResourceDimension(dimension));
                 rtvDesc.Format = ConvertToWriteableFormat(m_Format);
                 switch (rtvDesc.ViewDimension)
                 {
@@ -218,7 +267,7 @@ namespace hd
                 m_DSV = descriptorManager.AllocateDSV();
 
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-                dsvDesc.ViewDimension = ResourceDimensionToDSV(dimension);
+                dsvDesc.ViewDimension = ResourceDimensionToDSV(ConvertToResourceDimension(dimension));
                 dsvDesc.Format = ConvertToWriteableFormat(m_Format);
                 dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
                 switch (dsvDesc.ViewDimension)
@@ -241,7 +290,7 @@ namespace hd
                 m_SRV = descriptorManager.AllocateSRV();
 
                 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-                srvDesc.ViewDimension = ResourceDimensionToSRV(dimension, isCube);
+                srvDesc.ViewDimension = ResourceDimensionToSRV(ConvertToResourceDimension(dimension), dimension == TextureDimenstion::TextureCube);
                 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
                 srvDesc.Format = ConvertToReadableFormat(m_Format);
                 switch (srvDesc.ViewDimension)
@@ -276,12 +325,12 @@ namespace hd
 
             if (flags & uint32_t(TextureFlags::UnorderedAccess))
             {
-                hdAssert(!isCube, u8"Writing to cubemaps is not supported.");
+                hdAssert(dimension != TextureDimenstion::TextureCube, u8"Writing to cubemaps is not supported.");
 
                 m_UAV = descriptorManager.AllocateSRV();
 
                 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
-                uavDesc.ViewDimension = ResourceDimensionToUAV(dimension);
+                uavDesc.ViewDimension = ResourceDimensionToUAV(ConvertToResourceDimension(dimension));
                 uavDesc.Format = ConvertToWriteableFormat(m_Format);
                 switch (uavDesc.ViewDimension)
                 {

@@ -4,6 +4,7 @@
 
 #include "Engine/Framework/Graphics/DX12/CommandListManagerDX12.h"
 #include "Engine/Framework/Graphics/DX12/DescriptorManagerDX12.h"
+#include "Engine/Framework/Graphics/DX12/HeapAllocatorDX12.h"
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Utils/BufferArray.h"
@@ -33,12 +34,13 @@ namespace hd
 
             ID3D12Device* GetNativeDevice() const;
 
-            TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags);
+            TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
 
             void PresentOnQueue(Queue& queue, TextureHandle framebuffer);
             void SubmitToQueue(Queue& queue, util::CommandBuffer& commandBuffer);
 
             DescriptorManager& GetDescriptorManager();
+            HeapAllocator& GetHeapAllocator();
 
         protected:
             Backend* m_Backend;
@@ -54,6 +56,8 @@ namespace hd
 
             ResourceStateTracker* m_ResourceStateTracker;
             DescriptorManager* m_DescriptorManager;
+
+            HeapAllocator* m_HeapAllocator;
 
             template<typename T>
             struct ResourceHolder

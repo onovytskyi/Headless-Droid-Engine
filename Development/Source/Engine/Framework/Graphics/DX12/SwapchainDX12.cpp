@@ -89,7 +89,8 @@ namespace hd
             {
                 ID3D12Resource* resource{};
                 hdEnsure(m_SwapChain->GetBuffer(framebufferIdx, IID_PPV_ARGS(&resource)));
-                m_FramebufferTextures[framebufferIdx] = m_OwnerDevice->RegisterTexture(resource, D3D12_RESOURCE_STATE_PRESENT, m_Format, uint32_t(TextureFlags::RenderTarget));
+                m_FramebufferTextures[framebufferIdx] = m_OwnerDevice->RegisterTexture(resource, D3D12_RESOURCE_STATE_PRESENT, m_Format, uint32_t(TextureFlags::RenderTarget), 
+                    TextureDimenstion::Texture2D);
             }
         }
 

@@ -2,12 +2,14 @@
 
 #include "Engine/Framework/Utils/BestFitAllocatorHelper.h"
 
+#include "Engine/Foundation/Memory/Utils.h"
+
 namespace hd
 {
     namespace util
     {
 
-        BestFitAllocatorHelper::BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size, size_t maxRanges)
+        BestFitAllocatorHelper::BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size)
             : m_RangesAllocator{ allocationScope }
             , m_FirstFreeRange{}
             , m_Size{ size }
@@ -16,7 +18,7 @@ namespace hd
             *m_FirstFreeRange = { nullptr, nullptr,  0, size };
         }
 
-        size_t BestFitAllocatorHelper::Allocate(size_t size)
+        size_t BestFitAllocatorHelper::Allocate(size_t size, size_t align)
         {
             if (m_FirstFreeRange)
             {
@@ -26,13 +28,15 @@ namespace hd
                 for (Range* range = m_FirstFreeRange; range; range = range->m_NextRange)
                 {
                       // exact fit choose this and out
-                    if (range->Size == size)
+                    if (mem::IsAligned(range->Offset, align) && range->Size == size)
                     {
                         bestFitRange = range;
                         break;
                     }
 
-                    if (range->Size > size)
+                    size_t alignedOffset = mem::AlignAbove(range->Offset, align);
+                    size_t adjustedSize = size + (alignedOffset - range->Offset);
+                    if (range->Size >= adjustedSize)
                     {
                         size_t diff = range->Size - size;
                         if (diff < bestFitRangeDiff)
@@ -45,10 +49,35 @@ namespace hd
 
                 if (bestFitRange)
                 {
-                    size_t result = bestFitRange->Offset;
+                    size_t result = mem::AlignAbove(bestFitRange->Offset, align);
 
-                    bestFitRange->Offset += size;
-                    bestFitRange->Size -= size;
+                    // Check if we can allocate from the very beginning of the range
+                    if (result == bestFitRange->Offset)
+                    {
+                        bestFitRange->Offset += size;
+                        bestFitRange->Size -= size;
+                    }
+                    // Check if allocation spans to the very end of the range
+                    else if ((bestFitRange->Offset + bestFitRange->Size) == (result + size))
+                    {
+                        bestFitRange->Size -= size;
+                    }
+                    // Otherwise we should split the range in two
+                    else
+                    {
+                        Range* secondRange = m_RangesAllocator.Allocate();
+                        secondRange->Offset = result + size;
+                        secondRange->Size = (bestFitRange->Offset + bestFitRange->Size) - secondRange->Offset;
+                        secondRange->m_PrevRange = bestFitRange;
+                        secondRange->m_NextRange = bestFitRange->m_NextRange;
+                        if (secondRange->m_NextRange)
+                        {
+                            secondRange->m_NextRange->m_PrevRange = secondRange;
+                        }
+
+                        bestFitRange->Size = result - bestFitRange->Offset;
+                        bestFitRange->m_NextRange = secondRange;
+                    }
 
                     // Remove range if it is fully occupied
                     if (bestFitRange->Size == 0)
@@ -170,6 +199,11 @@ namespace hd
         bool BestFitAllocatorHelper::Empty()
         {
             return m_FirstFreeRange && m_FirstFreeRange->Offset == 0 && m_FirstFreeRange->Size == m_Size;
+        }
+
+        size_t BestFitAllocatorHelper::GetSize()
+        {
+            return m_Size;
         }
     }
 }

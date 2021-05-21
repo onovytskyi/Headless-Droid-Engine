@@ -16,12 +16,14 @@ namespace hd
         public:
             static const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
-            BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size, size_t maxRanges);
+            BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size);
 
-            size_t Allocate(size_t count);
+            size_t Allocate(size_t count, size_t align);
             void Deallocate(size_t offset, size_t count);
 
             bool Empty();
+
+            size_t GetSize();
 
         private:
             struct Range

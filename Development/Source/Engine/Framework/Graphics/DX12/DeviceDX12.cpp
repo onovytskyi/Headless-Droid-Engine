@@ -27,6 +27,7 @@ namespace hd
             , m_CopyCommandListManager{}
             , m_ResourceStateTracker{}
             , m_DescriptorManager{}
+            , m_HeapAllocator{}
             , m_BuffersToFree{ allocationScope, cfg::MaxBuffersToFreeInQueue() }
             , m_TexturesToFree{ allocationScope, cfg::MaxTexturesToFreeInQueue() }
             , m_RecentBufferToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
@@ -69,6 +70,7 @@ namespace hd
                 cfg::MaxCopyCommandAllocators());
             m_ResourceStateTracker = allocationScope.AllocateObject<ResourceStateTracker>(allocationScope);
             m_DescriptorManager = allocationScope.AllocateObject<DescriptorManager>(*this, allocationScope);
+            m_HeapAllocator = allocationScope.AllocateObject<HeapAllocator>(*static_cast<Device*>(this), allocationScope, cfg::GPUHeapSize(), cfg::MaxGPUHeaps(), cfg::KeepHeapsAliveForFrames());
         }
 
         DevicePlatform::~DevicePlatform()
@@ -89,12 +91,12 @@ namespace hd
             return m_Device.Get();
         }
 
-        TextureHandle DevicePlatform::RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags)
+        TextureHandle DevicePlatform::RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
         {
             Texture* texture{};
             TextureHandle result = TextureHandle(m_Backend->GetTextureAllocator().Allocate(&texture));
 
-            new(texture)Texture(*static_cast<Device*>(this), resource, state, format, flags);
+            new(texture)Texture(*static_cast<Device*>(this), resource, state, format, flags, dimension);
 
             return result;
         }
@@ -162,6 +164,11 @@ namespace hd
             return *m_DescriptorManager;
         }
 
+        HeapAllocator& DevicePlatform::GetHeapAllocator()
+        {
+            return *m_HeapAllocator;
+        }
+
         TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,
             float clearValue[4])
         {
@@ -214,7 +221,6 @@ namespace hd
                 }
             }
 
-
             D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
             if (flags & (uint32_t)TextureFlags::RenderTarget)
             {
@@ -225,14 +231,24 @@ namespace hd
                 initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
             }
 
-            D3D12_HEAP_PROPERTIES heapPriorities{};
-            heapPriorities.Type = D3D12_HEAP_TYPE_DEFAULT;
+            D3D12_HEAP_FLAGS heapFlags = isRenderTarget ? D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES : D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES;
 
-            //#TODO #Optimization use placed resources with custom memory management instead of committed
+            D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = m_Device->GetResourceAllocationInfo(0, 1, &textureDesc);
+
+            HeapAllocator::Allocation allocation = m_HeapAllocator->Allocate(allocationInfo.SizeInBytes, allocationInfo.Alignment, D3D12_HEAP_TYPE_DEFAULT, heapFlags, 
+                HeapAllocator::Usage::Transient);
+
+            hdEnsure(allocation.IsValid(), u8"Cannot allocate GPU memory for resource.");
+
             ID3D12Resource* textureResource{};
-            m_Device->CreateCommittedResource(&heapPriorities, D3D12_HEAP_FLAG_NONE, &textureDesc, initialState, isRenderTarget ? &textureClearValue : nullptr, IID_PPV_ARGS(&textureResource));
+            m_Device->CreatePlacedResource(allocation.GPUHeap, allocation.Offset, &textureDesc, initialState, isRenderTarget ? &textureClearValue : nullptr, IID_PPV_ARGS(&textureResource));
 
-            return RegisterTexture(textureResource, initialState, format, flags);
+            Texture* texture{};
+            TextureHandle result = TextureHandle(m_Backend->GetTextureAllocator().Allocate(&texture));
+
+            new(texture)Texture(*static_cast<Device*>(this), textureResource, allocation, initialState, format, flags, dimension);
+
+            return result;
         }
 
         void Device::DestroyTexture(TextureHandle handle)
@@ -254,6 +270,7 @@ namespace hd
             m_GraphicsCommandListManager->RecycleResources(currentMarker, completedMarker);
             m_ComputeCommandListManager->RecycleResources(currentMarker, completedMarker);
             m_CopyCommandListManager->RecycleResources(currentMarker, completedMarker);
+            m_HeapAllocator->RecycleResources(currentMarker, completedMarker);
 
             for (BufferHandle& buffer : m_RecentBufferToFree)
             {

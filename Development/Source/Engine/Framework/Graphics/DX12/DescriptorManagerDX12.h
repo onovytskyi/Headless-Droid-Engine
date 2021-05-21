@@ -67,7 +67,7 @@ namespace hd
             class DescriptorAllocator
             {
             public:
-                DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors, size_t maxRanges);
+                DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors);
 
                 uint32_t Allocate();
                 void Free(D3D12_CPU_DESCRIPTOR_HANDLE handleCPU);

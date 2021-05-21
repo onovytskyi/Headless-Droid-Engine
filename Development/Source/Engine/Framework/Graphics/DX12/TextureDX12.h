@@ -3,6 +3,7 @@
 #if defined(HD_GRAPHICS_API_DX12)
 
 #include "Engine/Framework/Graphics/DX12/DescriptorManagerDX12.h"
+#include "Engine/Framework/Graphics/DX12/HeapAllocatorDX12.h"
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 
@@ -15,7 +16,9 @@ namespace hd
         class Texture
         {
         public:
-            Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags);
+            Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            Texture(Device& device, HeapAllocator::Allocation const& heapAllocation, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
 
             hdNoncopyable(Texture)
 
@@ -33,9 +36,10 @@ namespace hd
             DescriptorSRV GetOrCreateSubresoruceUAV(Device& device, uint32_t subresourceIdx);
 
         private:
-            void CreateViews(Device& device, GraphicFormat format, uint32_t flags, D3D12_RESOURCE_DIMENSION dimension, bool isCube);
+            void CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
 
             ResourceStateTracker::StateTrackedData m_Data;
+            HeapAllocator::Allocation m_HeapAllocation;
             GraphicFormat m_Format;
             DescriptorRTV m_RTV;
             DescriptorDSV m_DSV;
