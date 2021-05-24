@@ -16,33 +16,43 @@ namespace hd
             : m_Data{}
             , m_HeapAllocation{}
             , m_Format{ format }
+            , m_Dimension{ dimension }
             , m_RTV{}
             , m_DSV{}
             , m_SRV{}
             , m_UAV{}
             , m_SubresourceSRV{}
             , m_SubresourceUAV{}
+            , m_SubresourceCount{}
+            , m_Width{}
+            , m_Height{}
         {
             m_Data.Resource = resource;
             m_Data.State = initialState;
 
             CreateViews(device, format, flags, dimension);
+            UpdateDataFromNativeDescription();
         }
 
         Texture::Texture(Device& device, HeapAllocator::Allocation const& heapAllocation, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
             : m_Data{}
             , m_HeapAllocation{ heapAllocation }
             , m_Format{ format }
+            , m_Dimension{ dimension }
             , m_RTV{}
             , m_DSV{}
             , m_SRV{}
             , m_UAV{}
             , m_SubresourceSRV{}
             , m_SubresourceUAV{}
+            , m_SubresourceCount{}
+            , m_Width{}
+            , m_Height{}
         {
             hdAssert(heapAllocation.ResourceData->Resource, u8"No resource bound to heap allocation.");
 
             CreateViews(device, format, flags, dimension);
+            UpdateDataFromNativeDescription();
         }
 
         Texture::Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, 
@@ -50,17 +60,22 @@ namespace hd
             : m_Data{}
             , m_HeapAllocation{ heapAllocation }
             , m_Format{ format }
+            , m_Dimension{ dimension }
             , m_RTV{}
             , m_DSV{}
             , m_SRV{}
             , m_UAV{}
             , m_SubresourceSRV{}
             , m_SubresourceUAV{}
+            , m_SubresourceCount{}
+            , m_Width{}
+            , m_Height{}
         {
             m_Data.Resource = resource;
             m_Data.State = initialState;
 
             CreateViews(device, format, flags, dimension);
+            UpdateDataFromNativeDescription();
         }
 
         void Texture::Free(Device& device)
@@ -145,7 +160,7 @@ namespace hd
         {
             hdAssert(m_SRV, u8"Cannot create subresource SRV for non SRV capable texture.");
 
-            if (subresourceIdx == ResourceStateTracker::ALL_SUBRESOURCES)
+            if (subresourceIdx == ALL_SUBRESOURCES)
                 return m_SRV;
 
             hdAssert(subresourceIdx < ResourceStateTracker::StateTrackedData::MAX_SUBRESOURCES, u8"Texture only support % subresources. Cannot get subresource with index %.", 
@@ -156,7 +171,7 @@ namespace hd
                 m_SubresourceSRV[subresourceIdx] = device.GetDescriptorManager().AllocateSRV();
 
                 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-                srvDesc.ViewDimension = ResourceDimensionToSRV(m_Data.Resource->GetDesc().Dimension, false);
+                srvDesc.ViewDimension = ResourceDimensionToSRV(ConvertToResourceDimension(m_Dimension), m_Dimension == TextureDimenstion::TextureCube);
                 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
                 srvDesc.Format = ConvertToReadableFormat(m_Format);
                 switch (srvDesc.ViewDimension)
@@ -192,7 +207,7 @@ namespace hd
         {
             hdAssert(m_UAV, u8"Cannot create subresource UAV for non UAV capable texture.");
 
-            if (subresourceIdx == ResourceStateTracker::ALL_SUBRESOURCES)
+            if (subresourceIdx == ALL_SUBRESOURCES)
                 return m_UAV;
 
             hdAssert(subresourceIdx < ResourceStateTracker::StateTrackedData::MAX_SUBRESOURCES, u8"Texture only support % subresources. Cannot get subresource with index %.", 
@@ -203,7 +218,7 @@ namespace hd
                 m_SubresourceUAV[subresourceIdx] = device.GetDescriptorManager().AllocateSRV();
 
                 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
-                uavDesc.ViewDimension = ResourceDimensionToUAV(m_Data.Resource->GetDesc().Dimension);
+                uavDesc.ViewDimension = ResourceDimensionToUAV(ConvertToResourceDimension(m_Dimension));
                 uavDesc.Format = ConvertToWriteableFormat(m_Format);
                 switch (uavDesc.ViewDimension)
                 {
@@ -228,6 +243,26 @@ namespace hd
             }
 
             return m_SubresourceUAV[subresourceIdx];
+        }
+
+        uint64_t Texture::GetWidth() const
+        {
+            return m_Width;
+        }
+
+        uint32_t Texture::GetHeight() const
+        {
+            return m_Height;
+        }
+
+        uint32_t Texture::GetSubresourceCount() const
+        {
+            return m_SubresourceCount;
+        }
+
+        GraphicFormat Texture::GetFormat() const
+        {
+            return m_Format;
         }
 
         void Texture::CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
@@ -352,6 +387,15 @@ namespace hd
                 }
                 device.GetNativeDevice()->CreateUnorderedAccessView(m_Data.Resource, nullptr, &uavDesc, m_UAV.HandleCPU);
             }
+        }
+
+        void Texture::UpdateDataFromNativeDescription()
+        {
+            D3D12_RESOURCE_DESC textureDesc = GetNativeResource()->GetDesc();
+
+            m_SubresourceCount = (m_Dimension == TextureDimenstion::Texture3D || m_Dimension == TextureDimenstion::TextureCube ? textureDesc.DepthOrArraySize : 1) * textureDesc.MipLevels;
+            m_Width = textureDesc.Width;
+            m_Height = textureDesc.Height;
         }
     }
 }

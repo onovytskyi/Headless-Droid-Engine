@@ -20,6 +20,9 @@ namespace hd
             template<typename T>
             T* AllocatePOD();
 
+            template<typename T>
+            T* AllocatePODArray(size_t size);
+
             void* AllocateMemory(size_t size, size_t align);
 
         private:

@@ -18,14 +18,31 @@ namespace hd
             return commandBuffer.Write<Command>();
         }
 
-        ClearRenderTargetCommandCommand& ClearRenderTargetCommandCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        ClearRenderTargetCommand& ClearRenderTargetCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
-            return WriteGraphicCommand<ClearRenderTargetCommandCommand>(commandBuffer, GraphicCommandType::ClearRenderTarget);
+            return WriteGraphicCommand<ClearRenderTargetCommand>(commandBuffer, GraphicCommandType::ClearRenderTarget);
         }
 
-        ClearRenderTargetCommandCommand& ClearRenderTargetCommandCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        ClearRenderTargetCommand& ClearRenderTargetCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
         {
-            return commandBuffer.Read<ClearRenderTargetCommandCommand>();
+            return commandBuffer.Read<ClearRenderTargetCommand>();
+        }
+
+        UpdateTextureCommand& UpdateTextureCommand::WriteTo(util::CommandBuffer& commandBuffer, size_t dataSize)
+        {
+            UpdateTextureCommand& command = WriteGraphicCommand<UpdateTextureCommand>(commandBuffer, GraphicCommandType::UpdateTexture);
+            command.Data = &commandBuffer.Write<std::byte>(dataSize);
+            command.Size = dataSize;
+
+            return command;
+        }
+
+        UpdateTextureCommand& UpdateTextureCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            UpdateTextureCommand& command = commandBuffer.Read<UpdateTextureCommand>();
+            commandBuffer.Read<std::byte>(command.Size);
+
+            return command;
         }
     }
 }

@@ -14,16 +14,29 @@ namespace hd
     {
         enum class GraphicCommandType : uint32_t
         {
-            ClearRenderTarget
+            ClearRenderTarget,
+            UpdateTexture
         };
 
-        struct ClearRenderTargetCommandCommand
+        struct ClearRenderTargetCommand
         {
-            static ClearRenderTargetCommandCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static ClearRenderTargetCommandCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+            static ClearRenderTargetCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static ClearRenderTargetCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
 
-            TextureHandle Tagert;
+            TextureHandle Target;
             std::array<float, 4> Color;
+        };
+
+        struct UpdateTextureCommand
+        {
+            static UpdateTextureCommand& WriteTo(util::CommandBuffer& commandBuffer, size_t dataSize);
+            static UpdateTextureCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            TextureHandle Target;
+            uint32_t FirstSubresource;
+            uint32_t NumSubresources;
+            std::byte* Data;
+            size_t Size;
         };
     }
 }

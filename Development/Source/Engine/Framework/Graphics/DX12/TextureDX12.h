@@ -35,12 +35,22 @@ namespace hd
             DescriptorSRV GetOrCreateSubresoruceSRV(Device& device, uint32_t subresourceIdx);
             DescriptorSRV GetOrCreateSubresoruceUAV(Device& device, uint32_t subresourceIdx);
 
+            uint64_t GetWidth() const;
+            uint32_t GetHeight() const;
+
+            uint32_t GetSubresourceCount() const;
+            GraphicFormat GetFormat() const;
+
         private:
             void CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            void UpdateDataFromNativeDescription();
 
             ResourceStateTracker::StateTrackedData m_Data;
             HeapAllocator::Allocation m_HeapAllocation;
+
             GraphicFormat m_Format;
+            TextureDimenstion m_Dimension;
+
             DescriptorRTV m_RTV;
             DescriptorDSV m_DSV;
             DescriptorSRV m_SRV;
@@ -48,6 +58,10 @@ namespace hd
 
             DescriptorSRV m_SubresourceSRV[ResourceStateTracker::StateTrackedData::MAX_SUBRESOURCES];
             DescriptorSRV m_SubresourceUAV[ResourceStateTracker::StateTrackedData::MAX_SUBRESOURCES];
+
+            uint32_t m_SubresourceCount;
+            uint64_t m_Width;
+            uint32_t m_Height;
         };
     }
 }

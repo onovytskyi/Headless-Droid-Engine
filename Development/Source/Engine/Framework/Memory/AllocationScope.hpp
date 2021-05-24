@@ -25,9 +25,24 @@ namespace hd
         inline T* AllocationScope::AllocatePOD()
         {
             void* allocation = m_Allocator.Allocate(sizeof(T), alignof(T));
+            hdAssert(allocation != nullptr, u8"Cannot allocate memory. Allocator is full.");
+
             T* result = new(allocation)T;
 
-            hdAssert(result != nullptr, u8"Cannot allocate memory. Allocator is full.");
+            return result;
+        }
+
+        template<typename T>
+        inline T* AllocationScope::AllocatePODArray(size_t size)
+        {
+            void* allocation = reinterpret_cast<T*>(m_Allocator.Allocate(sizeof(T) * size, alignof(T)));
+            hdAssert(allocation != nullptr, u8"Cannot allocate memory. Allocator is full.");
+
+            T* result = reinterpret_cast<T*>(allocation);
+            for (size_t podIdx = 0; podIdx < size; ++podIdx)
+            {
+                new(result + podIdx)T;
+            }
 
             return result;
         }

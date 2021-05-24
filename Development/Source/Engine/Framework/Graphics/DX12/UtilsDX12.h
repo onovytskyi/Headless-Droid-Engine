@@ -12,6 +12,10 @@ namespace hd
         DXGI_FORMAT ConvertToWriteableFormat(GraphicFormat format);
         DXGI_FORMAT ConvertToReadableFormat(GraphicFormat format);
 
+        bool IsBlockCompressed(GraphicFormat format);
+        size_t GetBlockSize(GraphicFormat format);
+        size_t BytesPerElement(GraphicFormat format);
+
         D3D12_SRV_DIMENSION ResourceDimensionToSRV(D3D12_RESOURCE_DIMENSION dimension, bool isCube);
         D3D12_UAV_DIMENSION ResourceDimensionToUAV(D3D12_RESOURCE_DIMENSION dimension);
         D3D12_RTV_DIMENSION ResourceDimensionToRTV(D3D12_RESOURCE_DIMENSION dimension);

@@ -12,6 +12,8 @@ namespace hd
         struct TextureTag {};
         using TextureHandle = util::Handle<TextureTag, uint64_t, std::numeric_limits<uint64_t>::max()>;
 
+        static const uint32_t ALL_SUBRESOURCES = std::numeric_limits<uint32_t>::max();
+
         enum class QueueType : uint32_t
         {
             Graphics,
@@ -21,6 +23,7 @@ namespace hd
 
         enum class GraphicFormat : uint32_t
         {
+            RGBA8UNorm,
             RGBA8UNorm_Srgb
         };
 

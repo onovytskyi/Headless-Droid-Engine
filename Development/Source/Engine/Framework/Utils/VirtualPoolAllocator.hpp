@@ -101,8 +101,8 @@ namespace hd
                 return false;
             }
 
-            Item* itemsArray = reinterpret_cast<Item*>(m_Memory.GetData());
-            Item* item = itemsArray + itemIdx;
+            Item const* itemsArray = reinterpret_cast<Item const*>(m_Memory.GetData());
+            Item const* item = itemsArray + itemIdx;
 
             if (item->Version != version)
             {

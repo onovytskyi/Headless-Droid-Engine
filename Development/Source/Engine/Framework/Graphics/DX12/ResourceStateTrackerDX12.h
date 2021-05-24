@@ -16,8 +16,6 @@ namespace hd
         class ResourceStateTracker
         {
         public:
-            static const uint32_t ALL_SUBRESOURCES = std::numeric_limits<uint32_t>::max();
-
             struct StateTrackedData
             {
                 static const size_t MAX_SUBRESOURCES = 32;

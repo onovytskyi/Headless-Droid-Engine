@@ -4,6 +4,7 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 

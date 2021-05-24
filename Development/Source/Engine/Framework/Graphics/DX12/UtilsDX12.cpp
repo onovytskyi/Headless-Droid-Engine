@@ -14,6 +14,7 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
             case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM;
             }
 
@@ -24,6 +25,7 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
             case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
             }
 
@@ -34,10 +36,33 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
             case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
             }
 
             return DXGI_FORMAT_UNKNOWN;
+        }
+
+        bool IsBlockCompressed(GraphicFormat format)
+        {
+            return false;
+        }
+
+        size_t GetBlockSize(GraphicFormat format)
+        {
+            return 16;
+        }
+
+        size_t BytesPerElement(GraphicFormat format)
+        {
+            switch (format)
+            {
+            case GraphicFormat::RGBA8UNorm: return 4;
+            case GraphicFormat::RGBA8UNorm_Srgb: return 4;
+            }
+
+            hdAssert(false, u8"Cannot get BPP for format. Format not supported!");
+            return 0;
         }
 
         D3D12_SRV_DIMENSION ResourceDimensionToSRV(D3D12_RESOURCE_DIMENSION dimension, bool isCube)
