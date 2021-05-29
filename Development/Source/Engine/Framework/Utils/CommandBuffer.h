@@ -24,6 +24,8 @@ namespace hd
 
             void Clear();
 
+            mem::VirtualBuffer& GetBuffer();
+
         private:
             std::byte* WriteToVirtualBuffer(size_t size);
             std::byte* ReadFromVirtualBuffer(size_t size, size_t& offset);

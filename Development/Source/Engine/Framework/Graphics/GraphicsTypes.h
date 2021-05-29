@@ -23,8 +23,30 @@ namespace hd
 
         enum class GraphicFormat : uint32_t
         {
+            Unknown,
+
             RGBA8UNorm,
             RGBA8UNorm_Srgb
+        };
+
+        enum class PrimitiveType : uint32_t
+        {
+            Undefined,
+
+            Point,
+            Line,
+            Triangle,
+            Patch
+        };
+
+        enum class TopologyType : uint32_t
+        {
+            Undefined,
+
+            List,
+            Strip,
+            ListAdjacent,
+            StipAdjacent
         };
 
         enum class TextureFlags : uint32_t
@@ -41,6 +63,24 @@ namespace hd
             Texture2D,
             Texture3D,
             TextureCube
+        };
+
+        struct Viewport
+        {
+            float MinX;
+            float MaxX;
+            float MinY;
+            float MaxY;
+            float MinZ;
+            float MaxZ;
+        };
+
+        struct Rect
+        {
+            uint32_t MinX;
+            uint32_t MaxX;
+            uint32_t MinY;
+            uint32_t MaxY;
         };
     }
 }

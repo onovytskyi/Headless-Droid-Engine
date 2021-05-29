@@ -32,7 +32,8 @@ namespace hd
             DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope);
             ~DevicePlatform();
 
-            ID3D12Device* GetNativeDevice() const;
+            ID3D12Device2* GetNativeDevice() const;
+            ID3D12RootSignature* GetNativeRootSignature() const;
 
             TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
 
@@ -43,10 +44,13 @@ namespace hd
             HeapAllocator& GetHeapAllocator();
 
         protected:
+            void CreateUnifiedRootSignature();
+
             Backend* m_Backend;
 
             ComPtr<IDXGIAdapter4> m_Adapter;
-            ComPtr<ID3D12Device> m_Device;
+            ComPtr<ID3D12Device2> m_Device;
+            ComPtr<ID3D12RootSignature> m_RootSignature;
 #if defined(HD_ENABLE_GFX_DEBUG)
             DWORD m_MessageCallbackCookie;
 #endif

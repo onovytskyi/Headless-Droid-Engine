@@ -37,7 +37,18 @@ namespace hd
         {
             m_Adapter = backend.GetBestAdapter();
 
-            hdEnsure(::D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_Device.GetAddressOf())));
+            ComPtr<ID3D12Device> device;
+            hdEnsure(::D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddressOf())));
+            hdEnsure(device.As(&m_Device));
+
+            D3D12_FEATURE_DATA_D3D12_OPTIONS optionalFeatures{};
+            hdEnsure(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &optionalFeatures, sizeof(optionalFeatures)));
+            hdEnsure(optionalFeatures.ResourceBindingTier == D3D12_RESOURCE_BINDING_TIER_3, u8"GPU does not support Binding Tier 3.");
+
+            D3D12_FEATURE_DATA_SHADER_MODEL shaderModel{};
+            shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
+            hdEnsure(m_Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+            hdEnsure(shaderModel.HighestShaderModel >= D3D_SHADER_MODEL_6_6, u8"GPU does not support Shader Model 6.6 or higher.");
 
 #if defined(HD_ENABLE_GFX_DEBUG)
             dbg::SetDebugDevice(m_Device.Get());
@@ -63,6 +74,7 @@ namespace hd
                 }
             }
 #endif
+            CreateUnifiedRootSignature();
 
             m_GraphicsCommandListManager = allocationScope.AllocateObject<CommandListManager>(*this, allocationScope, D3D12_COMMAND_LIST_TYPE_DIRECT, cfg::MaxGraphicsCommandLists(), 
                 cfg::MaxGraphicsCommandAllocators());
@@ -88,9 +100,14 @@ namespace hd
 #endif
         }
 
-        ID3D12Device* DevicePlatform::GetNativeDevice() const
+        ID3D12Device2* DevicePlatform::GetNativeDevice() const
         {
             return m_Device.Get();
+        }
+
+        ID3D12RootSignature* DevicePlatform::GetNativeRootSignature() const
+        {
+            return m_RootSignature.Get();
         }
 
         TextureHandle DevicePlatform::RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
@@ -280,6 +297,76 @@ namespace hd
         HeapAllocator& DevicePlatform::GetHeapAllocator()
         {
             return *m_HeapAllocator;
+        }
+
+        void DevicePlatform::CreateUnifiedRootSignature()
+        {
+            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
+
+            const uint32_t numRootParameters = 1;
+            D3D12_ROOT_PARAMETER1* rootParameters = scratchScope.AllocatePODArray<D3D12_ROOT_PARAMETER1>(numRootParameters);
+
+            rootParameters[0] = {};
+            rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+            rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+            rootParameters[0].Constants.Num32BitValues = 32;
+            rootParameters[0].Constants.ShaderRegister = 0;
+            rootParameters[0].Constants.RegisterSpace = 0;
+
+            const uint32_t numStaticSamplers = 3;
+            D3D12_STATIC_SAMPLER_DESC* staticSamplers = scratchScope.AllocatePODArray<D3D12_STATIC_SAMPLER_DESC>(numStaticSamplers);
+
+            staticSamplers[0] = {};
+            staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[0].MinLOD = 0.0f;
+            staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
+            staticSamplers[0].ShaderRegister = 0;
+            staticSamplers[0].RegisterSpace = 0;
+            staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+            staticSamplers[1] = {};
+            staticSamplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            staticSamplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            staticSamplers[1].MinLOD = 0.0f;
+            staticSamplers[1].MaxLOD = D3D12_FLOAT32_MAX;
+            staticSamplers[1].ShaderRegister = 1;
+            staticSamplers[1].RegisterSpace = 0;
+            staticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+            staticSamplers[2] = {};
+            staticSamplers[2].Filter = D3D12_FILTER_ANISOTROPIC;
+            staticSamplers[2].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            staticSamplers[2].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            staticSamplers[2].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            staticSamplers[2].MinLOD = 0.0f;
+            staticSamplers[2].MaxLOD = D3D12_FLOAT32_MAX;
+            staticSamplers[2].MaxAnisotropy = 16;
+            staticSamplers[2].ShaderRegister = 2;
+            staticSamplers[2].RegisterSpace = 0;
+            staticSamplers[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+            D3D12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+            rootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+            rootSignatureDesc.Desc_1_1.NumParameters = numRootParameters;
+            rootSignatureDesc.Desc_1_1.pParameters = rootParameters;
+            rootSignatureDesc.Desc_1_1.NumStaticSamplers = numStaticSamplers;
+            rootSignatureDesc.Desc_1_1.pStaticSamplers = staticSamplers;
+            rootSignatureDesc.Desc_1_1.Flags = D3D12_ROOT_SIGNATURE_FLAGS(D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED | D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED);
+
+            ComPtr<ID3DBlob> signatureBlob;
+            ComPtr<ID3DBlob> errorBlob;
+            HRESULT result = ::D3D12SerializeVersionedRootSignature(&rootSignatureDesc, &signatureBlob, &errorBlob);
+            if (FAILED(result))
+            {
+                hdEnsure(result, u8"Failed to create root signature. Error message: %", reinterpret_cast<char8_t*>(errorBlob->GetBufferPointer()));
+            }
+
+            hdEnsure(m_Device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSignature.GetAddressOf())));
         }
 
         TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,

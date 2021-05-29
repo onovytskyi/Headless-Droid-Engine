@@ -24,6 +24,11 @@ namespace hd
             m_Buffer.Resize(0);
         }
 
+        mem::VirtualBuffer& CommandBuffer::GetBuffer()
+        {
+            return m_Buffer;
+        }
+
         std::byte* CommandBuffer::WriteToVirtualBuffer(size_t size)
         {
             std::byte* memory = m_Buffer.GetData() + m_Buffer.GetSize();
