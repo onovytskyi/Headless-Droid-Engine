@@ -34,27 +34,6 @@ namespace hd
             UpdateDataFromNativeDescription();
         }
 
-        Texture::Texture(Device& device, HeapAllocator::Allocation const& heapAllocation, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
-            : m_Data{}
-            , m_HeapAllocation{ heapAllocation }
-            , m_Format{ format }
-            , m_Dimension{ dimension }
-            , m_RTV{}
-            , m_DSV{}
-            , m_SRV{}
-            , m_UAV{}
-            , m_SubresourceSRV{}
-            , m_SubresourceUAV{}
-            , m_SubresourceCount{}
-            , m_Width{}
-            , m_Height{}
-        {
-            hdAssert(heapAllocation.ResourceData->Resource, u8"No resource bound to heap allocation.");
-
-            CreateViews(device, format, flags, dimension);
-            UpdateDataFromNativeDescription();
-        }
-
         Texture::Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, 
             TextureDimenstion dimension)
             : m_Data{}
@@ -80,10 +59,7 @@ namespace hd
 
         void Texture::Free(Device& device)
         {
-            if (m_Data.Resource)
-            {
-                m_Data.Resource->Release();
-            }
+            m_Data.Resource->Release();
 
             if (m_HeapAllocation.IsValid())
             {

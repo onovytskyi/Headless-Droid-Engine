@@ -17,7 +17,6 @@ namespace hd
         {
         public:
             Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
-            Texture(Device& device, HeapAllocator::Allocation const& heapAllocation, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
             Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
 
             hdNoncopyable(Texture)
