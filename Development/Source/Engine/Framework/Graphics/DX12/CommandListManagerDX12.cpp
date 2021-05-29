@@ -131,6 +131,7 @@ namespace hd
                 // Find free allocator
                 if (holder.Marker == 0 && holder.Thread == std::thread::id{})
                 {
+                    holder.Thread = currentThread;
                     return holder.Allocator;
                 }
             }
