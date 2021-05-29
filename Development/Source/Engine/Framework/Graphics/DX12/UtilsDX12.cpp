@@ -139,6 +139,74 @@ namespace hd
 
             return D3D12_RESOURCE_DIMENSION_UNKNOWN;
         }
+
+        D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertToTopologyType(PrimitiveType primitiveType)
+        {
+            switch (primitiveType)
+            {
+            case hd::gfx::PrimitiveType::Point: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+            case hd::gfx::PrimitiveType::Line: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+            case hd::gfx::PrimitiveType::Triangle: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+            case hd::gfx::PrimitiveType::Patch: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+            default:
+                hdAssert(u8"Unknown primitive type");
+                break;
+            }
+
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+        }
+
+        D3D_PRIMITIVE_TOPOLOGY ConvertToPrimitiveTopology(PrimitiveType primitiveType, TopologyType topologyType)
+        {
+            switch (primitiveType)
+            {
+            case hd::gfx::PrimitiveType::Point:
+            {
+                switch (topologyType)
+                {
+                case hd::gfx::TopologyType::List: return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                }
+            }
+            break;
+
+            case hd::gfx::PrimitiveType::Line:
+            {
+                switch (topologyType)
+                {
+                case hd::gfx::TopologyType::List: return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                case hd::gfx::TopologyType::Strip: return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+                case hd::gfx::TopologyType::ListAdjacent: return D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+                case hd::gfx::TopologyType::StipAdjacent: return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+                }
+            }
+            break;
+
+            case hd::gfx::PrimitiveType::Triangle:
+            {
+                switch (topologyType)
+                {
+                case hd::gfx::TopologyType::List: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                case hd::gfx::TopologyType::Strip: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+                case hd::gfx::TopologyType::ListAdjacent: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+                case hd::gfx::TopologyType::StipAdjacent: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+                }
+            }
+            break;
+
+            case hd::gfx::PrimitiveType::Patch:
+            {
+                switch (topologyType)
+                {
+                case hd::gfx::TopologyType::List: return D3D_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST;
+                }
+            }
+            default:
+                hdAssert(u8"Unknown primitive type");
+                break;
+            }
+
+            return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        }
     }
 }
 

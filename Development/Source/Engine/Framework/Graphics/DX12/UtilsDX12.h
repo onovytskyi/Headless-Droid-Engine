@@ -22,6 +22,8 @@ namespace hd
         D3D12_DSV_DIMENSION ResourceDimensionToDSV(D3D12_RESOURCE_DIMENSION dimension);
 
         D3D12_RESOURCE_DIMENSION ConvertToResourceDimension(TextureDimenstion dimension);
+        D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertToTopologyType(PrimitiveType primitiveType);
+        D3D_PRIMITIVE_TOPOLOGY ConvertToPrimitiveTopology(PrimitiveType primitiveType, TopologyType topologyType);
     }
 }
 
