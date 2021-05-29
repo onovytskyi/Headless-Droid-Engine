@@ -9,8 +9,10 @@
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
 #include "Engine/Framework/Graphics/DX12/UtilsDX12.h"
+#include "Engine/Framework/Graphics/DX12/VolatileStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Graphics/Queue.h"
+#include "Engine/Framework/Graphics/RenderState.h"
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 #include "Engine/Framework/Utils/CommandBufferReader.h"
@@ -147,6 +149,11 @@ namespace hd
 
             ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager->GetCommandList(nullptr);
 
+            commandList->SetGraphicsRootSignature(m_RootSignature.Get());
+            commandList->SetComputeRootSignature(m_RootSignature.Get());
+
+            VolatileStateTracker* volatileState = scratchScope.AllocatePOD<VolatileStateTracker>();
+
             while (commandBufferReader.HasCommands())
             {
                 GraphicCommandType& commandType = commandBufferReader.Read<GraphicCommandType>();
@@ -274,6 +281,101 @@ namespace hd
                 }
                 break;
                 
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetRenderState:
+                {
+                    SetRenderStateCommand& command = SetRenderStateCommand::ReadFrom(commandBufferReader);
+
+                    command.State->Compile(*static_cast<Device*>(this));
+                    volatileState->SetRenderState(command.State);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetTopologyType:
+                {
+                    SetTopologyTypeCommand& command = SetTopologyTypeCommand::ReadFrom(commandBufferReader);
+
+                    volatileState->SetTopologyType(command.Type);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::DrawInstanced:
+                {
+                    DrawInstancedCommand& command = DrawInstancedCommand::ReadFrom(commandBufferReader);
+
+                    m_ResourceStateTracker->ApplyTransitions(*commandList);
+                    volatileState->ApplyChangedStates(*commandList);
+
+                    commandList->DrawInstanced(command.VertexCount, command.InstanceCount, 0, 0);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetViewports:
+                {
+                    SetViewportsCommand& command = SetViewportsCommand::ReadFrom(commandBufferReader);
+
+                    D3D12_VIEWPORT* viewports = scratchScope.AllocatePODArray<D3D12_VIEWPORT>(command.Count);
+
+                    for (uint32_t viewportIdx = 0; viewportIdx < command.Count; ++viewportIdx)
+                    {
+                        viewports[viewportIdx].TopLeftX = command.Viewports[viewportIdx].MinX;
+                        viewports[viewportIdx].Width = command.Viewports[viewportIdx].MaxX - command.Viewports[viewportIdx].MinX;
+
+                        viewports[viewportIdx].TopLeftY = command.Viewports[viewportIdx].MinY;
+                        viewports[viewportIdx].Height = command.Viewports[viewportIdx].MaxY - command.Viewports[viewportIdx].MinY;
+
+                        viewports[viewportIdx].MinDepth = command.Viewports[viewportIdx].MinZ;
+                        viewports[viewportIdx].MaxDepth = command.Viewports[viewportIdx].MaxZ;
+                    }
+
+                    commandList->RSSetViewports(command.Count, viewports);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetScissorRects:
+                {
+                    SetScissorRectsCommand& command = SetScissorRectsCommand::ReadFrom(commandBufferReader);
+
+                    D3D12_RECT* rects = scratchScope.AllocatePODArray<D3D12_RECT>(command.Count);
+
+                    for (uint32_t rectIdx = 0; rectIdx < command.Count; ++rectIdx)
+                    {
+                        rects[rectIdx].left = command.Rects[rectIdx].MinX;
+                        rects[rectIdx].right = command.Rects[rectIdx].MaxX;
+
+                        rects[rectIdx].top = command.Rects[rectIdx].MinY;
+                        rects[rectIdx].bottom = command.Rects[rectIdx].MaxY;
+                    }
+
+                    commandList->RSSetScissorRects(command.Count, rects);
+                }
+                break;
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetRenderTargets:
+                {
+                    SetRenderTargetsCommand& command = SetRenderTargetsCommand::ReadFrom(commandBufferReader);
+
+                    for (uint32_t renderTargetIdx = 0; renderTargetIdx < command.Count; ++renderTargetIdx)
+                    {
+                        Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.Targets[renderTargetIdx]));
+                        // #FIXME shouldn't we request this state transion only when really apply render target in volatile state tracker
+                        m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+                        volatileState->SetRenderTarget(renderTargetIdx, &target);
+                    }
+
+                    volatileState->SetUsedRenderTargets(command.Count);
+                }
+                break;
 
                 default:
                     hdAssert(false, u8"Cannot process command. Unknown command type.");
