@@ -14,7 +14,7 @@ namespace hd
         class Backend : public BackendPlatform
         {
         public:
-            Backend();
+            Backend(mem::AllocationScope& allocationScope);
             ~Backend();
 
             hdNoncopyable(Backend)

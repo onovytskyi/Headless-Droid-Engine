@@ -2,19 +2,21 @@
 
 #include "Engine/Framework/Graphics/Backend.h"
 
+#if defined(HD_GRAPHICS_API_DX12)
+
 #include "Engine/Debug/Assert.h"
 #include "Engine/Debug/Log.h"
 #include "Engine/Foundation/Memory/Utils.h"
+#include "Engine/Framework/Graphics/DX12/ShaderManagerDX12.h"
 #include "Engine/Framework/Memory/AllocationScope.h"
-
-#if defined(HD_GRAPHICS_API_DX12)
 
 namespace hd
 {
     namespace gfx
     {
-        BackendPlatform::BackendPlatform()
-            : m_BufferAllocator{ 4096 }
+        BackendPlatform::BackendPlatform(mem::AllocationScope& allocationScope)
+            : m_ShaderManager{}
+            , m_BufferAllocator{ 4096 }
             , m_TextureAllocator{ 4096 }
         {
 #if defined(HD_ENABLE_GFX_DEBUG)
@@ -54,6 +56,8 @@ namespace hd
             ComPtr<IDXGIFactory2> factory2;
             hdEnsure(::CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(factory2.GetAddressOf())));
             hdEnsure(factory2.As<IDXGIFactory6>(&m_Factory));
+
+            m_ShaderManager = allocationScope.AllocateObject<ShaderManager>(allocationScope);
         }
 
         BackendPlatform::~BackendPlatform()
@@ -104,6 +108,11 @@ namespace hd
         IDXGIFactory6* BackendPlatform::GetNativeFactory() const
         {
             return m_Factory.Get();
+        }
+
+        ShaderManager& BackendPlatform::GetShaderManager()
+        {
+            return *m_ShaderManager;
         }
 
         util::VirtualPoolAllocator<Buffer>& BackendPlatform::GetBufferAllocator()

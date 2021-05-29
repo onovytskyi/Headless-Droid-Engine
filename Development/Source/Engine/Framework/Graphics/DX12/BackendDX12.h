@@ -17,23 +17,24 @@ namespace hd
     namespace gfx
     {
         class Device;
-        class ResourceManager;
+        class ShaderManager;
 
         class BackendPlatform
         {
         public:
-            BackendPlatform();
+            BackendPlatform(mem::AllocationScope& allocationScope);
             ~BackendPlatform();
 
             ComPtr<IDXGIAdapter4> GetBestAdapter() const;
             IDXGIFactory6* GetNativeFactory() const;
 
+            ShaderManager& GetShaderManager();
             util::VirtualPoolAllocator<Buffer>& GetBufferAllocator();
             util::VirtualPoolAllocator<Texture>& GetTextureAllocator();
 
         protected:
             ComPtr<IDXGIFactory6> m_Factory;
-            ResourceManager* m_ResourceManager;
+            ShaderManager* m_ShaderManager;
 
             util::VirtualPoolAllocator<Buffer> m_BufferAllocator;
             util::VirtualPoolAllocator<Texture> m_TextureAllocator;

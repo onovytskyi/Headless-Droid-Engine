@@ -8,6 +8,19 @@ namespace hd
 
         inline constexpr uint32_t MaxFrameLatency() { return 3; }
 
+        inline constexpr char8_t const* ShadersPath() { return u8"../Development/Source/Shaders/"; }
+
+#if defined(HD_BUILD_DEBUG)
+        inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/Debug/"; }
+        inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Debug/"; }
+#elif defined(HD_BUILD_DEVELOPMENT)
+        inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/Development/"; }
+        inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Development/"; }
+#else
+        inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/"; }
+        inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Release/"; }
+#endif
+
 #if defined(HD_GRAPHICS_API_DX12)
         inline constexpr size_t MaxTransitionRequests() { return 128; }
         inline constexpr uint32_t MaxDescriptorsRTV() { return 1000000; }
@@ -27,6 +40,9 @@ namespace hd
         inline constexpr size_t GPUHeapSize() { return 64 * 1024 * 1024; }
         inline constexpr uint32_t MaxGPUHeaps() { return 128; }
         inline constexpr uint32_t KeepHeapsAliveForFrames() { return 10; }
+        inline constexpr char8_t const* GetVSProfile() { return u8"vs_6_6"; }
+        inline constexpr char8_t const* GetPSProfile() { return u8"ps_6_6"; }
+        inline constexpr char8_t const* GetCSProfile() { return u8"cs_6_6"; }
 #endif
     }
 }

@@ -2,6 +2,7 @@
 
 #if !defined(HD_BUILD_FINAL)
 #   define HD_ENABLE_ASSERTS
+#   define HD_ENABLE_RESOURCE_COOKING
 #endif
 
 #define HD_LOG_LEVEL_INFO 1

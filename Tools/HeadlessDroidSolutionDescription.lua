@@ -71,7 +71,7 @@ project "Engine"
 	cppdialect "C++latest"
 	targetdir "../Development/Lib"
 	includedirs { "$(SolutionDir)/Source/", "$(SolutionDir)/packages/Microsoft.Direct3D.D3D12.1.4.9/build/native/include/" }
-	files { "../Development/Source/Engine/**.h", "../Development/Source/Engine/**.cpp", "../Development/Source/Engine/**.hpp", "../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli" }
+	files { "../Development/Source/Engine/**.h", "../Development/Source/Engine/**.cpp", "../Development/Source/Engine/**.hpp" }
 	removefiles { "SystemWindowLinux.cpp" }
 	vpaths {
 	   ["00_Config/*"] = {"../Development/Source/Engine/Config/**.h", "../Development/Source/Engine/Config/**.hpp", "../Development/Source/Engine/Config/**.cpp" },
@@ -79,7 +79,6 @@ project "Engine"
 	   ["02_Debug/*"] = {"../Development/Source/Engine/Debug/**.h", "../Development/Source/Engine/Debug/**.hpp", "../Development/Source/Engine/Debug/**.cpp" },
 	   ["03_Framework/*"] = {"../Development/Source/Engine/Framework/**.h", "../Development/Source/Engine/Framework/**.hpp", "../Development/Source/Engine/Framework/**.cpp" },
 	   ["04_Engine/*"] = {"../Development/Source/Engine/Engine/**.h", "../Development/Source/Engine/Engine/**.hpp", "../Development/Source/Engine/Engine/**.cpp" },
-	   ["05_Shaders/*"] = {"../Development/Source/Engine/Shaders/**.hlsl", "../Development/Source/Engine/Shaders/**.hlsli"}
 	}
 	pchheader ("Engine/Config/Bootstrap.h")
 	pchsource ("../Development/Source/Engine/Config/Bootstrap.cpp")
@@ -97,7 +96,10 @@ project "Game"
 	includedirs { "$(SolutionDir)/Source/" }
 	libdirs { "../Development/Lib/", }
 	links { "Externals", "Engine" }
-	files { "../Development/Source/Game/**.h", "../Development/Source/Game/**.hpp", "../Development/Source/Game/**.cpp" }
+	files { "../Development/Source/Game/**.h", "../Development/Source/Game/**.hpp", "../Development/Source/Game/**.cpp", "../Development/Source/Shaders/**.hlsl", "../Development/Source/Shaders/**.hlsli" }
+	vpaths {
+	   ["Shaders/*"] = {"../Development/Source/Shaders/**.hlsl", "../Development/Source/Shaders/**.hlsli"}
+	}
 	pchheader ("Game/Bootstrap.h")
 	pchsource ("../Development/Source/Game/Bootstrap.cpp")
     buildoptions { "/Zm256" }

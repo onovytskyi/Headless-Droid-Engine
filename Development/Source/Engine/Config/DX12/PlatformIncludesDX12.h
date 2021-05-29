@@ -22,6 +22,12 @@ using Microsoft::WRL::ComPtr;
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+#   include "d3d12shader.h"
+#   include "Externals/DXC/dxcapi.h"
+#   pragma comment(lib, "dxcompiler.lib")
+#endif
+
 #if defined(HD_ENGINE_PROJECT)
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 4; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; }
