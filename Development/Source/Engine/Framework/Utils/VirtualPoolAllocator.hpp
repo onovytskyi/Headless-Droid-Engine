@@ -6,7 +6,7 @@ namespace hd
     {
         static const uint32_t INVALID_ITEM_IDX = std::numeric_limits<uint32_t>::max();
 
-        inline uint64_t EncodeHandle(uint32_t version, uint32_t idx)
+        inline constexpr uint64_t EncodeHandle(uint32_t version, uint32_t idx)
         {
             return (uint64_t(version) << 32) | uint64_t(idx);
         }
@@ -34,13 +34,13 @@ namespace hd
         template<typename Payload>
         inline typename VirtualPoolAllocator<Payload>::Handle VirtualPoolAllocator<Payload>::Allocate(Payload** outItem)
         {
-            Handle result;
+            Handle result = InvalidHandle();
             Item* itemsArray = reinterpret_cast<Item*>(m_Memory.GetData());
 
             if (m_FirstFreeItem == INVALID_ITEM_IDX)
             {
                 uint32_t itemIdx = uint32_t(m_Memory.GetSize() / sizeof(Item));
-                m_Memory.Resize((itemIdx + 1) * sizeof(Item));
+                m_Memory.Resize((size_t(itemIdx) + 1) * sizeof(Item));
 
                 Item* item = itemsArray + itemIdx;
                 item->Version = 1;
@@ -127,6 +127,12 @@ namespace hd
             hdAssert(item->Version == version, u8"Handle is pointing to already deleted object.");
 
             return item->Data;
+        }
+
+        template<typename Payload>
+        inline constexpr typename VirtualPoolAllocator<Payload>::Handle hd::util::VirtualPoolAllocator<Payload>::InvalidHandle()
+        {
+            return EncodeHandle(0, INVALID_ITEM_IDX);
         }
     }
 }

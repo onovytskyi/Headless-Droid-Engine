@@ -14,6 +14,9 @@ namespace hd
 {
     namespace gfx
     {
+        BufferHandle INVALID_BUFFER_HANDLE = BufferHandle(util::VirtualPoolAllocator<Buffer>::InvalidHandle());
+        TextureHandle INVALID_TEXTURE_HANDLE = TextureHandle(util::VirtualPoolAllocator<Buffer>::InvalidHandle());
+
         BackendPlatform::BackendPlatform(mem::AllocationScope& allocationScope)
             : m_ShaderManager{}
             , m_BufferAllocator{ 4096 }

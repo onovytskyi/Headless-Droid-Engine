@@ -21,6 +21,8 @@ namespace hd
             bool IsValid(Handle handle) const;
             Payload& Get(Handle handle);
 
+            static constexpr Handle InvalidHandle();
+
         private:
             struct Item
             {
