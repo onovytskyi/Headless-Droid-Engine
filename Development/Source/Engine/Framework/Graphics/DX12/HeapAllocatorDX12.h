@@ -51,6 +51,7 @@ namespace hd
                 Heap(mem::AllocationScope& allocationScope, size_t size);
 
                 void ChangeUsage(Usage usage);
+                Usage GetUsage() const;
 
                 bool IsCompatible(D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags, Usage usage);
                 bool IsCompatible(D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags);
@@ -77,7 +78,7 @@ namespace hd
                 Usage m_Usage;
 
                 util::BestFitAllocatorHelper m_Allocator;
-                util::BestFitAllocatorHelper m_AllocatorShadow;
+                uint32_t m_NumTransientAllocations;
 
                 ID3D12Heap* m_Heap;
                 ResourceStateTracker::StateTrackedData m_ResourceData;
@@ -89,6 +90,7 @@ namespace hd
             size_t m_HeapSize;
             size_t m_KeepAliveFrames;
             util::BufferArray<Heap*> m_Heaps;
+            util::BufferArray<Heap*> m_PendingHeaps;
             util::BufferArray<Heap*> m_FreeHeaps;
             util::BufferArray<Heap*> m_NonresidentHeaps;
         };

@@ -6,6 +6,7 @@
 
 #include "Engine/Debug/Assert.h"
 #include "Engine/Debug/Log.h"
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
 #include "Engine/Framework/Graphics/DX12/UtilsDX12.h"
@@ -34,7 +35,7 @@ namespace hd
             , m_HeapAllocator{}
             , m_BuffersToFree{ allocationScope, cfg::MaxBuffersToFreeInQueue() }
             , m_TexturesToFree{ allocationScope, cfg::MaxTexturesToFreeInQueue() }
-            , m_RecentBufferToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
+            , m_RecentBuffersToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
             , m_RecentTexturesToFree{ allocationScope, cfg::MaxTexturesToFreePerFrame() }
         {
             m_Adapter = backend.GetBestAdapter();
@@ -149,6 +150,9 @@ namespace hd
 
             ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager->GetCommandList(nullptr);
 
+            //ID3D12DescriptorHeap* bindlessHeaps[2] = { m_DescriptorManager->GetResourceHeap(), m_DescriptorManager->GetSamplerHeap() };
+            ID3D12DescriptorHeap* bindlessHeaps[1] = { m_DescriptorManager->GetResourceHeap() };
+            commandList->SetDescriptorHeaps(_countof(bindlessHeaps), bindlessHeaps);
             commandList->SetGraphicsRootSignature(m_RootSignature.Get());
             commandList->SetComputeRootSignature(m_RootSignature.Get());
 
@@ -172,6 +176,29 @@ namespace hd
                      commandList->ClearRenderTargetView(target.GetRTV().HandleCPU, command.Color.data(), 0, nullptr);
                 }
                 break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::UpdateBuffer:
+                {
+                    UpdateBufferCommand& command = UpdateBufferCommand::ReadFrom(commandBufferReader);
+                    Buffer& target = m_Backend->GetBufferAllocator().Get(uint64_t(command.Target));
+
+                    HeapAllocator::Allocation uploadAllocation = m_HeapAllocator->Allocate(target.GetSize(), D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE, D3D12_HEAP_TYPE_UPLOAD,
+                        D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS, HeapAllocator::Usage::Transient);
+
+                    memcpy_s(uploadAllocation.CPUMappedMemory, uploadAllocation.Size, command.Data, command.Size);
+
+                    m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_COPY_DEST);
+                    m_ResourceStateTracker->ApplyTransitions(*commandList);
+
+                    commandList->CopyBufferRegion(target.GetNativeResource(), target.GetBaseOffset() + command.Offset, uploadAllocation.ResourceData->Resource, uploadAllocation.Offset, 
+                        uploadAllocation.Size);
+
+                    m_HeapAllocator->Free(uploadAllocation);
+                }
+                break;
+
 
                 // -------------------------------------------------------------------------------------------------------------
                 case GraphicCommandType::UpdateTexture:
@@ -377,6 +404,18 @@ namespace hd
                 }
                 break;
 
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetRootVariable:
+                {
+                    SetRootVariableCommand& command = SetRootVariableCommand::ReadFrom(commandBufferReader);
+
+                    //#TODO #Optimization separate those out
+                    commandList->SetGraphicsRoot32BitConstant(0, command.Value, command.Index);
+                    commandList->SetComputeRoot32BitConstant(0, command.Value, command.Index);
+                }
+                break;
+
                 default:
                     hdAssert(false, u8"Cannot process command. Unknown command type.");
                     break;
@@ -471,6 +510,91 @@ namespace hd
             hdEnsure(m_Device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSignature.GetAddressOf())));
         }
 
+        BufferHandle Device::CreateBuffer(uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        {
+            size_t bufferSize = size_t(numElements) * elementSize;
+            size_t bufferAlignment = (flags & (uint32_t)BufferFlags::ConstantBuffer) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : elementSize;
+
+            if (flags & (uint32_t)BufferFlags::ConstantBuffer)
+            {
+                bufferSize = mem::AlignAbove(bufferSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+            }
+
+            HeapAllocator::Usage bufferUsage = (flags & (uint32_t)BufferFlags::Transient) ? HeapAllocator::Usage::Transient : HeapAllocator::Usage::Persistent;
+            HeapAllocator::Allocation bufferAllocation = m_HeapAllocator->Allocate(bufferSize, bufferAlignment, D3D12_HEAP_TYPE_DEFAULT, D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS, bufferUsage);
+
+            hdEnsure(bufferAllocation.IsValid(), u8"Cannot allocate GPU memory for resource.");
+
+            Buffer* buffer{};
+            BufferHandle result = BufferHandle(m_Backend->GetBufferAllocator().Allocate(&buffer));
+
+            new(buffer)Buffer(*static_cast<Device*>(this), bufferAllocation, numElements, elementSize, flags);
+
+            return result;
+        }
+
+        void Device::DestroyBuffer(BufferHandle handle)
+        {
+            if (m_Backend->GetBufferAllocator().IsValid(uint64_t(handle)))
+            {
+                m_RecentBuffersToFree.Add(handle);
+            }
+        }
+
+        void Device::DestroyBufferImmediate(BufferHandle handle)
+        {
+            util::VirtualPoolAllocator<Buffer>& bufferAllocator = m_Backend->GetBufferAllocator();
+
+            if (bufferAllocator.IsValid(uint64_t(handle)))
+            {
+                Buffer& buffer = bufferAllocator.Get(uint64_t(handle));
+                buffer.Free(*this);
+                bufferAllocator.Free(uint64_t(handle));
+            }
+        }
+
+        uint32_t Device::GetCBVShaderIndex(BufferHandle handle)
+        {
+            util::VirtualPoolAllocator<Buffer>& bufferAllocator = m_Backend->GetBufferAllocator();
+
+            hdAssert(bufferAllocator.IsValid(uint64_t(handle)), u8"Buffer handle is invalid.");
+
+            Buffer& buffer = bufferAllocator.Get(uint64_t(handle));
+            DescriptorSRV descriptor = buffer.GetCBV();
+
+            hdAssert(descriptor, u8"Buffer doesn't have CBV view.");
+
+            return descriptor.HeapIndex;
+        }
+
+        uint32_t Device::GetSRVShaderIndex(BufferHandle handle)
+        {
+            util::VirtualPoolAllocator<Buffer>& bufferAllocator = m_Backend->GetBufferAllocator();
+
+            hdAssert(bufferAllocator.IsValid(uint64_t(handle)), u8"Buffer handle is invalid.");
+
+            Buffer& buffer = bufferAllocator.Get(uint64_t(handle));
+            DescriptorSRV descriptor = buffer.GetSRV();
+
+            hdAssert(descriptor, u8"Buffer doesn't have SRV view.");
+
+            return descriptor.HeapIndex;
+        }
+
+        uint32_t Device::GetUAVShaderIndex(BufferHandle handle)
+        {
+            util::VirtualPoolAllocator<Buffer>& bufferAllocator = m_Backend->GetBufferAllocator();
+
+            hdAssert(bufferAllocator.IsValid(uint64_t(handle)), u8"Buffer handle is invalid.");
+
+            Buffer& buffer = bufferAllocator.Get(uint64_t(handle));
+            DescriptorSRV descriptor = buffer.GetUAV();
+
+            hdAssert(descriptor, u8"Buffer doesn't have UAV view.");
+
+            return descriptor.HeapIndex;
+        }
+
         TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,
             float clearValue[4])
         {
@@ -563,14 +687,42 @@ namespace hd
 
         void Device::DestroyTextureImmediate(TextureHandle handle)
         {
-            if (m_Backend->GetTextureAllocator().IsValid(uint64_t(handle)))
-            {
-                util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
+            util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
 
+            if (textureAllocator.IsValid(uint64_t(handle)))
+            {
                 Texture& texture = textureAllocator.Get(uint64_t(handle));
                 texture.Free(*this);
                 textureAllocator.Free(uint64_t(handle));
             }
+        }
+
+        uint32_t Device::GetSRVShaderIndex(TextureHandle handle)
+        {
+            util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
+
+            hdAssert(textureAllocator.IsValid(uint64_t(handle)), u8"Texture handle is invalid.");
+
+            Texture& texture = textureAllocator.Get(uint64_t(handle));
+            DescriptorSRV descriptor = texture.GetSRV();
+
+            hdAssert(descriptor, u8"Texture doesn't have SRV view.");
+
+            return descriptor.HeapIndex;
+        }
+
+        uint32_t Device::GetUAVShaderIndex(TextureHandle handle)
+        {
+            util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
+
+            hdAssert(textureAllocator.IsValid(uint64_t(handle)), u8"Texture handle is invalid.");
+
+            Texture& texture = textureAllocator.Get(uint64_t(handle));
+            DescriptorSRV descriptor = texture.GetUAV();
+
+            hdAssert(descriptor, u8"Texture doesn't have SRV view.");
+
+            return descriptor.HeapIndex;
         }
 
         void Device::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
@@ -580,11 +732,11 @@ namespace hd
             m_CopyCommandListManager->RecycleResources(currentMarker, completedMarker);
             m_HeapAllocator->RecycleResources(currentMarker, completedMarker);
 
-            for (BufferHandle& buffer : m_RecentBufferToFree)
+            for (BufferHandle& buffer : m_RecentBuffersToFree)
             {
                 m_BuffersToFree.Add({ currentMarker, buffer });
             }
-            m_RecentBufferToFree.Clear();
+            m_RecentBuffersToFree.Clear();
 
             for (TextureHandle& texture : m_RecentTexturesToFree)
             {
@@ -623,6 +775,21 @@ namespace hd
                     textureIdx -= 1;
                 }
             }
+        }
+
+        void Device::GetMemoryBudgets(size_t& outLocalBudget, size_t& outLocalUsage, size_t& outNonlocalBudget, size_t& outNonlocalUsage)
+        {
+            DXGI_QUERY_VIDEO_MEMORY_INFO localInfo{};
+            DXGI_QUERY_VIDEO_MEMORY_INFO nonlocalInfo{};
+
+            hdEnsure(m_Adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &localInfo));
+            hdEnsure(m_Adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &nonlocalInfo));
+
+            outLocalBudget = localInfo.Budget;
+            outLocalUsage = localInfo.CurrentUsage;
+
+            outNonlocalBudget = nonlocalInfo.CurrentUsage;
+            outNonlocalUsage = nonlocalInfo.CurrentUsage;
         }
     }
 }

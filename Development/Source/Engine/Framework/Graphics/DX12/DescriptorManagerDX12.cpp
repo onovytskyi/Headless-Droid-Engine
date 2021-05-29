@@ -16,8 +16,27 @@ namespace hd
             , m_DSV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, cfg::MaxDescriptorsDSV() }
             , m_SRV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cfg::MaxDescriptorsSRV() }
             , m_Sampler{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, cfg::MaxDescriptorsSampler() }
+            , m_DefaultDescriptorResource{}
         {
+            D3D12_HEAP_PROPERTIES heapProperties{};
+            heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12_RESOURCE_DESC resourceDesc{};
+            resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            resourceDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+            resourceDesc.Width = 4;
+            resourceDesc.Height = 1;
+            resourceDesc.DepthOrArraySize = 1;
+            resourceDesc.MipLevels = 1;
+            resourceDesc.SampleDesc.Count = 1;
+            resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+            device.GetNativeDevice()->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+                IID_PPV_ARGS(m_DefaultDescriptorResource.GetAddressOf()));
+
+            // #WORKAROUND Kill this with fire when NVIDIA will fix their issue, or 10** series fade out
+            m_SRV.FillWithDefaults(device, m_DefaultDescriptorResource.Get());
         }
 
         DescriptorManager::~DescriptorManager()
@@ -89,6 +108,16 @@ namespace hd
             m_Sampler.Free(descriptor.HandleCPU);
         }
 
+        ID3D12DescriptorHeap* DescriptorManager::GetResourceHeap()
+        {
+            return m_SRV.GetDescriptorHeap();
+        }
+
+        ID3D12DescriptorHeap* DescriptorManager::GetSamplerHeap()
+        {
+            return m_Sampler.GetDescriptorHeap();
+        }
+
         DescriptorManager::DescriptorAllocator::DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors)
             : m_Allocator{ allocationScope, maxDescriptors }
             , m_HandleIncrementSize{}
@@ -139,6 +168,25 @@ namespace hd
             handle.ptr = m_Heap->GetGPUDescriptorHandleForHeapStart().ptr + size_t(m_HandleIncrementSize) * index;
 
             return handle;
+        }
+
+        void DescriptorManager::DescriptorAllocator::FillWithDefaults(DevicePlatform& device, ID3D12Resource* defaultResource)
+        {
+            D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+            srvDesc.Buffer.FirstElement = 0;
+            srvDesc.Buffer.NumElements = 1;
+            srvDesc.Buffer.StructureByteStride = 4;
+            srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+            for (uint32_t descIdx = 0; descIdx < m_Allocator.GetSize(); ++descIdx)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE srv = ResolveCPU(descIdx);
+
+                device.GetNativeDevice()->CreateShaderResourceView(defaultResource, &srvDesc, srv);
+            }
         }
     }
 }

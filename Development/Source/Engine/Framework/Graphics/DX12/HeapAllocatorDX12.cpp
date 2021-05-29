@@ -17,6 +17,7 @@ namespace hd
             , m_HeapSize{ heapSize }
             , m_KeepAliveFrames{ keepAliveFrames }
             , m_Heaps{ allocationScope, maxHeaps }
+            , m_PendingHeaps{ allocationScope, maxHeaps }
             , m_FreeHeaps{ allocationScope, maxHeaps }
             , m_NonresidentHeaps{ allocationScope, maxHeaps }
         {
@@ -26,6 +27,11 @@ namespace hd
         HeapAllocator::~HeapAllocator()
         {
             for (Heap* heap : m_Heaps)
+            {
+                heap->Destroy();
+            }
+
+            for (Heap* heap : m_PendingHeaps)
             {
                 heap->Destroy();
             }
@@ -116,6 +122,19 @@ namespace hd
                 }
             }
 
+            // Check if we can make transient heaps free
+            for (size_t heapIdx = 0; heapIdx < m_PendingHeaps.GetSize(); ++heapIdx)
+            {
+                Heap* heap = m_PendingHeaps[heapIdx];
+                if (heap->GetMarker() <= completedMarker)
+                {
+                    m_PendingHeaps.RemoveFast(heapIdx);
+                    heapIdx -= 1;
+
+                    m_FreeHeaps.Add(heap);
+                }
+            }
+
             // Check if we can free some of the heaps
             for (size_t heapIdx = 0; heapIdx < m_Heaps.GetSize(); ++heapIdx)
             {
@@ -123,11 +142,18 @@ namespace hd
                 if (heap->IsEmpty())
                 {
                     m_Heaps.RemoveFast(heapIdx);
+                    heapIdx -= 1;
 
                     heap->SetMarker(currentMarker);
-                    m_FreeHeaps.Add(heap);
 
-                    heapIdx -= 1;
+                    if (heap->GetUsage() == Usage::Transient)
+                    {
+                        m_PendingHeaps.Add(heap);
+                    }
+                    else
+                    {
+                        m_FreeHeaps.Add(heap);
+                    }
                 }
             }
         }
@@ -138,7 +164,7 @@ namespace hd
             , m_Flags{ D3D12_HEAP_FLAG_NONE }
             , m_Usage{ Usage::Persistent }
             , m_Allocator{ allocationScope, size }
-            , m_AllocatorShadow{ allocationScope, size }
+            , m_NumTransientAllocations{}
             , m_Heap{}
             , m_ResourceData{}
             , m_CPUMappedData{}
@@ -151,6 +177,11 @@ namespace hd
             hdAssert(IsCreated(), u8"Cannot use nonresident heap.");
 
             m_Usage = usage;
+        }
+
+        HeapAllocator::Usage HeapAllocator::Heap::GetUsage() const
+        {
+            return m_Usage;
         }
 
         bool HeapAllocator::Heap::IsCompatible(D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags, Usage usage)
@@ -174,13 +205,13 @@ namespace hd
             HeapAllocator::Allocation allocation{};
             allocation.Offset = m_Allocator.Allocate(size, alignment);
             allocation.Size = size;
-            allocation.CPUMappedMemory = m_CPUMappedData;
+            allocation.CPUMappedMemory = reinterpret_cast<std::byte*>(m_CPUMappedData) + allocation.Offset;
             allocation.GPUHeap = m_Heap;
             allocation.ResourceData = &m_ResourceData;
 
             if (m_Usage == Usage::Transient)
             {
-                m_AllocatorShadow.Allocate(size, alignment);
+                m_NumTransientAllocations += 1;
             }
 
             return allocation;
@@ -196,8 +227,8 @@ namespace hd
             }
             else
             {
-                // Deallocate only shadow for transient heaps to be able to check for empty
-                m_AllocatorShadow.Deallocate(allocation.Offset, allocation.Size);
+                hdAssert(m_NumTransientAllocations > 0, u8"Trying to deallocate from free heap.");
+                m_NumTransientAllocations -= 1;
             }
         }
 
@@ -248,6 +279,10 @@ namespace hd
                     m_ResourceData.Resource->Map(0, nullptr, &m_CPUMappedData);
                 }
             }
+
+            m_Type = type;
+            m_Flags = flags;
+            m_Usage = usage;
         }
 
         void HeapAllocator::Heap::Destroy()
@@ -270,7 +305,7 @@ namespace hd
 
         bool HeapAllocator::Heap::IsEmpty()
         {
-            return m_Usage == Usage::Persistent ? m_Allocator.Empty() : m_AllocatorShadow.Empty();
+            return m_Usage == Usage::Persistent ? m_Allocator.Empty() : m_NumTransientAllocations == 0;
         }
 
         void HeapAllocator::Heap::SetMarker(size_t marker)

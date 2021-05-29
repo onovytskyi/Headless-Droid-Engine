@@ -17,13 +17,15 @@ namespace hd
         enum class GraphicCommandType : uint32_t
         {
             ClearRenderTarget,
+            UpdateBuffer,
             UpdateTexture,
             SetRenderState,
             SetTopologyType,
             DrawInstanced,
             SetViewports,
             SetScissorRects,
-            SetRenderTargets
+            SetRenderTargets,
+            SetRootVariable
         };
 
         struct ClearRenderTargetCommand
@@ -43,6 +45,17 @@ namespace hd
             TextureHandle Target;
             uint32_t FirstSubresource;
             uint32_t NumSubresources;
+            std::byte* Data;
+            size_t Size;
+        };
+
+        struct UpdateBufferCommand
+        {
+            static UpdateBufferCommand& WriteTo(util::CommandBuffer& commandBuffer, size_t dataSize);
+            static UpdateBufferCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            BufferHandle Target;
+            size_t Offset;
             std::byte* Data;
             size_t Size;
         };
@@ -99,12 +112,22 @@ namespace hd
             uint32_t Count;
         };
 
+        struct SetRootVariableCommand
+        {
+            static SetRootVariableCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static SetRootVariableCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            uint32_t Index;
+            uint32_t Value;
+        };
+
         class GraphicCommandsStream
         {
         public:
             GraphicCommandsStream(util::CommandBuffer& targetBuffer);
 
             void ClearRenderTarget(TextureHandle target, std::array<float, 4> color);
+            void UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size);
             void UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void* data, size_t size);
             void SetRenderState(RenderState* renderState);
             void SetTopologyType(TopologyType type);
@@ -112,6 +135,7 @@ namespace hd
             void SetViewport(Viewport const& viewport);
             void SetScissorRect(Rect const& rect);
             void SetRenderTarget(TextureHandle target);
+            void SetRootVariable(uint32_t index, uint32_t value);
 
         private:
             util::CommandBuffer& m_CommandBuffer;

@@ -63,6 +63,9 @@ namespace hd
             void Free(DescriptorSRV descriptor);
             void Free(DescriptorSampler descriptor);
 
+            ID3D12DescriptorHeap* GetResourceHeap();
+            ID3D12DescriptorHeap* GetSamplerHeap();
+
         private:
             class DescriptorAllocator
             {
@@ -76,6 +79,8 @@ namespace hd
                 D3D12_CPU_DESCRIPTOR_HANDLE ResolveCPU(uint32_t index);
                 D3D12_GPU_DESCRIPTOR_HANDLE ResolveGPU(uint32_t index);
 
+                void FillWithDefaults(DevicePlatform& device, ID3D12Resource* defaultResource);
+
             private:
                 util::BestFitAllocatorHelper m_Allocator;
                 ComPtr<ID3D12DescriptorHeap> m_Heap;
@@ -86,6 +91,8 @@ namespace hd
             DescriptorAllocator m_DSV;
             DescriptorAllocator m_SRV;
             DescriptorAllocator m_Sampler;
+
+            ComPtr<ID3D12Resource> m_DefaultDescriptorResource;
         };
     }
 }

@@ -45,6 +45,23 @@ namespace hd
             return command;
         }
 
+        UpdateBufferCommand& UpdateBufferCommand::WriteTo(util::CommandBuffer& commandBuffer, size_t dataSize)
+        {
+            UpdateBufferCommand& command = WriteGraphicCommand<UpdateBufferCommand>(commandBuffer, GraphicCommandType::UpdateBuffer);
+            command.Data = &commandBuffer.Write<std::byte>(dataSize);
+            command.Size = dataSize;
+
+            return command;
+        }
+
+        UpdateBufferCommand& UpdateBufferCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            UpdateBufferCommand& command = commandBuffer.Read<UpdateBufferCommand>();
+            commandBuffer.Read<std::byte>(command.Size);
+
+            return command;
+        }
+
         SetRenderStateCommand& SetRenderStateCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return WriteGraphicCommand<SetRenderStateCommand>(commandBuffer, GraphicCommandType::SetRenderState);
@@ -126,6 +143,16 @@ namespace hd
             return command;
         }
 
+        SetRootVariableCommand& SetRootVariableCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<SetRootVariableCommand>(commandBuffer, GraphicCommandType::SetRootVariable);
+        }
+
+        SetRootVariableCommand& SetRootVariableCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<SetRootVariableCommand>();
+        }
+
         GraphicCommandsStream::GraphicCommandsStream(util::CommandBuffer& targetBuffer)
             : m_CommandBuffer{ targetBuffer }
         {
@@ -136,6 +163,15 @@ namespace hd
             hd::gfx::ClearRenderTargetCommand& command = hd::gfx::ClearRenderTargetCommand::WriteTo(m_CommandBuffer);
             command.Target = target;
             command.Color = color;
+        }
+
+        void GraphicCommandsStream::UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size)
+        {
+            gfx::UpdateBufferCommand& command = gfx::UpdateBufferCommand::WriteTo(m_CommandBuffer, size);
+            command.Target = target;
+            command.Offset = offset;
+            command.Size = size;
+            memcpy_s(command.Data, command.Size, data, command.Size);
         }
 
         void GraphicCommandsStream::UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void* data, size_t size)
@@ -183,6 +219,13 @@ namespace hd
         {
             gfx::SetRenderTargetsCommand& command = gfx::SetRenderTargetsCommand::WriteTo(m_CommandBuffer, 1);
             command.Targets[0] = target;
+        }
+
+        void GraphicCommandsStream::SetRootVariable(uint32_t index, uint32_t value)
+        {
+            gfx::SetRootVariableCommand& command = gfx::SetRootVariableCommand::WriteTo(m_CommandBuffer);
+            command.Index = index;
+            command.Value = value;
         }
     }
 }

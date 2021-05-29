@@ -25,7 +25,7 @@ namespace hd
         inline constexpr size_t MaxTransitionRequests() { return 128; }
         inline constexpr uint32_t MaxDescriptorsRTV() { return 1000000; }
         inline constexpr uint32_t MaxDescriptorsDSV() { return 1000000; }
-        inline constexpr uint32_t MaxDescriptorsSRV() { return 1000000; }
+        inline constexpr uint32_t MaxDescriptorsSRV() { return 10000; }
         inline constexpr uint32_t MaxDescriptorsSampler() { return 2048; }
         inline constexpr uint32_t MaxGraphicsCommandLists() { return 16; }
         inline constexpr uint32_t MaxGraphicsCommandAllocators() { return 24; }

@@ -73,7 +73,7 @@ namespace hd
             util::BufferArray<ResourceHolder<BufferHandle>> m_BuffersToFree;
             util::BufferArray<ResourceHolder<TextureHandle>> m_TexturesToFree;
 
-            util::BufferArray<BufferHandle> m_RecentBufferToFree;
+            util::BufferArray<BufferHandle> m_RecentBuffersToFree;
             util::BufferArray<TextureHandle> m_RecentTexturesToFree;
         };
     }
