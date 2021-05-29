@@ -12,6 +12,9 @@ namespace hd
         struct TextureTag {};
         using TextureHandle = util::Handle<TextureTag, uint64_t, std::numeric_limits<uint64_t>::max()>;
 
+        extern BufferHandle INVALID_BUFFER_HANDLE;
+        extern TextureHandle INVALID_TEXTURE_HANDLE;
+
         static const uint32_t ALL_SUBRESOURCES = std::numeric_limits<uint32_t>::max();
 
         enum class QueueType : uint32_t
@@ -47,6 +50,14 @@ namespace hd
             Strip,
             ListAdjacent,
             StipAdjacent
+        };
+
+        enum class BufferFlags : uint32_t
+        {
+            ConstantBuffer = 1 << 0,
+            ShaderResource = 1 << 1,
+            UnorderedAccess = 1 << 2,
+            Transient = 1 << 3
         };
 
         enum class TextureFlags : uint32_t
