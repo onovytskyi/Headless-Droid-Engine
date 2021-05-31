@@ -19,10 +19,14 @@ Prototyping rendering framework served as a playground for my experiments
 ## External tools and libraries
 * Premake (https://premake.github.io/)
 * ImGUI (https://github.com/ocornut/imgui/)
+* DXC (https://github.com/microsoft/DirectXShaderCompiler)
+* fast_obj (https://github.com/thisistherk/fast_obj)
+* meshoptimizer (https://github.com/zeux/meshoptimizer)
 
 ## Quick Guide
 ### Prerequisites
 1. Visual Studio 2019
+2. Windows SDK 10.0.17763.0 (or put any version you have into systemversion variable in Tools/HeadlessDroidSolutionDescription.lua)
 
 ### How to Build
 1. Run GenerateProject.bat from repository root.
