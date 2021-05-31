@@ -52,6 +52,14 @@ namespace hd
             StipAdjacent
         };
 
+        enum class BlendType : uint32_t
+        {
+            None,
+
+            Alpha,
+            AlphaSource
+        };
+
         enum class BufferFlags : uint32_t
         {
             ConstantBuffer = 1 << 0,

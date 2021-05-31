@@ -207,6 +207,57 @@ namespace hd
 
             return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
         }
+
+        void FillBlendParameters(BlendType type, D3D12_BLEND& srcBlend, D3D12_BLEND& destBlend, D3D12_BLEND_OP& blendOp)
+        {
+            switch (type)
+            {
+            case hd::gfx::BlendType::None:
+            {
+                srcBlend = D3D12_BLEND_ONE;
+                destBlend = D3D12_BLEND_ZERO;
+                blendOp = D3D12_BLEND_OP_ADD;
+            }
+            break;
+
+            case hd::gfx::BlendType::Alpha:
+            {
+                srcBlend = D3D12_BLEND_SRC_ALPHA;
+                destBlend = D3D12_BLEND_INV_SRC_ALPHA;
+                blendOp = D3D12_BLEND_OP_ADD;
+            }
+            break;
+
+            case hd::gfx::BlendType::AlphaSource:
+            {
+                srcBlend = D3D12_BLEND_INV_SRC_ALPHA;
+                destBlend = D3D12_BLEND_ZERO;
+                blendOp = D3D12_BLEND_OP_ADD;
+            }
+            break;
+
+            default:
+                hdAssert(u8"Unknown blend type");
+                break;
+            }
+        }
+
+        D3D12_RENDER_TARGET_BLEND_DESC ConstructBlendDesc(BlendType color, BlendType alpha)
+        {
+            D3D12_RENDER_TARGET_BLEND_DESC result{};
+
+            result.BlendEnable = color != BlendType::None || alpha != BlendType::None;
+            result.LogicOpEnable = FALSE;
+
+            FillBlendParameters(color, result.SrcBlend, result.DestBlend, result.BlendOp);
+            FillBlendParameters(alpha, result.SrcBlendAlpha, result.DestBlendAlpha, result.BlendOpAlpha);
+
+            result.LogicOp = D3D12_LOGIC_OP_NOOP;
+            result.RenderTargetWriteMask = (color != BlendType::None ? ((D3D12_COLOR_WRITE_ENABLE_RED | D3D12_COLOR_WRITE_ENABLE_GREEN) | D3D12_COLOR_WRITE_ENABLE_BLUE ) : 0);
+            result.RenderTargetWriteMask |= (alpha != BlendType::None ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
+
+            return result;
+        }
     }
 }
 

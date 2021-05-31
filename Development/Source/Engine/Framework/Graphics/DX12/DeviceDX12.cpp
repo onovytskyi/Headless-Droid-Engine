@@ -150,9 +150,10 @@ namespace hd
 
             ID3D12GraphicsCommandList* commandList = m_GraphicsCommandListManager->GetCommandList(nullptr);
 
-            //ID3D12DescriptorHeap* bindlessHeaps[2] = { m_DescriptorManager->GetResourceHeap(), m_DescriptorManager->GetSamplerHeap() };
-            ID3D12DescriptorHeap* bindlessHeaps[1] = { m_DescriptorManager->GetResourceHeap() };
+            ID3D12DescriptorHeap* bindlessHeaps[2] = { m_DescriptorManager->GetResourceHeap(), m_DescriptorManager->GetSamplerHeap() };
             commandList->SetDescriptorHeaps(_countof(bindlessHeaps), bindlessHeaps);
+
+            // #HACK Set root signature only for used pipeline
             commandList->SetGraphicsRootSignature(m_RootSignature.Get());
             commandList->SetComputeRootSignature(m_RootSignature.Get());
 
@@ -184,7 +185,7 @@ namespace hd
                     UpdateBufferCommand& command = UpdateBufferCommand::ReadFrom(commandBufferReader);
                     Buffer& target = m_Backend->GetBufferAllocator().Get(uint64_t(command.Target));
 
-                    HeapAllocator::Allocation uploadAllocation = m_HeapAllocator->Allocate(target.GetSize(), D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE, D3D12_HEAP_TYPE_UPLOAD,
+                    HeapAllocator::Allocation uploadAllocation = m_HeapAllocator->Allocate(command.Size, D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE, D3D12_HEAP_TYPE_UPLOAD,
                         D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS, HeapAllocator::Usage::Transient);
 
                     memcpy_s(uploadAllocation.CPUMappedMemory, uploadAllocation.Size, command.Data, command.Size);
@@ -395,7 +396,7 @@ namespace hd
                     for (uint32_t renderTargetIdx = 0; renderTargetIdx < command.Count; ++renderTargetIdx)
                     {
                         Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.Targets[renderTargetIdx]));
-                        // #FIXME shouldn't we request this state transion only when really apply render target in volatile state tracker
+                        // #FIXME shouldn't we request this state transition only when really apply render target in volatile state tracker
                         m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_RENDER_TARGET);
                         volatileState->SetRenderTarget(renderTargetIdx, &target);
                     }
@@ -410,7 +411,7 @@ namespace hd
                 {
                     SetRootVariableCommand& command = SetRootVariableCommand::ReadFrom(commandBufferReader);
 
-                    //#TODO #Optimization separate those out
+                    //#TODO #Optimization Separate those out. Also values can and should be buffered and set in groups.
                     commandList->SetGraphicsRoot32BitConstant(0, command.Value, command.Index);
                     commandList->SetComputeRoot32BitConstant(0, command.Value, command.Index);
                 }
@@ -662,7 +663,7 @@ namespace hd
             D3D12_RESOURCE_ALLOCATION_INFO allocationInfo = m_Device->GetResourceAllocationInfo(0, 1, &textureDesc);
 
             HeapAllocator::Allocation allocation = m_HeapAllocator->Allocate(allocationInfo.SizeInBytes, allocationInfo.Alignment, D3D12_HEAP_TYPE_DEFAULT, heapFlags, 
-                HeapAllocator::Usage::Transient);
+                HeapAllocator::Usage::Persistent);
 
             hdEnsure(allocation.IsValid(), u8"Cannot allocate GPU memory for resource.");
 
@@ -730,7 +731,6 @@ namespace hd
             m_GraphicsCommandListManager->RecycleResources(currentMarker, completedMarker);
             m_ComputeCommandListManager->RecycleResources(currentMarker, completedMarker);
             m_CopyCommandListManager->RecycleResources(currentMarker, completedMarker);
-            m_HeapAllocator->RecycleResources(currentMarker, completedMarker);
 
             for (BufferHandle& buffer : m_RecentBuffersToFree)
             {
@@ -775,6 +775,8 @@ namespace hd
                     textureIdx -= 1;
                 }
             }
+
+            m_HeapAllocator->RecycleResources(currentMarker, completedMarker);
         }
 
         void Device::GetMemoryBudgets(size_t& outLocalBudget, size_t& outLocalUsage, size_t& outNonlocalBudget, size_t& outNonlocalUsage)

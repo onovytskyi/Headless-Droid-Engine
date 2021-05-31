@@ -70,6 +70,8 @@ namespace hd
                 void SetMarker(size_t marker);
                 size_t GetMarker();
 
+                void Reset();
+
             private:
                 size_t m_Marker;
 
@@ -77,6 +79,7 @@ namespace hd
                 D3D12_HEAP_FLAGS m_Flags;
                 Usage m_Usage;
 
+                // #TODO Use linear allocator and twice as smaller heaps for Transient allocations
                 util::BestFitAllocatorHelper m_Allocator;
                 uint32_t m_NumTransientAllocations;
 

@@ -156,16 +156,7 @@ namespace hd
             desc = {};
             desc.AlphaToCoverageEnable = FALSE;
             desc.IndependentBlendEnable = FALSE;
-            desc.RenderTarget[0].BlendEnable = FALSE;
-            desc.RenderTarget[0].LogicOpEnable = FALSE;
-            desc.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-            desc.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
-            desc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-            desc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-            desc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-            desc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-            desc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-            desc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+            desc.RenderTarget[0] = ConstructBlendDesc(BlendType::None, BlendType::None);
         }
 
         void RenderState::SetVS(char8_t const* shaderName, char8_t const* entryPoint)
@@ -257,7 +248,7 @@ namespace hd
             m_DepthStencil->StencilEnable = value ? TRUE : FALSE;
         }
 
-        void RenderState::SetBlendEnable(bool value)
+        void RenderState::SetBlendType(BlendType color, BlendType alpha)
         {
             if (m_Blend == nullptr)
             {
@@ -269,10 +260,10 @@ namespace hd
             }
 
             m_Blend->IndependentBlendEnable = FALSE;
-            m_Blend->RenderTarget[0].BlendEnable = TRUE;
+            m_Blend->RenderTarget[0] = ConstructBlendDesc(color, alpha);
         }
 
-        void RenderState::SetBlendEnable(uint32_t index, bool value)
+        void RenderState::SetBlendType(uint32_t index, BlendType color, BlendType alpha)
         {
             hdAssert(index < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT, u8"Render target index is out of supported range.");
 
@@ -286,7 +277,7 @@ namespace hd
             }
 
             m_Blend->IndependentBlendEnable = TRUE;
-            m_Blend->RenderTarget[index].BlendEnable = TRUE;
+            m_Blend->RenderTarget[index] = ConstructBlendDesc(color, alpha);
         }
 
         void RenderState::SetPrimitiveType(PrimitiveType primitiveType)

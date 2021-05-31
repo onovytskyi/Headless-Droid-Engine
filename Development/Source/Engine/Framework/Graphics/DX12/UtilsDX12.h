@@ -24,6 +24,8 @@ namespace hd
         D3D12_RESOURCE_DIMENSION ConvertToResourceDimension(TextureDimenstion dimension);
         D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertToTopologyType(PrimitiveType primitiveType);
         D3D_PRIMITIVE_TOPOLOGY ConvertToPrimitiveTopology(PrimitiveType primitiveType, TopologyType topologyType);
+
+        D3D12_RENDER_TARGET_BLEND_DESC ConstructBlendDesc(BlendType color, BlendType alpha);
     }
 }
 

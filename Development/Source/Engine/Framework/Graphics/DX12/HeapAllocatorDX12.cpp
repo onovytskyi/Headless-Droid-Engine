@@ -149,6 +149,7 @@ namespace hd
                     if (heap->GetUsage() == Usage::Transient)
                     {
                         m_PendingHeaps.Add(heap);
+                        heap->Reset();
                     }
                     else
                     {
@@ -209,7 +210,7 @@ namespace hd
             allocation.GPUHeap = m_Heap;
             allocation.ResourceData = &m_ResourceData;
 
-            if (m_Usage == Usage::Transient)
+            if (allocation.Offset != util::BestFitAllocatorHelper::INVALID_INDEX && m_Usage == Usage::Transient)
             {
                 m_NumTransientAllocations += 1;
             }
@@ -316,6 +317,11 @@ namespace hd
         size_t HeapAllocator::Heap::GetMarker()
         {
             return m_Marker;
+        }
+
+        void HeapAllocator::Heap::Reset()
+        {
+            m_Allocator.Reset();
         }
 
         bool HeapAllocator::Allocation::IsValid()

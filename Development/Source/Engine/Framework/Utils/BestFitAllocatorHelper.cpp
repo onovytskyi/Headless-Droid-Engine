@@ -8,7 +8,6 @@ namespace hd
 {
     namespace util
     {
-
         BestFitAllocatorHelper::BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size)
             : m_RangesAllocator{ allocationScope }
             , m_FirstFreeRange{}
@@ -194,6 +193,20 @@ namespace hd
             {
                 m_FirstFreeRange = newRange;
             }
+        }
+
+        void BestFitAllocatorHelper::Reset()
+        {
+            for (Range* range = m_FirstFreeRange; range;)
+            {
+                Range* rangeToFree = range;
+                range = range->m_NextRange;
+
+                m_RangesAllocator.Free(rangeToFree);
+            }
+
+            m_FirstFreeRange = m_RangesAllocator.Allocate();
+            *m_FirstFreeRange = { nullptr, nullptr,  0, m_Size };
         }
 
         bool BestFitAllocatorHelper::Empty()

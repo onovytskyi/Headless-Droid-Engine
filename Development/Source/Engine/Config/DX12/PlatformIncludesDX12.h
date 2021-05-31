@@ -17,8 +17,6 @@
 #include <wrl/client.h>
 using Microsoft::WRL::ComPtr;
 
-#include <DirectXMath.h>
-
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 

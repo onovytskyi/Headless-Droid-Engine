@@ -22,8 +22,8 @@ namespace hd
             void SetRenderTargetFormat(uint32_t index, GraphicFormat format);
             void SetDepthEnable(bool value);
             void SetStencilEnable(bool value);
-            void SetBlendEnable(bool value);
-            void SetBlendEnable(uint32_t index, bool value);
+            void SetBlendType(BlendType color, BlendType alpha);
+            void SetBlendType(uint32_t index, BlendType color, BlendType alpha);
             void SetPrimitiveType(PrimitiveType primitiveType);
             PrimitiveType GetPrimitiveType() const;
         };

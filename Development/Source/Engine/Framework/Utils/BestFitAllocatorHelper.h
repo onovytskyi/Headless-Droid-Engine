@@ -21,6 +21,9 @@ namespace hd
             size_t Allocate(size_t count, size_t align);
             void Deallocate(size_t offset, size_t count);
 
+            // #HACK Remove this method as soon as possible
+            // It is used to handle hacky usage of this class in HeapAllocator
+            void Reset();
             bool Empty();
 
             size_t GetSize();

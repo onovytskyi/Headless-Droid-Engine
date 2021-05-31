@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/Engine/DebugOverlay/DebugOverlay.h"
+#include "Engine/Engine/DebugOverlay/Tools/StatsDebugTool.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/Queue.h"
@@ -20,6 +22,7 @@ public:
     void RequestExit();
 
 private:
+    void PrepareResouces();
     void ProcessSystemCommands();
     void RenderFrame();
     void RecordFrame(hd::util::CommandBuffer& commandBuffer);
@@ -37,6 +40,9 @@ private:
     hd::gfx::Device* m_GfxDevice;
     hd::gfx::Queue* m_GfxQueue;
     hd::gfx::Swapchain* m_GfxSwapchain;
+
+    hd::ui::DebugOverlay* m_DebugOverlay;
+    hd::ui::StatsDebugTool* m_StatsDebugTool;
 
     hd::util::CommandBuffer m_GraphicCommands;
 };

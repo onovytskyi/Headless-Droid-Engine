@@ -116,13 +116,13 @@ namespace hd
                 m_CBV = descriptorManager.AllocateSRV();
 
                 D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-                cbvDesc.BufferLocation = GetNativeResource()->GetGPUVirtualAddress();
+                cbvDesc.BufferLocation = GetNativeResource()->GetGPUVirtualAddress() + GetBaseOffset();
                 cbvDesc.SizeInBytes = m_Size;
 
                 device.GetNativeDevice()->CreateConstantBufferView(&cbvDesc, m_CBV.HandleCPU);
             }
 
-            if (flags & uint32_t(TextureFlags::ShaderResource))
+            if (flags & uint32_t(BufferFlags::ShaderResource))
             {
                 m_SRV = descriptorManager.AllocateSRV();
 
@@ -135,10 +135,10 @@ namespace hd
                 srvDesc.Buffer.StructureByteStride = elementSize;
                 srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-                device.GetNativeDevice()->CreateShaderResourceView(m_Data.Resource, &srvDesc, m_SRV.HandleCPU);
+                device.GetNativeDevice()->CreateShaderResourceView(GetNativeResource(), &srvDesc, m_SRV.HandleCPU);
             }
 
-            if (flags & uint32_t(TextureFlags::UnorderedAccess))
+            if (flags & uint32_t(BufferFlags::UnorderedAccess))
             {
                 m_UAV = descriptorManager.AllocateSRV();
 
@@ -150,7 +150,7 @@ namespace hd
                 uavDesc.Buffer.StructureByteStride = elementSize;
                 uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-                device.GetNativeDevice()->CreateUnorderedAccessView(m_Data.Resource, nullptr, &uavDesc, m_UAV.HandleCPU);
+                device.GetNativeDevice()->CreateUnorderedAccessView(GetNativeResource(), nullptr, &uavDesc, m_UAV.HandleCPU);
             }
         }
     }

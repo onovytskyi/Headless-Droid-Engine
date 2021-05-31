@@ -8,6 +8,8 @@
 #include <Windowsx.h>
 #include <comdef.h>
 
+#include <DirectXMath.h>
+
 #undef CreateWindow
 #undef WriteConsole
 #undef LoadImage
