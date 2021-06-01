@@ -22,6 +22,7 @@ Prototyping rendering framework served as a playground for my experiments
 * DXC (https://github.com/microsoft/DirectXShaderCompiler)
 * fast_obj (https://github.com/thisistherk/fast_obj)
 * meshoptimizer (https://github.com/zeux/meshoptimizer)
+* stb_image (https://github.com/nothings/stb)
 
 ## Quick Guide
 ### Prerequisites
