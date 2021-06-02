@@ -1,10 +1,11 @@
 #include "Engine/Config/Bootstrap.h"
 
-#include "Engine/Framework/File/Util.h"
+#include "Engine/Framework/File/Utils.h"
 
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/Buffer.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
+#include "Engine/Framework/Memory/VirtualBuffer.h"
 #include "Engine/Framework/String/String.h"
 
 //#TODO replace filesystem code with manual implementation
@@ -29,7 +30,31 @@ namespace hd
             file.close();
         }
 
+        void ReadWholeFile(mem::AllocationScope& scratch, str::String const& filePath, mem::VirtualBuffer& output)
+        {
+            std::ifstream file{ filePath.AsWide(scratch), std::ios::binary | std::ios::ate };
+
+            hdEnsure(file.good(), u8"Failed to open file %", filePath.CStr());
+
+            std::streamsize size{ file.tellg() };
+            file.seekg(0, std::ios::beg);
+
+            output.Resize(size);
+            file.read(output.GetDataAs<char*>(), output.GetSize());
+            file.close();
+        }
+
         void WriteWholeFile(str::String const& filePath, mem::Buffer const& data)
+        {
+            WriteWholeFile(filePath, data.GetData(), data.GetSize());
+        }
+
+        void WriteWholeFile(str::String const& filePath, mem::VirtualBuffer const& data)
+        {
+            WriteWholeFile(filePath, data.GetData(), data.GetSize());
+        }
+
+        void WriteWholeFile(str::String const& filePath, std::byte const* data, size_t size)
         {
             mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
 
@@ -39,7 +64,7 @@ namespace hd
 
             hdEnsure(file.good(), u8"Failed to create file %", filePath.CStr());
 
-            file.write(data.GetDataAs<const char*>(), data.GetSize());
+            file.write(reinterpret_cast<char const*>(data), size);
             file.close();
         }
 
@@ -141,6 +166,12 @@ namespace hd
         void ConvertToShaderPath(mem::AllocationScope& scratch, str::String const& path, str::String& output)
         {
             str::String cookedPath{ scratch, cfg::ShadersPath() };
+            return Merge(scratch, cookedPath, path, output);
+        }
+
+        void ConvertToMediaPath(mem::AllocationScope& scratch, str::String const& path, str::String& output)
+        {
+            str::String cookedPath{ scratch, cfg::MediaPath() };
             return Merge(scratch, cookedPath, path, output);
         }
 

@@ -6,6 +6,7 @@ namespace hd
 {
     namespace mem
     {
+        // #TODO make unified interface between this class and mem::Buffer class
         class VirtualBuffer : public VirtualBufferPlatform
         {
         public:

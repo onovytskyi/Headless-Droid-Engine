@@ -33,6 +33,7 @@ namespace hd
             wchar_t const* AsWide(mem::AllocationScope& allocationScope) const;
 
             char8_t const* CStr() const;
+            char8_t* Str();
 
         private:
             mem::Buffer m_Memory;

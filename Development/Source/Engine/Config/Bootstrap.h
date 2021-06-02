@@ -31,4 +31,9 @@
             classname& operator = (classname const&) = delete; \
             classname& operator = (classname &&) = delete;
 
+inline constexpr uint32_t MakeFourCC(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4)
+{
+    return static_cast<uint32_t>(c1) | static_cast<uint32_t>(c2) << 8 | static_cast<uint32_t>(c3) << 16 | static_cast<uint32_t>(c4) << 24;
+}
+
 #include "Engine/Config/EngineConfiguration.h"

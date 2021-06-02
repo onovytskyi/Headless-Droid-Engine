@@ -9,6 +9,7 @@ namespace hd
         inline constexpr uint32_t MaxFrameLatency() { return 3; }
 
         inline constexpr char8_t const* ShadersPath() { return u8"../Development/Source/Shaders/"; }
+        inline constexpr char8_t const* MediaPath() { return u8"../Media/"; }
 
 #if defined(HD_BUILD_DEBUG)
         inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/Debug/"; }
@@ -35,8 +36,8 @@ namespace hd
         inline constexpr uint32_t MaxCopyCommandAllocators() { return 24; }
         inline constexpr uint32_t MaxBuffersToFreePerFrame() { return 32; }
         inline constexpr uint32_t MaxBuffersToFreeInQueue() { return 64; }
-        inline constexpr uint32_t MaxTexturesToFreePerFrame() { return 32; }
-        inline constexpr uint32_t MaxTexturesToFreeInQueue() { return 64; }
+        inline constexpr uint32_t MaxTexturesToFreePerFrame() { return 128; }
+        inline constexpr uint32_t MaxTexturesToFreeInQueue() { return 256; }
         inline constexpr size_t GPUHeapSize() { return 64 * 1024 * 1024; }
         inline constexpr uint32_t MaxGPUHeaps() { return 128; }
         inline constexpr uint32_t KeepHeapsAliveForFrames() { return 10; }

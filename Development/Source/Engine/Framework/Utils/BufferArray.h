@@ -30,10 +30,15 @@ namespace hd
             void ResizeToMax();
             void Clear();
 
+            T* GetData();
+            T const* GetData() const;
             size_t GetSize() const;
 
             T* begin();
             T* end();
+
+            T const* begin() const;
+            T const* end() const;
 
         private:
             mem::Buffer m_Memory;

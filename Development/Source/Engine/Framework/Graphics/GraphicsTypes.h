@@ -28,8 +28,22 @@ namespace hd
         {
             Unknown,
 
+            D24UNorm_S8UInt,
             RGBA8UNorm,
-            RGBA8UNorm_Srgb
+            RGBA8UNorm_Srgb,
+            BGRA8Unorm,
+            BGRA8Unorm_Srgb,
+            BGRX8Unorm,
+            BGRX8Unorm_Srgb,
+            BC1Unorm,
+            BC2Unorm,
+            BC3Unorm,
+            BC4Unorm,
+            BC4Snorm,
+            BC5Unorm,
+            BC5Snorm,
+            RGBA16Float,
+            RGBA32Float
         };
 
         enum class PrimitiveType : uint32_t
@@ -58,6 +72,18 @@ namespace hd
 
             Alpha,
             AlphaSource
+        };
+
+        enum class ComparisonFunc : uint32_t
+        {
+            Never,
+            Less,
+            Equal,
+            LessEqual,
+            Greater,
+            NotEqual,
+            GreaterEqual,
+            Always
         };
 
         enum class BufferFlags : uint32_t

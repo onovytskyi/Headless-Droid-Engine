@@ -14,8 +14,22 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::D24UNorm_S8UInt: return DXGI_FORMAT_D24_UNORM_S8_UINT;
             case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
             case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM;
+            case GraphicFormat::BGRA8Unorm: return DXGI_FORMAT_B8G8R8A8_UNORM;
+            case GraphicFormat::BGRA8Unorm_Srgb: return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+            case GraphicFormat::BGRX8Unorm: return DXGI_FORMAT_B8G8R8X8_UNORM;
+            case GraphicFormat::BGRX8Unorm_Srgb: return DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
+            case GraphicFormat::BC1Unorm: return DXGI_FORMAT_BC1_UNORM;
+            case GraphicFormat::BC2Unorm: return DXGI_FORMAT_BC2_UNORM;
+            case GraphicFormat::BC3Unorm: return DXGI_FORMAT_BC3_UNORM;
+            case GraphicFormat::BC4Unorm: return DXGI_FORMAT_BC4_UNORM;
+            case GraphicFormat::BC4Snorm: return DXGI_FORMAT_BC4_SNORM;
+            case GraphicFormat::BC5Unorm: return DXGI_FORMAT_BC5_UNORM;
+            case GraphicFormat::BC5Snorm: return DXGI_FORMAT_BC5_SNORM;
+            case GraphicFormat::RGBA16Float: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            case GraphicFormat::RGBA32Float: return DXGI_FORMAT_R32G32B32A32_FLOAT;
             }
 
             return DXGI_FORMAT_UNKNOWN;
@@ -25,8 +39,11 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::D24UNorm_S8UInt: return DXGI_FORMAT_D24_UNORM_S8_UINT;
             case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
             case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            case GraphicFormat::RGBA16Float: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            case GraphicFormat::RGBA32Float: return DXGI_FORMAT_R32G32B32A32_FLOAT;
             }
 
             return DXGI_FORMAT_UNKNOWN;
@@ -36,8 +53,19 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::D24UNorm_S8UInt: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
             case GraphicFormat::RGBA8UNorm: return DXGI_FORMAT_R8G8B8A8_UNORM;
-            case GraphicFormat::RGBA8UNorm_Srgb: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            case GraphicFormat::BGRA8Unorm: return DXGI_FORMAT_B8G8R8A8_UNORM;
+            case GraphicFormat::BGRX8Unorm: return DXGI_FORMAT_B8G8R8X8_UNORM;
+            case GraphicFormat::BC1Unorm: return DXGI_FORMAT_BC1_UNORM;
+            case GraphicFormat::BC2Unorm: return DXGI_FORMAT_BC2_UNORM;
+            case GraphicFormat::BC3Unorm: return DXGI_FORMAT_BC3_UNORM;
+            case GraphicFormat::BC4Unorm: return DXGI_FORMAT_BC4_UNORM;
+            case GraphicFormat::BC4Snorm: return DXGI_FORMAT_BC4_SNORM;
+            case GraphicFormat::BC5Unorm: return DXGI_FORMAT_BC5_UNORM;
+            case GraphicFormat::BC5Snorm: return DXGI_FORMAT_BC5_SNORM;
+            case GraphicFormat::RGBA16Float: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            case GraphicFormat::RGBA32Float: return DXGI_FORMAT_R32G32B32A32_FLOAT;
             }
 
             return DXGI_FORMAT_UNKNOWN;
@@ -45,11 +73,30 @@ namespace hd
 
         bool IsBlockCompressed(GraphicFormat format)
         {
+            switch (format)
+            {
+            case GraphicFormat::BC1Unorm:
+            case GraphicFormat::BC2Unorm:
+            case GraphicFormat::BC3Unorm:
+            case GraphicFormat::BC4Unorm:
+            case GraphicFormat::BC4Snorm:
+            case GraphicFormat::BC5Unorm:
+            case GraphicFormat::BC5Snorm:
+                return true;
+            }
+
             return false;
         }
 
         size_t GetBlockSize(GraphicFormat format)
         {
+            switch (format)
+            {
+            case GraphicFormat::BC1Unorm:
+            case GraphicFormat::BC4Unorm:
+                return 8;
+            }
+
             return 16;
         }
 
@@ -57,8 +104,11 @@ namespace hd
         {
             switch (format)
             {
+            case GraphicFormat::D24UNorm_S8UInt: return 4;
             case GraphicFormat::RGBA8UNorm: return 4;
             case GraphicFormat::RGBA8UNorm_Srgb: return 4;
+            case GraphicFormat::RGBA16Float: return 8;
+            case GraphicFormat::RGBA32Float: return 16;
             }
 
             hdAssert(false, u8"Cannot get BPP for format. Format not supported!");
@@ -258,6 +308,27 @@ namespace hd
 
             return result;
         }
+
+        D3D12_COMPARISON_FUNC ConvertToComparisonFunc(ComparisonFunc comparisonFunc)
+        {
+            switch (comparisonFunc)
+            {
+            case hd::gfx::ComparisonFunc::Never: return D3D12_COMPARISON_FUNC_NEVER;
+            case hd::gfx::ComparisonFunc::Less: return D3D12_COMPARISON_FUNC_LESS;
+            case hd::gfx::ComparisonFunc::Equal: return D3D12_COMPARISON_FUNC_EQUAL;
+            case hd::gfx::ComparisonFunc::LessEqual: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+            case hd::gfx::ComparisonFunc::Greater: return D3D12_COMPARISON_FUNC_GREATER;
+            case hd::gfx::ComparisonFunc::NotEqual: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+            case hd::gfx::ComparisonFunc::GreaterEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+            case hd::gfx::ComparisonFunc::Always: return D3D12_COMPARISON_FUNC_ALWAYS;
+            default:
+                hdAssert(u8"Unknown comparison func type");
+                break;
+            }
+
+            return D3D12_COMPARISON_FUNC_ALWAYS;
+        }
+
     }
 }
 

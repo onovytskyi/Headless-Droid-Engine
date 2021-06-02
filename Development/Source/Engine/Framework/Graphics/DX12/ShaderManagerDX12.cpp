@@ -5,7 +5,7 @@
 #if defined(HD_GRAPHICS_API_DX12)
 
 #include "Engine/Debug/Log.h"
-#include "Engine/Framework/File/Util.h"
+#include "Engine/Framework/File/Utils.h"
 #include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 

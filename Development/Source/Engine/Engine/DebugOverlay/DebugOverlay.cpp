@@ -101,8 +101,6 @@ namespace hd
                     0.0f,                            0.0f,                                0.5f, 0.0f ,
                     -1.0f,                           1.0f,                                0.5f, 1.0f
                 };
-
-                XMStoreFloat4x4(&m_GuiProjectionMatrix, XMMatrixTranspose(XMLoadFloat4x4(&m_GuiProjectionMatrix)));
             }
         }
 
@@ -211,9 +209,10 @@ namespace hd
                     commandListBaseVertex += cmdList->VtxBuffer.size();
                 }
 
-                gfx::BufferHandle constantBuffer = m_Device->CreateBuffer(1, sizeof(m_GuiProjectionMatrix),
+                gfx::BufferHandle constantBuffer = m_Device->CreateBuffer(1, sizeof(m_GuiProjectionMatrix), 
                     uint32_t(gfx::BufferFlags::ConstantBuffer) | uint32_t(gfx::BufferFlags::Transient));
-                commandStream.UpdateBuffer(constantBuffer, 0, m_GuiProjectionMatrix.m, sizeof(m_GuiProjectionMatrix));
+                math::Matrix4x4 gpuGuiProjectionMatrix = math::MatrixTranspose(m_GuiProjectionMatrix);
+                commandStream.UpdateBuffer(constantBuffer, 0, gpuGuiProjectionMatrix.m, sizeof(gpuGuiProjectionMatrix));
 
                 commandStream.SetRenderState(m_GuiDrawRenderState);
                 commandStream.SetTopologyType(gfx::TopologyType::List);

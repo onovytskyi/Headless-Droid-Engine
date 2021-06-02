@@ -26,6 +26,7 @@ namespace hd
         D3D_PRIMITIVE_TOPOLOGY ConvertToPrimitiveTopology(PrimitiveType primitiveType, TopologyType topologyType);
 
         D3D12_RENDER_TARGET_BLEND_DESC ConstructBlendDesc(BlendType color, BlendType alpha);
+        D3D12_COMPARISON_FUNC ConvertToComparisonFunc(ComparisonFunc comparisonFunc);
     }
 }
 

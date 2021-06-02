@@ -85,6 +85,18 @@ namespace hd
         }
 
         template<typename T>
+        T* BufferArray<T>::GetData()
+        {
+            return m_Memory.GetDataAs<T*>();
+        }
+
+        template<typename T>
+        T const* BufferArray<T>::GetData() const
+        {
+            return m_Memory.GetDataAs<T const*>();
+        }
+
+        template<typename T>
         size_t BufferArray<T>::GetSize() const
         {
             return m_Size;
@@ -100,6 +112,18 @@ namespace hd
         T* BufferArray<T>::end()
         {
             return m_Memory.GetDataAs<T*>() + GetSize();
+        }
+
+        template<typename T>
+        T const* BufferArray<T>::begin() const
+        {
+            return m_Memory.GetDataAs<T const*>();
+        }
+
+        template<typename T>
+        T const* BufferArray<T>::end() const
+        {
+            return m_Memory.GetDataAs<T const*>() + GetSize();
         }
     }
 }

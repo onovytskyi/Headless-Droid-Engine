@@ -108,5 +108,9 @@ namespace hd
             return m_Memory.GetDataAs<char8_t const*>();
         }
 
+        char8_t* String::Str()
+        {
+            return m_Memory.GetDataAs<char8_t*>();
+        }
     }
 }

@@ -6,6 +6,7 @@ namespace hd
     {
         class AllocationScope;
         class Buffer;
+        class VirtualBuffer;
     }
 
     namespace str
@@ -16,7 +17,10 @@ namespace hd
     namespace file
     {
         void ReadWholeFile(mem::AllocationScope& scratch, str::String const& filePath, mem::Buffer& output);
+        void ReadWholeFile(mem::AllocationScope& scratch, str::String const& filePath, mem::VirtualBuffer& output);
         void WriteWholeFile(str::String const& filePath, mem::Buffer const& data);
+        void WriteWholeFile(str::String const& filePath, mem::VirtualBuffer const& data);
+        void WriteWholeFile(str::String const& filePath, std::byte const* data, size_t size);
 
         void CreateDirectories(str::String const& dirPath);
         void GetDirectory(mem::AllocationScope& scratch, str::String const& filePath, str::String& output);
@@ -30,6 +34,7 @@ namespace hd
         void ReplaceExtension(mem::AllocationScope& scratch, str::String const& filePath, str::String const& newExtension, str::String& output);
 
         void ConvertToShaderPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
+        void ConvertToMediaPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
         void ConvertToCookedPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
         void ConvertToCookedPathPrefixed(mem::AllocationScope& scratch, str::String const& path, str::String const& prefix, str::String& output);
     }
