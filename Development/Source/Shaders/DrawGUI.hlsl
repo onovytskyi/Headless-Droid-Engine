@@ -12,7 +12,7 @@ struct Vertex
     uint Color;
 };
 
-uint GetConstantBufferIdx()
+uint GetFrameDataBufferIdx()
 {
     return GetIndexLiteralHack(g_Constants.Value0);
 }
@@ -54,29 +54,37 @@ float4 DecompressColor(uint color)
     return result;
 }
 
-void MainVS(in uint VertexID : SV_VertexID, out float4 Position : SV_Position, out float2 UV : TexCoord0, out uint MaterialIdx : User0, out float4 UserColor : User1)
+struct ShaderVarying
 {
-    ConstantBuffer<FrameData> frameConstants = ResourceDescriptorHeap[GetConstantBufferIdx()];
+    float4 Position : SV_Position;
+    float2 UV : TexCoord0;
+    uint MaterialIdx : User0;
+    float4 UserColor : User1;
+};
+
+void MainVS(in uint VertexID : SV_VertexID, out ShaderVarying Output)
+{
+    ConstantBuffer<FrameData> frameConstants = ResourceDescriptorHeap[GetFrameDataBufferIdx()];
     StructuredBuffer<uint> indices = ResourceDescriptorHeap[GetIndexBufferIdx()];
     StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[GetVertexBufferIdx()];
 
     uint index = indices[GetBaseIndexIdx() + VertexID];
     Vertex vertex = vertices[GetBaseVertexIdx() + index];
 
-    Position = mul(float4(vertex.Position, 0.0, 1.0), frameConstants.GuiProj);
-    Position.z = Position.w;
-    UV = vertex.UV;
-    UserColor = DecompressColor(vertex.Color);
+    Output.Position = mul(float4(vertex.Position, 0.0, 1.0), frameConstants.GuiProj);
+    Output.Position.z = Output.Position.w;
+    Output.UV = vertex.UV;
+    Output.UserColor = DecompressColor(vertex.Color);
 }
 
-void MainPS(float4 Position : SV_Position, float2 UV : TexCoord0, uint MaterialIdx : User0, float4 UserColor : User1, out float4 Color : SV_Target0)
+void MainPS(ShaderVarying Input, out float4 Color : SV_Target0)
 {
-    float4 diffuseSample = float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 textureColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
     if (GetTextureIdx() != INVALID_INDEX)
     {
         Texture2D<float4> sourceTexture = ResourceDescriptorHeap[GetTextureIdx()];
-        diffuseSample = sourceTexture.Sample(g_LinearClampSampler, UV);
+        textureColor = sourceTexture.Sample(g_LinearClampSampler, Input.UV);
     }
 
-    Color = UserColor * diffuseSample;
+    Color = Input.UserColor * textureColor;
 }

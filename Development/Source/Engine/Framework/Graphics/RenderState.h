@@ -20,7 +20,9 @@ namespace hd
             void SetPS(char8_t const* shaderName, char8_t const* entryPoint);
             void SetCS(char8_t const* shaderName, char8_t const* entryPoint);
             void SetRenderTargetFormat(uint32_t index, GraphicFormat format);
+            void SetDepthStencilFormat(GraphicFormat format);
             void SetDepthEnable(bool value);
+            void SetDepthComparisonFunction(ComparisonFunc comparisonFunc);
             void SetStencilEnable(bool value);
             void SetBlendType(BlendType color, BlendType alpha);
             void SetBlendType(uint32_t index, BlendType color, BlendType alpha);

@@ -34,6 +34,7 @@ namespace hd
             D3D12_SHADER_BYTECODE* m_PS;
             D3D12_SHADER_BYTECODE* m_CS;
             D3D12_RT_FORMAT_ARRAY* m_RTFormats;
+            DXGI_FORMAT* m_DSFormat;
             D3D12_DEPTH_STENCIL_DESC* m_DepthStencil;
             D3D12_BLEND_DESC* m_Blend;
             D3D12_PRIMITIVE_TOPOLOGY_TYPE* m_PrimitiveTopology;

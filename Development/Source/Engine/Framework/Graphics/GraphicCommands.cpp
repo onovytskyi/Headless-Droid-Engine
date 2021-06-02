@@ -28,6 +28,16 @@ namespace hd
             return commandBuffer.Read<ClearRenderTargetCommand>();
         }
 
+        ClearDepthStencilCommand& ClearDepthStencilCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<ClearDepthStencilCommand>(commandBuffer, GraphicCommandType::ClearDepthStencil);
+        }
+
+        ClearDepthStencilCommand& ClearDepthStencilCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<ClearDepthStencilCommand>();
+        }
+
         UpdateTextureCommand& UpdateTextureCommand::WriteTo(util::CommandBuffer& commandBuffer, size_t dataSize)
         {
             UpdateTextureCommand& command = WriteGraphicCommand<UpdateTextureCommand>(commandBuffer, GraphicCommandType::UpdateTexture);
@@ -143,6 +153,16 @@ namespace hd
             return command;
         }
 
+        SetDepthStencilCommand& SetDepthStencilCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<SetDepthStencilCommand>(commandBuffer, GraphicCommandType::SetDepthStencil);
+        }
+
+        SetDepthStencilCommand& SetDepthStencilCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<SetDepthStencilCommand>();
+        }
+
         SetRootVariableCommand& SetRootVariableCommand::WriteTo(util::CommandBuffer& commandBuffer)
         {
             return WriteGraphicCommand<SetRootVariableCommand>(commandBuffer, GraphicCommandType::SetRootVariable);
@@ -163,6 +183,14 @@ namespace hd
             hd::gfx::ClearRenderTargetCommand& command = hd::gfx::ClearRenderTargetCommand::WriteTo(m_CommandBuffer);
             command.Target = target;
             command.Color = color;
+        }
+
+        void GraphicCommandsStream::ClearDepthStencil(TextureHandle depthStencil, float depth, uint32_t stencil)
+        {
+            hd::gfx::ClearDepthStencilCommand& command = hd::gfx::ClearDepthStencilCommand::WriteTo(m_CommandBuffer);
+            command.DepthStencil = depthStencil;
+            command.Depth = depth;
+            command.Stencil = stencil;
         }
 
         void GraphicCommandsStream::UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size)
@@ -219,6 +247,12 @@ namespace hd
         {
             gfx::SetRenderTargetsCommand& command = gfx::SetRenderTargetsCommand::WriteTo(m_CommandBuffer, 1);
             command.Targets[0] = target;
+        }
+
+        void GraphicCommandsStream::SetDepthStencil(TextureHandle depthStencil)
+        {
+            gfx::SetDepthStencilCommand& command = gfx::SetDepthStencilCommand::WriteTo(m_CommandBuffer);
+            command.DepthStencil = depthStencil;
         }
 
         void GraphicCommandsStream::SetRootVariable(uint32_t index, uint32_t value)

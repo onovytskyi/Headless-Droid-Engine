@@ -2,6 +2,9 @@
 
 #include "Engine/Engine/DebugOverlay/DebugOverlay.h"
 #include "Engine/Engine/DebugOverlay/Tools/StatsDebugTool.h"
+#include "Engine/Engine/Render/MeshCollection.h"
+#include "Engine/Engine/Render/TextureCollection.h"
+#include "Engine/Engine/Scene/FpsCamera.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/Queue.h"
@@ -11,6 +14,9 @@
 #include "Engine/Framework/System/SystemWindow.h"
 #include "Engine/Framework/System/Timer.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
+
+class GBufferPass;
+class LightingPass;
 
 class SampleGame
 {
@@ -45,4 +51,12 @@ private:
     hd::ui::StatsDebugTool* m_StatsDebugTool;
 
     hd::util::CommandBuffer m_GraphicCommands;
+
+    hd::render::MeshCollection* m_SceneMeshCollection;
+    hd::render::TextureCollection* m_SceneTextureCollection;
+
+    hd::scene::FpsCamera* m_FpsCamera;
+
+    GBufferPass* m_GBufferPass;
+    LightingPass* m_LightingPass;
 };

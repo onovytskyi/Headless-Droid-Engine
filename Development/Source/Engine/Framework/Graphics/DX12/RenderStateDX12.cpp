@@ -63,6 +63,14 @@ namespace hd
             D3D12_RT_FORMAT_ARRAY Formats;
         };
 
+        struct alignas(void*) StreamingDepthStencilFormat
+        {
+        private:
+            D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
+        public:
+            DXGI_FORMAT Format;
+        };
+
         struct alignas(void*) StreamingDepthStencil
         {
         private:
@@ -220,6 +228,19 @@ namespace hd
             m_RTFormats->NumRenderTargets = std::max(m_RTFormats->NumRenderTargets, index + 1);
         }
 
+        void RenderState::SetDepthStencilFormat(GraphicFormat format)
+        {
+            if (m_DSFormat == nullptr)
+            {
+                StreamingDepthStencilFormat& depthFormat = m_PipelineStream.Write<StreamingDepthStencilFormat>();
+                depthFormat = {};
+
+                m_DSFormat = &depthFormat.Format;
+            }
+
+            *m_DSFormat = ConvertToWriteableFormat(format);
+        }
+
         void RenderState::SetDepthEnable(bool value)
         {
             if (m_DepthStencil == nullptr)
@@ -232,6 +253,20 @@ namespace hd
             }
 
             m_DepthStencil->DepthEnable = value ? TRUE : FALSE;
+        }
+
+        void RenderState::SetDepthComparisonFunction(ComparisonFunc comparisonFunc)
+        {
+            if (m_DepthStencil == nullptr)
+            {
+                StreamingDepthStencil& depthStencil = m_PipelineStream.Write<StreamingDepthStencil>();
+                depthStencil = {};
+                SetupDefaults(depthStencil.Desc);
+
+                m_DepthStencil = &depthStencil.Desc;
+            }
+
+            m_DepthStencil->DepthFunc = ConvertToComparisonFunc(comparisonFunc);
         }
 
         void RenderState::SetStencilEnable(bool value)

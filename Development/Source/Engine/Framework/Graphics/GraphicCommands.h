@@ -17,6 +17,7 @@ namespace hd
         enum class GraphicCommandType : uint32_t
         {
             ClearRenderTarget,
+            ClearDepthStencil,
             UpdateBuffer,
             UpdateTexture,
             SetRenderState,
@@ -25,6 +26,7 @@ namespace hd
             SetViewports,
             SetScissorRects,
             SetRenderTargets,
+            SetDepthStencil,
             SetRootVariable
         };
 
@@ -35,6 +37,16 @@ namespace hd
 
             TextureHandle Target;
             std::array<float, 4> Color;
+        };
+
+        struct ClearDepthStencilCommand
+        {
+            static ClearDepthStencilCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static ClearDepthStencilCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            TextureHandle DepthStencil;
+            float Depth;
+            uint32_t Stencil;
         };
 
         struct UpdateTextureCommand
@@ -112,6 +124,14 @@ namespace hd
             uint32_t Count;
         };
 
+        struct SetDepthStencilCommand
+        {
+            static SetDepthStencilCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static SetDepthStencilCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            TextureHandle DepthStencil;
+        };
+
         struct SetRootVariableCommand
         {
             static SetRootVariableCommand& WriteTo(util::CommandBuffer& commandBuffer);
@@ -127,6 +147,7 @@ namespace hd
             GraphicCommandsStream(util::CommandBuffer& targetBuffer);
 
             void ClearRenderTarget(TextureHandle target, std::array<float, 4> color);
+            void ClearDepthStencil(TextureHandle depthStencil, float depth, uint32_t stencil);
             void UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size);
             void UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void* data, size_t size);
             void SetRenderState(RenderState* renderState);
@@ -135,6 +156,7 @@ namespace hd
             void SetViewport(Viewport const& viewport);
             void SetScissorRect(Rect const& rect);
             void SetRenderTarget(TextureHandle target);
+            void SetDepthStencil(TextureHandle depthStencil);
             void SetRootVariable(uint32_t index, uint32_t value);
 
         private:

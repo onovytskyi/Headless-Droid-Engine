@@ -31,12 +31,15 @@ namespace hd
             uint32_t GetSRVShaderIndex(BufferHandle handle);
             uint32_t GetUAVShaderIndex(BufferHandle handle);
 
-            TextureHandle CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension, float clearValue[4]);
+            TextureHandle CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension, 
+                float clearValue[4]);
             void DestroyTexture(TextureHandle handle);
             void DestroyTextureImmediate(TextureHandle handle);
 
             uint32_t GetSRVShaderIndex(TextureHandle handle);
             uint32_t GetUAVShaderIndex(TextureHandle handle);
+
+            void GetTextureDimensions(TextureHandle handle, uint64_t& outWidth, uint32_t& outHeight);
 
             void RecycleResources(uint64_t currentMarker, uint64_t completedMarker);
 

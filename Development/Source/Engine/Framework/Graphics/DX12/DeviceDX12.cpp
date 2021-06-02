@@ -180,6 +180,19 @@ namespace hd
 
 
                 // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::ClearDepthStencil:
+                {
+                    ClearDepthStencilCommand& command = ClearDepthStencilCommand::ReadFrom(commandBufferReader);
+                    Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.DepthStencil));
+
+                    m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+                    m_ResourceStateTracker->ApplyTransitions(*commandList);
+                    commandList->ClearDepthStencilView(target.GetDSV().HandleCPU, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, command.Depth, command.Stencil, 0, nullptr);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
                 case GraphicCommandType::UpdateBuffer:
                 {
                     UpdateBufferCommand& command = UpdateBufferCommand::ReadFrom(commandBufferReader);
@@ -388,6 +401,7 @@ namespace hd
                 }
                 break;
 
+
                 // -------------------------------------------------------------------------------------------------------------
                 case GraphicCommandType::SetRenderTargets:
                 {
@@ -402,6 +416,19 @@ namespace hd
                     }
 
                     volatileState->SetUsedRenderTargets(command.Count);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::SetDepthStencil:
+                {
+                    SetDepthStencilCommand& command = SetDepthStencilCommand::ReadFrom(commandBufferReader);
+
+                    Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.DepthStencil));
+                    // #FIXME shouldn't we request this state transition only when really apply render target in volatile state tracker
+                    m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_DEPTH_WRITE);
+                    volatileState->SetDepthStencil(&target);
                 }
                 break;
 
@@ -724,6 +751,18 @@ namespace hd
             hdAssert(descriptor, u8"Texture doesn't have SRV view.");
 
             return descriptor.HeapIndex;
+        }
+
+        void Device::GetTextureDimensions(TextureHandle handle, uint64_t& outWidth, uint32_t& outHeight)
+        {
+            util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
+
+            hdAssert(textureAllocator.IsValid(uint64_t(handle)), u8"Texture handle is invalid.");
+
+            Texture& texture = textureAllocator.Get(uint64_t(handle));
+
+            outWidth = texture.GetWidth();
+            outHeight = texture.GetHeight();
         }
 
         void Device::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)

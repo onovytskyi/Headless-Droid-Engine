@@ -1,3 +1,6 @@
+#ifndef _HLSL_COMMON_
+#define _HLSL_COMMON_
+
 struct RootVariables
 {
     uint Value0;
@@ -55,3 +58,5 @@ uint GetIndexLiteralHack(uint index)
 
     return (index << 1) >> 1;
 }
+
+#endif
