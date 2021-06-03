@@ -173,6 +173,36 @@ namespace hd
             return commandBuffer.Read<SetRootVariableCommand>();
         }
 
+        UseAsConstantBufferCommand& UseAsConstantBufferCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<UseAsConstantBufferCommand>(commandBuffer, GraphicCommandType::UseAsConstantBuffer);
+        }
+
+        UseAsConstantBufferCommand& UseAsConstantBufferCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<UseAsConstantBufferCommand>();
+        }
+
+        UseAsReadableResourceCommand& UseAsReadableResourceCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<UseAsReadableResourceCommand>(commandBuffer, GraphicCommandType::UseAsReadableResource);
+        }
+
+        UseAsReadableResourceCommand& UseAsReadableResourceCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<UseAsReadableResourceCommand>();
+        }
+
+        UseAsWriteableResourceCommand& UseAsWriteableResourceCommand::WriteTo(util::CommandBuffer& commandBuffer)
+        {
+            return WriteGraphicCommand<UseAsWriteableResourceCommand>(commandBuffer, GraphicCommandType::UseAsWriteableResource);
+        }
+
+        UseAsWriteableResourceCommand& UseAsWriteableResourceCommand::ReadFrom(util::CommandBufferReader& commandBuffer)
+        {
+            return commandBuffer.Read<UseAsWriteableResourceCommand>();
+        }
+
         GraphicCommandsStream::GraphicCommandsStream(util::CommandBuffer& targetBuffer)
             : m_CommandBuffer{ targetBuffer }
         {
@@ -260,6 +290,40 @@ namespace hd
             gfx::SetRootVariableCommand& command = gfx::SetRootVariableCommand::WriteTo(m_CommandBuffer);
             command.Index = index;
             command.Value = value;
+        }
+
+        void GraphicCommandsStream::UseAsConstantBuffer(BufferHandle buffer)
+        {
+            gfx::UseAsConstantBufferCommand& command = gfx::UseAsConstantBufferCommand::WriteTo(m_CommandBuffer);
+            command.Buffer = buffer;
+        }
+
+        void GraphicCommandsStream::UseAsReadableResource(BufferHandle buffer)
+        {
+            gfx::UseAsReadableResourceCommand& command = gfx::UseAsReadableResourceCommand::WriteTo(m_CommandBuffer);
+            command.Buffer = buffer;
+            command.Texture = INVALID_TEXTURE_HANDLE;
+        }
+
+        void GraphicCommandsStream::UseAsReadableResource(TextureHandle texture)
+        {
+            gfx::UseAsReadableResourceCommand& command = gfx::UseAsReadableResourceCommand::WriteTo(m_CommandBuffer);
+            command.Buffer = INVALID_BUFFER_HANDLE;
+            command.Texture = texture;
+        }
+
+        void GraphicCommandsStream::UseAsWriteableResource(BufferHandle buffer)
+        {
+            gfx::UseAsWriteableResourceCommand& command = gfx::UseAsWriteableResourceCommand::WriteTo(m_CommandBuffer);
+            command.Buffer = buffer;
+            command.Texture = INVALID_TEXTURE_HANDLE;
+        }
+
+        void GraphicCommandsStream::UseAsWriteableResource(TextureHandle texture)
+        {
+            gfx::UseAsWriteableResourceCommand& command = gfx::UseAsWriteableResourceCommand::WriteTo(m_CommandBuffer);
+            command.Buffer = INVALID_BUFFER_HANDLE;
+            command.Texture = texture;
         }
     }
 }

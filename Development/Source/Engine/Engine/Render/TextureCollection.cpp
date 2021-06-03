@@ -59,6 +59,7 @@ namespace hd
 
             gfx::GraphicCommandsStream commandStream{ graphicsCommands };
             commandStream.UpdateTexture(newHolder->Handle, 0, gfx::ALL_SUBRESOURCES, textureData.GetData(), textureData.GetSize());
+            commandStream.UseAsReadableResource(newHolder->Handle);
 
             hdLogInfo(u8"Texture % loaded.", textureFilePathStr.CStr());
 

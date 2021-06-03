@@ -51,6 +51,7 @@ void LightingPass::RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::sc
     frameData.SunDirection = { -1.0f, -1.0f, -1.0f };
     frameData.SunIntensity = 4.0f;
     commandStream.UpdateBuffer(m_FrameConstants, 0, &frameData, sizeof(frameData));
+    commandStream.UseAsConstantBuffer(m_FrameConstants);
 
     uint64_t width{};
     uint32_t height{};
@@ -61,6 +62,11 @@ void LightingPass::RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::sc
     commandStream.SetViewport({ 0.0f, float(width), 0.0f, float(height), 0.0f, 1.0f });
     commandStream.SetScissorRect({ 0, uint32_t(width), 0, height });
     commandStream.SetRenderTarget(target);
+
+    commandStream.UseAsReadableResource(surface0);
+    commandStream.UseAsReadableResource(surface1);
+    commandStream.UseAsReadableResource(surface2);
+    commandStream.UseAsReadableResource(depth);
 
     commandStream.SetRootVariable(0, m_Device.GetCBVShaderIndex(m_FrameConstants));
     commandStream.SetRootVariable(1, m_Device.GetSRVShaderIndex(surface0));

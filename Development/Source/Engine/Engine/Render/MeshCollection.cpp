@@ -76,6 +76,12 @@ namespace hd
 
             m_Meshes = m_Device.CreateBuffer(uint32_t(meshes.GetSize()), sizeof(MeshInfo), uint32_t(gfx::BufferFlags::ShaderResource));
             commandStream.UpdateBuffer(m_Meshes, 0, gpuMeshInfo.GetData(), gpuMeshInfo.GetSize() * sizeof(MeshInfo));
+
+            // After initial setup those resources must be always in readable state.
+            commandStream.UseAsReadableResource(m_Materials);
+            commandStream.UseAsReadableResource(m_Meshes);
+            commandStream.UseAsReadableResource(m_Indices);
+            commandStream.UseAsReadableResource(m_Vertices);
         }
 
         MeshCollection::~MeshCollection()

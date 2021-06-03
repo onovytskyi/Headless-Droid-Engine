@@ -27,7 +27,10 @@ namespace hd
             SetScissorRects,
             SetRenderTargets,
             SetDepthStencil,
-            SetRootVariable
+            SetRootVariable,
+            UseAsConstantBuffer,
+            UseAsReadableResource,
+            UseAsWriteableResource
         };
 
         struct ClearRenderTargetCommand
@@ -141,6 +144,33 @@ namespace hd
             uint32_t Value;
         };
 
+        struct UseAsConstantBufferCommand
+        {
+            static UseAsConstantBufferCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static UseAsConstantBufferCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            BufferHandle Buffer;
+        };
+
+        struct UseAsReadableResourceCommand
+        {
+            static UseAsReadableResourceCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static UseAsReadableResourceCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+            BufferHandle Buffer;
+            TextureHandle Texture;
+        };
+
+        struct UseAsWriteableResourceCommand
+        {
+            static UseAsWriteableResourceCommand& WriteTo(util::CommandBuffer& commandBuffer);
+            static UseAsWriteableResourceCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+
+
+            BufferHandle Buffer;
+            TextureHandle Texture;
+        };
+
         class GraphicCommandsStream
         {
         public:
@@ -158,6 +188,11 @@ namespace hd
             void SetRenderTarget(TextureHandle target);
             void SetDepthStencil(TextureHandle depthStencil);
             void SetRootVariable(uint32_t index, uint32_t value);
+            void UseAsConstantBuffer(BufferHandle buffer);
+            void UseAsReadableResource(BufferHandle buffer);
+            void UseAsReadableResource(TextureHandle texture);
+            void UseAsWriteableResource(BufferHandle buffer);
+            void UseAsWriteableResource(TextureHandle texture);
 
         private:
             util::CommandBuffer& m_CommandBuffer;

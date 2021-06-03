@@ -67,6 +67,7 @@ void GBufferPass::RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::sce
     frameData.WorldViewProj = hd::math::MatrixTranspose(hd::math::MatrixMultiply(frameData.World, camera.GetViewProjectionMatrix()));
     frameData.EyePositionWorld = camera.GetPosition();
     commandStream.UpdateBuffer(m_FrameConstants, 0, &frameData, sizeof(frameData));
+    commandStream.UseAsConstantBuffer(m_FrameConstants);
 
     commandStream.SetRenderState(&m_RenderState);
     commandStream.SetTopologyType(hd::gfx::TopologyType::List);

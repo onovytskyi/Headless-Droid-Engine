@@ -444,6 +444,63 @@ namespace hd
                 }
                 break;
 
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::UseAsConstantBuffer:
+                {
+                    UseAsConstantBufferCommand& command = UseAsConstantBufferCommand::ReadFrom(commandBufferReader);
+                    Buffer& target = m_Backend->GetBufferAllocator().Get(uint64_t(command.Buffer));
+
+                    m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::UseAsReadableResource:
+                {
+                    UseAsReadableResourceCommand& command = UseAsReadableResourceCommand::ReadFrom(commandBufferReader);
+
+                    if (command.Buffer != INVALID_BUFFER_HANDLE)
+                    {
+                        Buffer& target = m_Backend->GetBufferAllocator().Get(uint64_t(command.Buffer));
+
+                        m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+                    }
+                    else
+                    {
+                        hdAssert(command.Texture != INVALID_TEXTURE_HANDLE, u8"UseAsReadableResource command parameters are invalid.");
+
+                        Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.Texture));
+
+                        m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+                    }
+                }
+                break;
+
+
+                // -------------------------------------------------------------------------------------------------------------
+                case GraphicCommandType::UseAsWriteableResource:
+                {
+                    UseAsWriteableResourceCommand& command = UseAsWriteableResourceCommand::ReadFrom(commandBufferReader);
+
+                    if (command.Buffer != INVALID_BUFFER_HANDLE)
+                    {
+                        Buffer& target = m_Backend->GetBufferAllocator().Get(uint64_t(command.Buffer));
+
+                        m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                    }
+                    else
+                    {
+                        hdAssert(command.Texture != INVALID_TEXTURE_HANDLE, u8"UseAsWriteableResource command parameters are invalid.");
+
+                        Texture& target = m_Backend->GetTextureAllocator().Get(uint64_t(command.Texture));
+
+                        m_ResourceStateTracker->RequestTransition(target.GetStateTrackedData(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                    }
+                }
+                break;
+
                 default:
                     hdAssert(false, u8"Cannot process command. Unknown command type.");
                     break;

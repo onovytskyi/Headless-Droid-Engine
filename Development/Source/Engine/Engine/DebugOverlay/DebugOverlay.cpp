@@ -237,6 +237,7 @@ namespace hd
 
                         if (renderCmd.TextureId != std::numeric_limits<uint64_t>::max())
                         {
+                            commandStream.UseAsReadableResource(gfx::TextureHandle(renderCmd.TextureId));
                             commandStream.SetRootVariable(5, m_Device->GetSRVShaderIndex(gfx::TextureHandle(renderCmd.TextureId)));
                         }
                         else
