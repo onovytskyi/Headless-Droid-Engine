@@ -23,6 +23,7 @@ namespace hd
 #endif
 
 #if defined(HD_GRAPHICS_API_DX12)
+        inline constexpr uint32_t NumRootConstants() { return 32; } // See also Common.hlsl
         inline constexpr size_t MaxTransitionRequests() { return 128; }
         inline constexpr uint32_t MaxDescriptorsRTV() { return 1000000; }
         inline constexpr uint32_t MaxDescriptorsDSV() { return 1000000; }

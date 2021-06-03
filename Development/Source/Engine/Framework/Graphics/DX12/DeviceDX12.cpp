@@ -153,11 +153,8 @@ namespace hd
             ID3D12DescriptorHeap* bindlessHeaps[2] = { m_DescriptorManager->GetResourceHeap(), m_DescriptorManager->GetSamplerHeap() };
             commandList->SetDescriptorHeaps(_countof(bindlessHeaps), bindlessHeaps);
 
-            // #HACK Set root signature only for used pipeline
-            commandList->SetGraphicsRootSignature(m_RootSignature.Get());
-            commandList->SetComputeRootSignature(m_RootSignature.Get());
-
             VolatileStateTracker* volatileState = scratchScope.AllocatePOD<VolatileStateTracker>();
+            volatileState->SetRootSignature(m_RootSignature.Get());
 
             while (commandBufferReader.HasCommands())
             {
@@ -350,7 +347,7 @@ namespace hd
                     DrawInstancedCommand& command = DrawInstancedCommand::ReadFrom(commandBufferReader);
 
                     m_ResourceStateTracker->ApplyTransitions(*commandList);
-                    volatileState->ApplyChangedStates(*commandList);
+                    volatileState->ApplyChangedStatesForGrahics(*commandList);
 
                     commandList->DrawInstanced(command.VertexCount, command.InstanceCount, 0, 0);
                 }
@@ -438,9 +435,7 @@ namespace hd
                 {
                     SetRootVariableCommand& command = SetRootVariableCommand::ReadFrom(commandBufferReader);
 
-                    //#TODO #Optimization Separate those out. Also values can and should be buffered and set in groups.
-                    commandList->SetGraphicsRoot32BitConstant(0, command.Value, command.Index);
-                    commandList->SetComputeRoot32BitConstant(0, command.Value, command.Index);
+                    volatileState->SetRootConstant(command.Index, command.Value);
                 }
                 break;
 
@@ -535,7 +530,7 @@ namespace hd
             rootParameters[0] = {};
             rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
             rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-            rootParameters[0].Constants.Num32BitValues = 32;
+            rootParameters[0].Constants.Num32BitValues = cfg::NumRootConstants();
             rootParameters[0].Constants.ShaderRegister = 0;
             rootParameters[0].Constants.RegisterSpace = 0;
 
