@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Engine/Framework/Utils/Flags.h"
 #include "Engine/Framework/Utils/Handle.h"
 
 namespace hd
@@ -86,21 +87,25 @@ namespace hd
             Always
         };
 
-        enum class BufferFlags : uint32_t
+        enum class BufferFlagsBits : uint32_t
         {
-            ConstantBuffer = 1 << 0,
-            ShaderResource = 1 << 1,
-            UnorderedAccess = 1 << 2,
-            Transient = 1 << 3
+            ConstantBuffer,
+            ShaderResource,
+            UnorderedAccess,
+            Transient
         };
+        using BufferFlags = hd::util::Flags<BufferFlagsBits>;
+        hdAllowFlagsForEnum(BufferFlagsBits);
 
-        enum class TextureFlags : uint32_t
+        enum class TextureFlagsBits : uint32_t
         {
-            RenderTarget = 1 << 0,
-            DepthStencil = 1 << 1,
-            ShaderResource = 1 << 2,
-            UnorderedAccess = 1 << 3
+            RenderTarget,
+            DepthStencil,
+            ShaderResource,
+            UnorderedAccess
         };
+        using TextureFlags = hd::util::Flags<TextureFlagsBits>;
+        hdAllowFlagsForEnum(TextureFlagsBits);
 
         enum class TextureDimenstion : uint32_t
         {

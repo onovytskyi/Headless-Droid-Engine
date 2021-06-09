@@ -36,7 +36,7 @@ namespace hd
         {
             gfx::GraphicCommandsStream commandStream{ graphicsCommands };
 
-            m_Materials = m_Device.CreateBuffer(uint32_t(materials.GetSize()), sizeof(MaterialData), uint32_t(gfx::BufferFlags::ShaderResource));
+            m_Materials = m_Device.CreateBuffer(uint32_t(materials.GetSize()), sizeof(MaterialData), gfx::BufferFlagsBits::ShaderResource);
             commandStream.UpdateBuffer(m_Materials, 0, (void*)materials.GetData(), materials.GetSize() * sizeof(MaterialData));
 
             uint32_t indexCount{};
@@ -47,8 +47,8 @@ namespace hd
                 vertexCount += meshData.VertexCount;
             }
 
-            m_Indices = m_Device.CreateBuffer(indexCount, sizeof(uint32_t), uint32_t(gfx::BufferFlags::ShaderResource));
-            m_Vertices = m_Device.CreateBuffer(vertexCount, sizeof(util::MeshResourceVertex), uint32_t(gfx::BufferFlags::ShaderResource));
+            m_Indices = m_Device.CreateBuffer(indexCount, sizeof(uint32_t), gfx::BufferFlagsBits::ShaderResource);
+            m_Vertices = m_Device.CreateBuffer(vertexCount, sizeof(util::MeshResourceVertex), gfx::BufferFlagsBits::ShaderResource);
 
             mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
 
@@ -74,7 +74,7 @@ namespace hd
                 startVertex += meshes[meshIdx].VertexCount;
             }
 
-            m_Meshes = m_Device.CreateBuffer(uint32_t(meshes.GetSize()), sizeof(MeshInfo), uint32_t(gfx::BufferFlags::ShaderResource));
+            m_Meshes = m_Device.CreateBuffer(uint32_t(meshes.GetSize()), sizeof(MeshInfo), gfx::BufferFlagsBits::ShaderResource);
             commandStream.UpdateBuffer(m_Meshes, 0, gpuMeshInfo.GetData(), gpuMeshInfo.GetSize() * sizeof(MeshInfo));
 
             // After initial setup those resources must be always in readable state.

@@ -113,7 +113,7 @@ namespace hd
             return m_RootSignature.Get();
         }
 
-        TextureHandle DevicePlatform::RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
+        TextureHandle DevicePlatform::RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension)
         {
             Texture* texture{};
             TextureHandle result = TextureHandle(m_Backend->GetTextureAllocator().Allocate(&texture));
@@ -590,17 +590,17 @@ namespace hd
             hdEnsure(m_Device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSignature.GetAddressOf())));
         }
 
-        BufferHandle Device::CreateBuffer(uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        BufferHandle Device::CreateBuffer(uint32_t numElements, uint32_t elementSize, BufferFlags flags)
         {
             size_t bufferSize = size_t(numElements) * elementSize;
-            size_t bufferAlignment = (flags & (uint32_t)BufferFlags::ConstantBuffer) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : elementSize;
+            size_t bufferAlignment = flags.IsSet(BufferFlagsBits::ConstantBuffer) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : elementSize;
 
-            if (flags & (uint32_t)BufferFlags::ConstantBuffer)
+            if (flags.IsSet(BufferFlagsBits::ConstantBuffer))
             {
                 bufferSize = mem::AlignAbove(bufferSize, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
             }
 
-            HeapAllocator::Usage bufferUsage = (flags & (uint32_t)BufferFlags::Transient) ? HeapAllocator::Usage::Transient : HeapAllocator::Usage::Persistent;
+            HeapAllocator::Usage bufferUsage = flags.IsSet(BufferFlagsBits::Transient) ? HeapAllocator::Usage::Transient : HeapAllocator::Usage::Persistent;
             HeapAllocator::Allocation bufferAllocation = m_HeapAllocator->Allocate(bufferSize, bufferAlignment, D3D12_HEAP_TYPE_DEFAULT, D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS, bufferUsage);
 
             hdEnsure(bufferAllocation.IsValid(), u8"Cannot allocate GPU memory for resource.");
@@ -675,7 +675,7 @@ namespace hd
             return descriptor.HeapIndex;
         }
 
-        TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension,
+        TextureHandle Device::CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension,
             float clearValue[4])
         {
             bool isCube = dimension == TextureDimenstion::TextureCube;
@@ -692,26 +692,26 @@ namespace hd
             textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
             textureDesc.Dimension = ConvertToResourceDimension(dimension);
 
-            if (flags & (uint32_t)TextureFlags::RenderTarget)
+            if (flags.IsSet(TextureFlagsBits::RenderTarget))
                 textureDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
-            if (flags & (uint32_t)TextureFlags::DepthStencil)
+            if (flags.IsSet(TextureFlagsBits::DepthStencil))
                 textureDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-            if (flags & (uint32_t)TextureFlags::UnorderedAccess)
+            if (flags.IsSet(TextureFlagsBits::UnorderedAccess))
                 textureDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
-            if (!(flags & (uint32_t)TextureFlags::ShaderResource))
+            if (!flags.IsSet(TextureFlagsBits::ShaderResource))
                 textureDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 
-            bool isRenderTarget = (flags & (uint32_t)TextureFlags::RenderTarget) | (flags & (uint32_t)TextureFlags::DepthStencil);
+            bool isRenderTarget = flags.IsSet(TextureFlagsBits::RenderTarget) || flags.IsSet(TextureFlagsBits::DepthStencil);
 
             hdAssert(!(isRenderTarget && isCube), u8"Cubemaps as render targets are not supported.");
 
             D3D12_CLEAR_VALUE textureClearValue{};
             if (clearValue != nullptr)
             {
-                if (flags & (uint32_t)TextureFlags::RenderTarget)
+                if (flags.IsSet(TextureFlagsBits::RenderTarget))
                 {
                     textureClearValue.Format = ConvertToWriteableFormat(format);
                     textureClearValue.Color[0] = clearValue[0];
@@ -719,7 +719,7 @@ namespace hd
                     textureClearValue.Color[2] = clearValue[2];
                     textureClearValue.Color[3] = clearValue[3];
                 }
-                else if (flags & (uint32_t)TextureFlags::DepthStencil)
+                else if (flags.IsSet(TextureFlagsBits::DepthStencil))
                 {
                     textureClearValue.Format = ConvertToWriteableFormat(format);
                     textureClearValue.DepthStencil.Depth = clearValue[0];
@@ -728,11 +728,11 @@ namespace hd
             }
 
             D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
-            if (flags & (uint32_t)TextureFlags::RenderTarget)
+            if (flags.IsSet(TextureFlagsBits::RenderTarget))
             {
                 initialState = D3D12_RESOURCE_STATE_RENDER_TARGET;
             }
-            else if (flags & (uint32_t)TextureFlags::DepthStencil)
+            else if (flags.IsSet(TextureFlagsBits::DepthStencil))
             {
                 initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
             }

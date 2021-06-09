@@ -12,7 +12,7 @@ namespace hd
 {
     namespace gfx
     {
-        Texture::Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
+        Texture::Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension)
             : m_Data{}
             , m_HeapAllocation{}
             , m_Format{ format }
@@ -34,8 +34,8 @@ namespace hd
             UpdateDataFromNativeDescription();
         }
 
-        Texture::Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, 
-            TextureDimenstion dimension)
+        Texture::Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, 
+            TextureFlags flags, TextureDimenstion dimension)
             : m_Data{}
             , m_HeapAllocation{ heapAllocation }
             , m_Format{ format }
@@ -241,11 +241,11 @@ namespace hd
             return m_Format;
         }
 
-        void Texture::CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension)
+        void Texture::CreateViews(Device& device, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension)
         {
             DescriptorManager& descriptorManager = device.GetDescriptorManager();
 
-            if (flags & uint32_t(TextureFlags::RenderTarget))
+            if (flags.IsSet(TextureFlagsBits::RenderTarget))
             {
                 m_RTV = descriptorManager.AllocateRTV();
 
@@ -273,7 +273,7 @@ namespace hd
                 device.GetNativeDevice()->CreateRenderTargetView(m_Data.Resource, &rtvDesc, m_RTV.HandleCPU);
             }
 
-            if (flags & uint32_t(TextureFlags::DepthStencil))
+            if (flags.IsSet(TextureFlagsBits::DepthStencil))
             {
                 m_DSV = descriptorManager.AllocateDSV();
 
@@ -296,7 +296,7 @@ namespace hd
                 device.GetNativeDevice()->CreateDepthStencilView(m_Data.Resource, &dsvDesc, m_DSV.HandleCPU);
             }
 
-            if (flags & uint32_t(TextureFlags::ShaderResource))
+            if (flags.IsSet(TextureFlagsBits::ShaderResource))
             {
                 m_SRV = descriptorManager.AllocateSRV();
 
@@ -334,7 +334,7 @@ namespace hd
                 device.GetNativeDevice()->CreateShaderResourceView(m_Data.Resource, &srvDesc, m_SRV.HandleCPU);
             }
 
-            if (flags & uint32_t(TextureFlags::UnorderedAccess))
+            if (flags.IsSet(TextureFlagsBits::UnorderedAccess))
             {
                 hdAssert(dimension != TextureDimenstion::TextureCube, u8"Writing to cubemaps is not supported.");
 

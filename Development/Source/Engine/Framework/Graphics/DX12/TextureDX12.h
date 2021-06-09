@@ -16,8 +16,9 @@ namespace hd
         class Texture
         {
         public:
-            Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
-            Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            Texture(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension);
+            Texture(Device& device, ID3D12Resource* resource, HeapAllocator::Allocation const& heapAllocation, D3D12_RESOURCE_STATES initialState, GraphicFormat format, TextureFlags flags, 
+                TextureDimenstion dimension);
 
             hdNoncopyable(Texture)
 
@@ -41,7 +42,7 @@ namespace hd
             GraphicFormat GetFormat() const;
 
         private:
-            void CreateViews(Device& device, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            void CreateViews(Device& device, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension);
             void UpdateDataFromNativeDescription();
 
             ResourceStateTracker::StateTrackedData m_Data;

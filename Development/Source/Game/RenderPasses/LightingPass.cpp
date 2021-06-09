@@ -19,7 +19,7 @@ LightingPass::LightingPass(hd::gfx::Backend& backend, hd::gfx::Device& device, h
     , m_RenderState{ backend }
     , m_FrameConstants{}
 {
-    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), uint32_t(hd::gfx::BufferFlags::ConstantBuffer));
+    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), hd::gfx::BufferFlagsBits::ConstantBuffer);
 
     m_RenderState.SetVS(u8"FullscreenTriangle.hlsl", u8"MainVS");
     m_RenderState.SetPS(u8"Lighting.hlsl", u8"MainPS");

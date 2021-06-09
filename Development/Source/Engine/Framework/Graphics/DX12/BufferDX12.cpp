@@ -10,12 +10,12 @@ namespace hd
 {
     namespace gfx
     {
-        Buffer::Buffer(Device& device, ID3D12Resource* resource, uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        Buffer::Buffer(Device& device, ID3D12Resource* resource, uint32_t numElements, uint32_t elementSize, BufferFlags flags)
             : Buffer(device, resource, D3D12_RESOURCE_STATE_COMMON, numElements, elementSize, flags)
         {
         }
 
-        Buffer::Buffer(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        Buffer::Buffer(Device& device, ID3D12Resource* resource, D3D12_RESOURCE_STATES initialState, uint32_t numElements, uint32_t elementSize, BufferFlags flags)
             : m_Data{}
             , m_HeapAllocation{}
             , m_CBV{}
@@ -31,7 +31,7 @@ namespace hd
             CreateViews(device, numElements, elementSize, flags);
         }
 
-        Buffer::Buffer(Device& device, HeapAllocator::Allocation const& heapAllocation, uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        Buffer::Buffer(Device& device, HeapAllocator::Allocation const& heapAllocation, uint32_t numElements, uint32_t elementSize, BufferFlags flags)
             : m_Data{}
             , m_HeapAllocation{ heapAllocation }
             , m_CBV{}
@@ -107,11 +107,11 @@ namespace hd
             return m_Size;
         }
 
-        void Buffer::CreateViews(Device& device, uint32_t numElements, uint32_t elementSize, uint32_t flags)
+        void Buffer::CreateViews(Device& device, uint32_t numElements, uint32_t elementSize, BufferFlags flags)
         {
             DescriptorManager& descriptorManager = device.GetDescriptorManager();
 
-            if (flags & uint32_t(BufferFlags::ConstantBuffer))
+            if (flags.IsSet(BufferFlagsBits::ConstantBuffer))
             {
                 m_CBV = descriptorManager.AllocateSRV();
 
@@ -122,7 +122,7 @@ namespace hd
                 device.GetNativeDevice()->CreateConstantBufferView(&cbvDesc, m_CBV.HandleCPU);
             }
 
-            if (flags & uint32_t(BufferFlags::ShaderResource))
+            if (flags.IsSet(BufferFlagsBits::ShaderResource))
             {
                 m_SRV = descriptorManager.AllocateSRV();
 
@@ -138,7 +138,7 @@ namespace hd
                 device.GetNativeDevice()->CreateShaderResourceView(GetNativeResource(), &srvDesc, m_SRV.HandleCPU);
             }
 
-            if (flags & uint32_t(BufferFlags::UnorderedAccess))
+            if (flags.IsSet(BufferFlagsBits::UnorderedAccess))
             {
                 m_UAV = descriptorManager.AllocateSRV();
 

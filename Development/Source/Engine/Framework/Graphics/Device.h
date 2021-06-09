@@ -23,7 +23,7 @@ namespace hd
 
             hdNoncopyable(Device)
 
-            BufferHandle CreateBuffer(uint32_t numElements, uint32_t elementSize, uint32_t flags);
+            BufferHandle CreateBuffer(uint32_t numElements, uint32_t elementSize, BufferFlags flags);
             void DestroyBuffer(BufferHandle handle);
             void DestroyBufferImmediate(BufferHandle handle);
 
@@ -31,7 +31,7 @@ namespace hd
             uint32_t GetSRVShaderIndex(BufferHandle handle);
             uint32_t GetUAVShaderIndex(BufferHandle handle);
 
-            TextureHandle CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, uint32_t flags, TextureDimenstion dimension, 
+            TextureHandle CreateTexture(uint64_t width, uint32_t height, uint16_t depth, uint16_t mipLevels, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension, 
                 float clearValue[4]);
             void DestroyTexture(TextureHandle handle);
             void DestroyTextureImmediate(TextureHandle handle);

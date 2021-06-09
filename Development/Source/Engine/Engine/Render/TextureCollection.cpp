@@ -54,7 +54,7 @@ namespace hd
             util::ImageResource textureDesc{};
             util::LoadImage(scratchScope, textureFilePath, textureData, textureDesc);
 
-            newHolder->Handle = m_Device.CreateTexture(textureDesc.Width, textureDesc.Height, 1, textureDesc.MipCount, textureDesc.Format, uint32_t(gfx::TextureFlags::ShaderResource),
+            newHolder->Handle = m_Device.CreateTexture(textureDesc.Width, textureDesc.Height, 1, textureDesc.MipCount, textureDesc.Format, gfx::TextureFlagsBits::ShaderResource,
                 textureDesc.IsCube ? gfx::TextureDimenstion::TextureCube : gfx::TextureDimenstion::Texture2D, nullptr);
 
             gfx::GraphicCommandsStream commandStream{ graphicsCommands };

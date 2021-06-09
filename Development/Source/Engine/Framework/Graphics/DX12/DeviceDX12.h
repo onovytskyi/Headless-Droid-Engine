@@ -35,7 +35,7 @@ namespace hd
             ID3D12Device2* GetNativeDevice() const;
             ID3D12RootSignature* GetNativeRootSignature() const;
 
-            TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, uint32_t flags, TextureDimenstion dimension);
+            TextureHandle RegisterTexture(ID3D12Resource* resource, D3D12_RESOURCE_STATES state, GraphicFormat format, TextureFlags flags, TextureDimenstion dimension);
 
             void PresentOnQueue(Queue& queue, TextureHandle framebuffer);
             void SubmitToQueue(Queue& queue, util::CommandBuffer& commandBuffer);

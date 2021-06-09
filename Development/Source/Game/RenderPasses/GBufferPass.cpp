@@ -26,7 +26,7 @@ GBufferPass::GBufferPass(hd::gfx::Backend& backend, hd::gfx::Device& device, uin
     , m_DepthClearColor{ 0.0f, 0.0f, 0.0f, 0.0f }
     , m_GBufferClearColor{ 0.0f, 0.0f, 0.0f, 0.0f }
 {
-    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), uint32_t(hd::gfx::BufferFlags::ConstantBuffer));
+    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), hd::gfx::BufferFlagsBits::ConstantBuffer);
 
     m_RenderState.SetVS(u8"GBuffer.hlsl", u8"MainVS");
     m_RenderState.SetPS(u8"GBuffer.hlsl", u8"MainPS");
@@ -120,14 +120,14 @@ void GBufferPass::ResizeTextures(uint32_t width, uint32_t height)
         }
 
         m_Depth = m_Device.CreateTexture(width, height, 1, 1, hd::gfx::GraphicFormat::D24UNorm_S8UInt,
-            uint32_t(hd::gfx::TextureFlags::DepthStencil) | uint32_t(hd::gfx::TextureFlags::ShaderResource), hd::gfx::TextureDimenstion::Texture2D, m_DepthClearColor.data());
+            hd::gfx::TextureFlagsBits::DepthStencil | hd::gfx::TextureFlagsBits::ShaderResource, hd::gfx::TextureDimenstion::Texture2D, m_DepthClearColor.data());
 
         m_Surface0 = m_Device.CreateTexture(width, height, 1, 1, hd::gfx::GraphicFormat::RGBA8UNorm,
-            uint32_t(hd::gfx::TextureFlags::RenderTarget) | uint32_t(hd::gfx::TextureFlags::ShaderResource), hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
+            hd::gfx::TextureFlagsBits::RenderTarget | hd::gfx::TextureFlagsBits::ShaderResource, hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
         m_Surface1 = m_Device.CreateTexture(width, height, 1, 1, hd::gfx::GraphicFormat::RGBA8UNorm,
-            uint32_t(hd::gfx::TextureFlags::RenderTarget) | uint32_t(hd::gfx::TextureFlags::ShaderResource), hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
+            hd::gfx::TextureFlagsBits::RenderTarget | hd::gfx::TextureFlagsBits::ShaderResource, hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
         m_Surface2 = m_Device.CreateTexture(width, height, 1, 1, hd::gfx::GraphicFormat::RGBA16Float,
-            uint32_t(hd::gfx::TextureFlags::RenderTarget) | uint32_t(hd::gfx::TextureFlags::ShaderResource), hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
+            hd::gfx::TextureFlagsBits::RenderTarget | hd::gfx::TextureFlagsBits::ShaderResource, hd::gfx::TextureDimenstion::Texture2D, m_GBufferClearColor.data());
     }
 }
 

@@ -63,7 +63,7 @@ namespace hd
             imguiIO.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 13.0f);
             imguiIO.Fonts->GetTexDataAsRGBA32(&fontTextureData, &fontTextureWidth, &fontTextureHeight, &fontTextureBPP);
 
-            m_DefaultFont = m_Device->CreateTexture(fontTextureWidth, fontTextureHeight, 1, 1, gfx::GraphicFormat::RGBA8UNorm, uint32_t(gfx::TextureFlags::ShaderResource),
+            m_DefaultFont = m_Device->CreateTexture(fontTextureWidth, fontTextureHeight, 1, 1, gfx::GraphicFormat::RGBA8UNorm, gfx::TextureFlagsBits::ShaderResource,
                 gfx::TextureDimenstion::Texture2D, nullptr);
 
             gfx::GraphicCommandsStream commandStream{ commandBuffer };
@@ -190,11 +190,8 @@ namespace hd
                     vertexCount += cmdList->VtxBuffer.size();
                 }
 
-                gfx::BufferHandle indexBuffer = m_Device->CreateBuffer(indexCount, uint32_t(sizeof(ImDrawIdx)),
-                    uint32_t(gfx::BufferFlags::ShaderResource) | uint32_t(gfx::BufferFlags::Transient));
-
-                gfx::BufferHandle vertexBuffer = m_Device->CreateBuffer(vertexCount, uint32_t(sizeof(ImDrawVert)),
-                    uint32_t(gfx::BufferFlags::ShaderResource) | uint32_t(gfx::BufferFlags::Transient));
+                gfx::BufferHandle indexBuffer = m_Device->CreateBuffer(indexCount, uint32_t(sizeof(ImDrawIdx)), gfx::BufferFlagsBits::ShaderResource | gfx::BufferFlagsBits::Transient);
+                gfx::BufferHandle vertexBuffer = m_Device->CreateBuffer(vertexCount, uint32_t(sizeof(ImDrawVert)), gfx::BufferFlagsBits::ShaderResource | gfx::BufferFlagsBits::Transient);
 
                 uint32_t commandListBaseIndex = 0;
                 uint32_t commandListBaseVertex = 0;
@@ -209,8 +206,7 @@ namespace hd
                     commandListBaseVertex += cmdList->VtxBuffer.size();
                 }
 
-                gfx::BufferHandle constantBuffer = m_Device->CreateBuffer(1, sizeof(m_GuiProjectionMatrix), 
-                    uint32_t(gfx::BufferFlags::ConstantBuffer) | uint32_t(gfx::BufferFlags::Transient));
+                gfx::BufferHandle constantBuffer = m_Device->CreateBuffer(1, sizeof(m_GuiProjectionMatrix), gfx::BufferFlagsBits::ConstantBuffer | gfx::BufferFlagsBits::Transient);
                 math::Matrix4x4 gpuGuiProjectionMatrix = math::MatrixTranspose(m_GuiProjectionMatrix);
                 commandStream.UpdateBuffer(constantBuffer, 0, gpuGuiProjectionMatrix.m, sizeof(gpuGuiProjectionMatrix));
 
