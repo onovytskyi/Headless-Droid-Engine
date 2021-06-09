@@ -177,7 +177,7 @@ namespace hd
                 m_VS = &vs.ShaderBytecode;
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetVSProfile());
+            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetVSProfile(), ShaderFlagsBits::GenerateSymbols);
             m_VS->pShaderBytecode = shaderMicrocode.GetData();
             m_VS->BytecodeLength = shaderMicrocode.GetSize();
         }
@@ -192,7 +192,7 @@ namespace hd
                 m_PS = &ps.ShaderBytecode;
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetPSProfile());
+            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetPSProfile(), ShaderFlagsBits::GenerateSymbols);
             m_PS->pShaderBytecode = shaderMicrocode.GetData();
             m_PS->BytecodeLength = shaderMicrocode.GetSize();
         }
@@ -207,7 +207,7 @@ namespace hd
                 m_CS = &cs.ShaderBytecode;
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetCSProfile());
+            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetCSProfile(), ShaderFlagsBits::GenerateSymbols);
             m_CS->pShaderBytecode = shaderMicrocode.GetData();
             m_CS->BytecodeLength = shaderMicrocode.GetSize();
         }

@@ -4,6 +4,7 @@
 
 #include "Engine/Framework/Memory/Buffer.h"
 #include "Engine/Framework/String/String.h"
+#include "Engine/Framework/Utils/Flags.h"
 
 namespace hd
 {
@@ -13,6 +14,14 @@ namespace hd
         class Buffer;
     }
 
+    enum class ShaderFlagsBits
+    {
+        GenerateSymbols,
+        IgnoreCache
+    };
+    using ShaderFlags = hd::util::Flags<ShaderFlagsBits>;
+    hdAllowFlagsForEnum(ShaderFlagsBits);
+
     namespace gfx
     {
         class ShaderManager
@@ -21,14 +30,12 @@ namespace hd
             ShaderManager(mem::AllocationScope& allocationScope);
             ~ShaderManager();
 
-            mem::Buffer& GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile);
+            mem::Buffer& GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags);
 
         private:
-            void LoadShaderMicrocode(mem::AllocationScope& scratch, str::String const& shaderName, str::String const& entryPoint, str::String const& profile, str::String const& cookedName, 
-                mem::Buffer& output);
-
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            void CookShader(mem::AllocationScope& scratch, str::String const& shaderFilePath, str::String const& entryPoint, str::String const& profile, str::String const& cookedFilePath);
+            void CookShader(mem::AllocationScope& scratch, str::String const& shaderFilePath, str::String const& entryPoint, str::String const& profile, str::String const& cookedFilePath, 
+                ShaderFlags flags);
 #endif
 
             struct ShaderHolder

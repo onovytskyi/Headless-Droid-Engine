@@ -25,7 +25,7 @@ namespace hd
 
         }
 
-        hd::mem::Buffer& ShaderManager::GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile)
+        hd::mem::Buffer& ShaderManager::GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags)
         {
             mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
             str::String shaderNameString{ scratchScope, shaderName };
@@ -35,48 +35,47 @@ namespace hd
             str::String cookedFilePath{ scratchScope };
             file::ConvertToCookedPathPrefixed(scratchScope, shaderNameString, entryPointString, cookedFilePath);
 
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            str::String shaderFilePath{ scratchScope };
+            file::ConvertToShaderPath(scratchScope, shaderNameString, shaderFilePath);
+#endif
+
             ShaderHolder* holder = m_FirstShaderHolder;
             while (holder)
             {
                 if (holder->ShaderKey == cookedFilePath)
                 {
-                    return holder->ShaderMicrocode;
+                    break;
                 }
 
                 holder = holder->Next;
             }
 
-            ShaderHolder* newHolder = m_AllocationScope.AllocateObject<ShaderHolder>(m_AllocationScope);
-            newHolder->ShaderKey.Assign(cookedFilePath.CStr());
-
-            LoadShaderMicrocode(scratchScope, shaderNameString, entryPointString, profileString, cookedFilePath, newHolder->ShaderMicrocode);
-
-            hdLogInfo(u8"Shader %:% loaded.", shaderNameString.CStr(), entryPointString.CStr());
-
-            newHolder->Next = m_FirstShaderHolder;
-            m_FirstShaderHolder = newHolder;
-
-            return newHolder->ShaderMicrocode;
-        }
-
-        void ShaderManager::LoadShaderMicrocode(mem::AllocationScope& scratch, str::String const& shaderName, str::String const& entryPoint, str::String const& profile, 
-            str::String const& cookedFilePath, mem::Buffer& output)
-        {
-#if defined(HD_ENABLE_RESOURCE_COOKING)
-            str::String shaderFilePath{ scratch };
-            file::ConvertToShaderPath(scratch, shaderName, shaderFilePath);
-            if (file::DestinationOlder(shaderFilePath, cookedFilePath))
+            if (holder == nullptr)
             {
-                CookShader(scratch, shaderFilePath, entryPoint, profile, cookedFilePath);
-            }
-#endif
+                holder = m_AllocationScope.AllocateObject<ShaderHolder>(m_AllocationScope);
+                holder->ShaderKey.Assign(cookedFilePath.CStr());
 
-            file::ReadWholeFile(scratch, cookedFilePath, output);
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+                if (flags.IsSet(ShaderFlagsBits::IgnoreCache) || file::DestinationOlder(shaderFilePath, cookedFilePath))
+                {
+                    CookShader(scratchScope, shaderFilePath, entryPointString, profileString, cookedFilePath, flags);
+                }
+#endif
+                file::ReadWholeFile(scratchScope, cookedFilePath, holder->ShaderMicrocode);
+
+                hdLogInfo(u8"Shader %:% loaded.", shaderNameString.CStr(), entryPointString.CStr());
+
+                holder->Next = m_FirstShaderHolder;
+                m_FirstShaderHolder = holder;
+            }
+
+            return holder->ShaderMicrocode;
         }
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
         void ShaderManager::CookShader(mem::AllocationScope& scratch, str::String const& shaderFilePath, str::String const& entryPoint, str::String const& profile, 
-            str::String const& cookedFilePath)
+            str::String const& cookedFilePath, ShaderFlags flags)
         {
             struct DXCRuntime
             {
@@ -135,9 +134,12 @@ namespace hd
             arguments.push_back(L"-Qstrip_rootsignature");
 
             // Generate symbols
-            arguments.push_back(DXC_ARG_DEBUG);
-            arguments.push_back(L"-Fd");
-            arguments.push_back(pdbFilePath.AsWide(scratch));
+            if (flags.IsSet(ShaderFlagsBits::GenerateSymbols))
+            {
+                arguments.push_back(DXC_ARG_DEBUG);
+                arguments.push_back(L"-Fd");
+                arguments.push_back(pdbFilePath.AsWide(scratch));
+            }
 
             ComPtr<IDxcResult> operationResult;
             result = s_DXCRuntime.Compiler->Compile(&sourceBuffer, arguments.data(), uint32_t(arguments.size()), s_DXCRuntime.IncludeHandler, IID_PPV_ARGS(&operationResult));
@@ -173,23 +175,26 @@ namespace hd
                     reinterpret_cast<char8_t const*>(errorBlob->GetStringPointer()));
             }
 
-            ComPtr<IDxcBlob> pdbBlob;
-            operationResult->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(&pdbBlob), dummyName.ReleaseAndGetAddressOf());
-            if (pdbBlob && pdbBlob->GetBufferSize() > 0)
+            if (flags.IsSet(ShaderFlagsBits::GenerateSymbols))
             {
-                size_t narrowSize = str::SizeAsNarrow(dummyName->GetStringPointer());
-                char8_t* pdbFileName = reinterpret_cast<char8_t*>(scratch.AllocateMemory(narrowSize, alignof(char8_t)));
-                str::ToNarrow(dummyName->GetStringPointer(), pdbFileName, narrowSize);
+                ComPtr<IDxcBlob> pdbBlob;
+                operationResult->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(&pdbBlob), dummyName.ReleaseAndGetAddressOf());
+                if (pdbBlob && pdbBlob->GetBufferSize() > 0)
+                {
+                    size_t narrowSize = str::SizeAsNarrow(dummyName->GetStringPointer());
+                    char8_t* pdbFileName = reinterpret_cast<char8_t*>(scratch.AllocateMemory(narrowSize, alignof(char8_t)));
+                    str::ToNarrow(dummyName->GetStringPointer(), pdbFileName, narrowSize);
 
-                str::String pdbFileNameString{ scratch, pdbFileName };
+                    str::String pdbFileNameString{ scratch, pdbFileName };
 
-                mem::Buffer buffer{ scratch };
-                buffer.Assign(pdbBlob->GetBufferPointer(), pdbBlob->GetBufferSize());
+                    mem::Buffer buffer{ scratch };
+                    buffer.Assign(pdbBlob->GetBufferPointer(), pdbBlob->GetBufferSize());
 
-                file::WriteWholeFile(pdbFileNameString, buffer);
+                    file::WriteWholeFile(pdbFileNameString, buffer);
+                }
             }
 
-            hdLogInfo(u8"Shader % cooked to %.", shaderFilePath.CStr(), cookedFilePath.CStr());
+            hdLogInfo(u8"Shader % cooked to % % debug symbols.", shaderFilePath.CStr(), cookedFilePath.CStr(), flags.IsSet(ShaderFlagsBits::GenerateSymbols) ? u8"with" : u8"without");
         }
 #endif
 
