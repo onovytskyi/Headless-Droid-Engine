@@ -22,7 +22,12 @@ namespace hd
 
             ID3D12PipelineState* GetNativePipelineState() const;
 
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            void Rebuild(bool ignoreCache);
+#endif
+
         protected:
+            void CreatePipelineState(Device& device);
             void SetupDefaults(D3D12_DEPTH_STENCIL_DESC& desc);
             void SetupDefaults(D3D12_BLEND_DESC& desc);
 
@@ -40,6 +45,16 @@ namespace hd
             D3D12_PRIMITIVE_TOPOLOGY_TYPE* m_PrimitiveTopology;
 
             PrimitiveType m_PrimitiveType;
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            Device* m_Device;
+            char8_t const* m_VSShaderName;
+            char8_t const* m_VSEntryPoint;
+            char8_t const* m_PSShaderName;
+            char8_t const* m_PSEntryPoint;
+            char8_t const* m_CSShaderName;
+            char8_t const* m_CSEntryPoint;
+#endif
         };
     }
 }

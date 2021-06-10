@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Engine/DebugOverlay/DebugOverlay.h"
+#include "Engine/Engine/DebugOverlay/Tools/CommandsDebugTool.h"
 #include "Engine/Engine/DebugOverlay/Tools/StatsDebugTool.h"
 #include "Engine/Engine/Render/MeshCollection.h"
 #include "Engine/Engine/Render/TextureCollection.h"
@@ -49,6 +50,7 @@ private:
 
     hd::ui::DebugOverlay* m_DebugOverlay;
     hd::ui::StatsDebugTool* m_StatsDebugTool;
+    hd::ui::CommandsDebugTool* m_CommandsDebugTool;
 
     hd::util::CommandBuffer m_GraphicCommands;
 

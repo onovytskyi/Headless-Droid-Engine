@@ -8,6 +8,7 @@
 #include "Engine/Debug/Log.h"
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Backend.h"
+#include "Engine/Framework/Graphics/DX12/ShaderManagerDX12.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
 #include "Engine/Framework/Graphics/DX12/UtilsDX12.h"
 #include "Engine/Framework/Graphics/DX12/VolatileStateTrackerDX12.h"
@@ -37,6 +38,9 @@ namespace hd
             , m_TexturesToFree{ allocationScope, cfg::MaxTexturesToFreeInQueue() }
             , m_RecentBuffersToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
             , m_RecentTexturesToFree{ allocationScope, cfg::MaxTexturesToFreePerFrame() }
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            , m_RenderStatesToRebuild{ allocationScope, cfg::MaxRenderStatesToRebuild() }
+#endif
         {
             m_Adapter = backend.GetBestAdapter();
 
@@ -590,6 +594,24 @@ namespace hd
             hdEnsure(m_Device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSignature.GetAddressOf())));
         }
 
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+        void DevicePlatform::RegisterRenderStateForRebuild(RenderStatePlatform* renderState)
+        {
+            m_RenderStatesToRebuild.Add(renderState);
+        }
+
+        void DevicePlatform::UnregisterRenderStateForRebuild(RenderStatePlatform* renderState)
+        {
+            for (size_t renderStateIdx = 0; renderStateIdx < m_RenderStatesToRebuild.GetSize(); ++renderStateIdx)
+            {
+                if (m_RenderStatesToRebuild[renderStateIdx] == renderState)
+                {
+                    m_RenderStatesToRebuild.RemoveFast(renderStateIdx);
+                }
+            }
+        }
+#endif
+
         BufferHandle Device::CreateBuffer(uint32_t numElements, uint32_t elementSize, BufferFlags flags)
         {
             size_t bufferSize = size_t(numElements) * elementSize;
@@ -884,6 +906,18 @@ namespace hd
             outNonlocalBudget = nonlocalInfo.CurrentUsage;
             outNonlocalUsage = nonlocalInfo.CurrentUsage;
         }
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+        void Device::RebuildRenderStates(bool ignoreCache)
+        {
+            m_Backend->GetShaderManager().ResetShaderCache();
+
+            for (size_t renderStateIdx = 0; renderStateIdx < m_RenderStatesToRebuild.GetSize(); ++renderStateIdx)
+            {
+                m_RenderStatesToRebuild[renderStateIdx]->Rebuild(ignoreCache);
+            }
+        }
+#endif
     }
 }
 

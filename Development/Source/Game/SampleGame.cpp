@@ -23,6 +23,8 @@ SampleGame::SampleGame()
     , m_GfxQueue{}
     , m_GfxSwapchain{}
     , m_DebugOverlay{}
+    , m_StatsDebugTool{}
+    , m_CommandsDebugTool{}
     , m_GraphicCommands{ hd::mem::MB(128) }
     , m_SceneMeshCollection{}
     , m_SceneTextureCollection{}
@@ -40,6 +42,7 @@ SampleGame::SampleGame()
     m_DebugOverlay = m_PersistentScope.AllocateObject<hd::ui::DebugOverlay>(*m_GfxBackend, *m_GfxDevice, m_MainWindow->GetWidth(), m_MainWindow->GetHeight(), backBufferFormat, 
         m_PersistentScope, 64);
     m_StatsDebugTool = m_PersistentScope.AllocateObject<hd::ui::StatsDebugTool>();
+    m_CommandsDebugTool = m_PersistentScope.AllocateObject<hd::ui::CommandsDebugTool>(*m_GfxDevice);
     m_SceneTextureCollection = m_PersistentScope.AllocateObject<hd::render::TextureCollection>(m_PersistentScope, *m_GfxDevice);
 
     m_FpsCamera = m_PersistentScope.AllocateObject<hd::scene::FpsCamera>();
@@ -49,6 +52,7 @@ SampleGame::SampleGame()
     m_LightingPass = m_PersistentScope.AllocateObject<LightingPass>(*m_GfxBackend, *m_GfxDevice, backBufferFormat);
 
     m_DebugOverlay->RegisterDebugTool(*m_StatsDebugTool);
+    m_DebugOverlay->RegisterDebugTool(*m_CommandsDebugTool);
 }
 
 SampleGame::~SampleGame()

@@ -45,6 +45,9 @@ namespace hd
         inline constexpr char8_t const* GetVSProfile() { return u8"vs_6_6"; }
         inline constexpr char8_t const* GetPSProfile() { return u8"ps_6_6"; }
         inline constexpr char8_t const* GetCSProfile() { return u8"cs_6_6"; }
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+        inline constexpr size_t MaxRenderStatesToRebuild() { return 128; }
+#endif
 #endif
     }
 }

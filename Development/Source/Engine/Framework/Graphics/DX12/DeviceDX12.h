@@ -25,6 +25,7 @@ namespace hd
     {
         class Backend;
         class Queue;
+        class RenderStatePlatform;
 
         class DevicePlatform
         {
@@ -42,6 +43,11 @@ namespace hd
 
             DescriptorManager& GetDescriptorManager();
             HeapAllocator& GetHeapAllocator();
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            void RegisterRenderStateForRebuild(RenderStatePlatform* renderState);
+            void UnregisterRenderStateForRebuild(RenderStatePlatform* renderState);
+#endif
 
         protected:
             void CreateUnifiedRootSignature();
@@ -75,6 +81,10 @@ namespace hd
 
             util::BufferArray<BufferHandle> m_RecentBuffersToFree;
             util::BufferArray<TextureHandle> m_RecentTexturesToFree;
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            util::BufferArray<RenderStatePlatform*> m_RenderStatesToRebuild;
+#endif
         };
     }
 }

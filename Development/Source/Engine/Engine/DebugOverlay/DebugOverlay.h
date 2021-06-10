@@ -30,12 +30,20 @@ namespace hd
             class Tool
             {
             public:
+                enum class ToolType
+                {
+                    AlwaysVisible,
+                    Gadget,
+                    Menu
+                };
+
                 virtual ~Tool() {}
 
                 virtual bool& GetVisibleRef() = 0;
-                virtual bool IsAlwaysVisible() const = 0;
+                virtual ToolType GetType() const = 0;
                 virtual const char* GetMenuName() const = 0;
                 virtual const char* GetToolName() const = 0;
+                virtual void ProcessShortcuts() = 0;
                 virtual void Draw() = 0;
             };
 

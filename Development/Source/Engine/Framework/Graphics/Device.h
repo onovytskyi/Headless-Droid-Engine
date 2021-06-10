@@ -44,6 +44,10 @@ namespace hd
             void RecycleResources(uint64_t currentMarker, uint64_t completedMarker);
 
             void GetMemoryBudgets(size_t& outLocalBudget, size_t& outLocalUsage, size_t& outNonlocalBudget, size_t& outNonlocalUsage);
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            void RebuildRenderStates(bool ignoreCache);
+#endif
         };
     }
 }

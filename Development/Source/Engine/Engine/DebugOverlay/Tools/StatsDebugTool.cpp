@@ -101,9 +101,9 @@ namespace hd
             return m_Visible;
         }
 
-        bool StatsDebugTool::IsAlwaysVisible() const
+        DebugOverlay::Tool::ToolType StatsDebugTool::GetType() const
         {
-            return true;
+            return ToolType::AlwaysVisible;
         }
 
         const char* StatsDebugTool::GetMenuName() const
@@ -114,6 +114,11 @@ namespace hd
         const char* StatsDebugTool::GetToolName() const
         {
             return "Stats Debug Information";
+        }
+
+        void StatsDebugTool::ProcessShortcuts()
+        {
+
         }
 
         void StatsDebugTool::Draw()

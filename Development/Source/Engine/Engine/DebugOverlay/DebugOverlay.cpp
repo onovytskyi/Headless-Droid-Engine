@@ -265,11 +265,22 @@ namespace hd
                     for (size_t toolIdx = 0; toolIdx < m_Tools.GetSize(); ++toolIdx)
                     {
                         Tool* tool = m_Tools[toolIdx];
-                        if (!tool->IsAlwaysVisible())
+                        if (tool->GetType() != Tool::ToolType::AlwaysVisible)
                         {
                             if (ImGui::BeginMenu(tool->GetMenuName()))
                             {
-                                ImGui::MenuItem(tool->GetToolName(), nullptr, nullptr, &tool->GetVisibleRef());
+                                if (tool->GetType() == Tool::ToolType::Menu)
+                                {
+                                    if (ImGui::BeginMenu(tool->GetToolName()))
+                                    {
+                                        tool->Draw();
+                                        ImGui::EndMenu();
+                                    }
+                                }
+                                else
+                                {
+                                    ImGui::MenuItem(tool->GetToolName(), nullptr, &tool->GetVisibleRef(), true);
+                                }
                                 ImGui::EndMenu();
                             }
                         }
@@ -282,7 +293,7 @@ namespace hd
                 {
                     Tool* tool = m_Tools[toolIdx];
 
-                    if (tool->GetVisibleRef() && !tool->IsAlwaysVisible())
+                    if (tool->GetVisibleRef() && tool->GetType() == Tool::ToolType::Gadget)
                     {
                         tool->Draw();
                     }
@@ -291,10 +302,12 @@ namespace hd
 
             for (size_t toolIdx = 0; toolIdx < m_Tools.GetSize(); ++toolIdx)
             {
-                if (m_Tools[toolIdx]->IsAlwaysVisible())
+                if (m_Tools[toolIdx]->GetType() == Tool::ToolType::AlwaysVisible)
                 {
                     m_Tools[toolIdx]->Draw();
                 }
+
+                m_Tools[toolIdx]->ProcessShortcuts();
             }
 
             ImGui::Render();

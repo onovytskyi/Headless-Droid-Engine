@@ -32,6 +32,7 @@ namespace hd
                 (*finalizer->m_OnDestroy)(objectPointer);
             }
             m_Allocator.Reset(m_ResetMarker);
+            m_NextFinalizer = {};
         }
     }
 }

@@ -23,9 +23,10 @@ namespace hd
             StatsDebugTool();
 
             bool& GetVisibleRef() override;
-            bool IsAlwaysVisible() const override;
+            ToolType GetType() const override;
             const char* GetMenuName() const override;
             const char* GetToolName() const override;
+            void ProcessShortcuts() override;
             void Draw() override;
 
             void Update(sys::Timer& timer, gfx::Swapchain& swapchain, gfx::Device& device);

@@ -106,13 +106,24 @@ namespace hd
             , m_Blend{}
             , m_PrimitiveTopology{}
             , m_PrimitiveType{}
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            , m_Device{}
+            , m_VSShaderName{}
+            , m_VSEntryPoint{}
+            , m_PSShaderName{}
+            , m_PSEntryPoint{}
+            , m_CSShaderName{}
+            , m_CSEntryPoint{}
+#endif
         {
 
         }
 
         RenderStatePlatform::~RenderStatePlatform()
         {
-
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            m_Device->UnregisterRenderStateForRebuild(this);
+#endif
         }
 
         void RenderStatePlatform::Compile(Device& device)
@@ -123,13 +134,14 @@ namespace hd
                 rootSignature = {};
                 rootSignature.RootSignature = device.GetNativeRootSignature();
 
-                D3D12_PIPELINE_STATE_STREAM_DESC pipelineDesc{};
-                pipelineDesc.pPipelineStateSubobjectStream = m_PipelineStream.GetBuffer().GetData();
-                pipelineDesc.SizeInBytes = m_PipelineStream.GetBuffer().GetSize();
+                CreatePipelineState(device);
 
-                hdEnsure(device.GetNativeDevice()->CreatePipelineState(&pipelineDesc, IID_PPV_ARGS(m_PipelineState.GetAddressOf())));
-
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+                m_Device = &device;
+                m_Device->RegisterRenderStateForRebuild(this);
+#else
                 m_PipelineStream.Clear();
+#endif
             }
         }
 
@@ -138,6 +150,51 @@ namespace hd
             hdAssert(m_PipelineState.Get() != nullptr, u8"Render state wasn't compiled.");
 
             return m_PipelineState.Get();
+        }
+
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+        void RenderStatePlatform::Rebuild(bool ignoreCache)
+        {
+            hdAssert(m_PipelineState.Get() != nullptr);
+
+            ShaderFlags flags = ignoreCache ? ShaderFlagsBits::IgnoreCache : ShaderFlags{};
+
+            if (m_VS != nullptr)
+            {
+                hdAssert(m_VSShaderName != nullptr && m_VSEntryPoint != nullptr);
+                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_VSShaderName, m_VSEntryPoint, cfg::GetVSProfile(), flags);
+                m_VS->pShaderBytecode = shaderMicrocode.GetData();
+                m_VS->BytecodeLength = shaderMicrocode.GetSize();
+            }
+
+            if (m_PS != nullptr)
+            {
+                hdAssert(m_PSShaderName != nullptr && m_PSEntryPoint != nullptr);
+                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_PSShaderName, m_PSEntryPoint, cfg::GetPSProfile(), flags);
+                m_PS->pShaderBytecode = shaderMicrocode.GetData();
+                m_PS->BytecodeLength = shaderMicrocode.GetSize();
+            }
+
+            if (m_CS != nullptr)
+            {
+                hdAssert(m_CSShaderName != nullptr && m_CSEntryPoint != nullptr);
+                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_CSShaderName, m_CSEntryPoint, cfg::GetCSProfile(), flags);
+                m_CS->pShaderBytecode = shaderMicrocode.GetData();
+                m_CS->BytecodeLength = shaderMicrocode.GetSize();
+            }
+
+            m_PipelineState.Reset();
+            CreatePipelineState(*m_Device);
+        }
+#endif
+
+        void RenderStatePlatform::CreatePipelineState(Device& device)
+        {
+            D3D12_PIPELINE_STATE_STREAM_DESC pipelineDesc{};
+            pipelineDesc.pPipelineStateSubobjectStream = m_PipelineStream.GetBuffer().GetData();
+            pipelineDesc.SizeInBytes = m_PipelineStream.GetBuffer().GetSize();
+
+            hdEnsure(device.GetNativeDevice()->CreatePipelineState(&pipelineDesc, IID_PPV_ARGS(m_PipelineState.GetAddressOf())));
         }
 
         void RenderStatePlatform::SetupDefaults(D3D12_DEPTH_STENCIL_DESC& desc)
@@ -175,6 +232,10 @@ namespace hd
                 vs = {};
 
                 m_VS = &vs.ShaderBytecode;
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+                m_VSShaderName = shaderName;
+                m_VSEntryPoint = entryPoint;
+#endif
             }
 
             mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetVSProfile(), ShaderFlagsBits::GenerateSymbols);
@@ -190,6 +251,10 @@ namespace hd
                 ps = {};
 
                 m_PS = &ps.ShaderBytecode;
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+                m_PSShaderName = shaderName;
+                m_PSEntryPoint = entryPoint;
+#endif
             }
 
             mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetPSProfile(), ShaderFlagsBits::GenerateSymbols);
@@ -205,6 +270,10 @@ namespace hd
                 cs = {};
 
                 m_CS = &cs.ShaderBytecode;
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+                m_CSShaderName = shaderName;
+                m_CSEntryPoint = entryPoint;
+#endif
             }
 
             mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetCSProfile(), ShaderFlagsBits::GenerateSymbols);
