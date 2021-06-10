@@ -60,7 +60,7 @@ namespace hd
             hdEnsure(::CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(factory2.GetAddressOf())));
             hdEnsure(factory2.As<IDXGIFactory6>(&m_Factory));
 
-            m_ShaderManager = allocationScope.AllocateObject<ShaderManager>(allocationScope);
+            m_ShaderManager = allocationScope.AllocateObject<ShaderManager>();
         }
 
         BackendPlatform::~BackendPlatform()

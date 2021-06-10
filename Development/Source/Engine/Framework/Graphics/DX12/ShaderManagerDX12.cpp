@@ -5,16 +5,17 @@
 #if defined(HD_GRAPHICS_API_DX12)
 
 #include "Engine/Debug/Log.h"
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/File/Utils.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 
 namespace hd
 {
     namespace gfx
     {
-        ShaderManager::ShaderManager(mem::AllocationScope& allocationScope)
-            : m_AllocationScope{ allocationScope }
+        ShaderManager::ShaderManager()
+            : m_LocalAllocator{ mem::MB(500) }
+            , m_LocalScope{ m_LocalAllocator }
             , m_FirstShaderHolder{}
         {
 
@@ -53,7 +54,7 @@ namespace hd
 
             if (holder == nullptr)
             {
-                holder = m_AllocationScope.AllocateObject<ShaderHolder>(m_AllocationScope);
+                holder = m_LocalScope.AllocateObject<ShaderHolder>(m_LocalScope);
                 holder->ShaderKey.Assign(cookedFilePath.CStr());
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
@@ -71,6 +72,12 @@ namespace hd
             }
 
             return holder->ShaderMicrocode;
+        }
+
+        void ShaderManager::ResetShaderCache()
+        {
+            m_LocalScope.Reset();
+            m_FirstShaderHolder = nullptr;
         }
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)

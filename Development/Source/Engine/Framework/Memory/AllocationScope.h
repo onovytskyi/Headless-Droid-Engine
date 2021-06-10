@@ -25,6 +25,8 @@ namespace hd
 
             void* AllocateMemory(size_t size, size_t align);
 
+            void Reset();
+
         private:
             class Finalizer
             {
