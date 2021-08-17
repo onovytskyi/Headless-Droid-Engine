@@ -4,10 +4,10 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Debug/Assert.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
 #include "Engine/Framework/Graphics/DX12/UtilsDX12.h"
 #include "Engine/Framework/Graphics/RenderState.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 
 namespace hd
@@ -84,7 +84,7 @@ namespace hd
 
         void VolatileStateTracker::ApplyChangedStatesInternal(ID3D12GraphicsCommandList& commandList, VolatileState& currentState, VolatileState& changedState, bool graphics)
         {
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
+            ScopedScratchMemory scopedScratch{};
 
             if (currentState.RootSignature != changedState.RootSignature)
             {
@@ -118,7 +118,7 @@ namespace hd
 
                 if (renderTargetsDirty)
                 {
-                    D3D12_CPU_DESCRIPTOR_HANDLE* rtvDescriptors = scratchScope.AllocatePODArray<D3D12_CPU_DESCRIPTOR_HANDLE>(changedState.UsedRenderTargets);
+                    D3D12_CPU_DESCRIPTOR_HANDLE* rtvDescriptors = hdAllocate(mem::Scratch(), D3D12_CPU_DESCRIPTOR_HANDLE, changedState.UsedRenderTargets);
                     for (uint32_t renderTargetIdx = 0; renderTargetIdx < changedState.UsedRenderTargets; ++renderTargetIdx)
                     {
                         rtvDescriptors[renderTargetIdx] = changedState.RenderTargets[renderTargetIdx]->GetRTV().HandleCPU;

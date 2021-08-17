@@ -6,10 +6,7 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace sys
     {
@@ -25,7 +22,7 @@ namespace hd
         class Swapchain : public SwapchainPlatform
         {
         public:
-            Swapchain(Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format, mem::AllocationScope& allocationScope);
+            Swapchain(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format);
             ~Swapchain();
 
             hdNoncopyable(Swapchain)

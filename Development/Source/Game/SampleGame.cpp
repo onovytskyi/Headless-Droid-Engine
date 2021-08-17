@@ -15,7 +15,6 @@
 
 SampleGame::SampleGame()
     : m_IsRunning{ false }
-    , m_PersistentScope{ hd::mem::GetPersistentAllocator() }
     , m_MainWindow{}
     , m_SystemCommands{ hd::mem::MB(64) }
     , m_GfxBackend{}
@@ -33,23 +32,21 @@ SampleGame::SampleGame()
 {
     const hd::gfx::GraphicFormat backBufferFormat = hd::gfx::GraphicFormat::RGBA8UNorm_Srgb;
 
-    m_FrameTimer = m_PersistentScope.AllocateObject<hd::sys::Timer>();
-    m_MainWindow = m_PersistentScope.AllocateObject<hd::sys::SystemWindow>(u8"Droid Engine : Sample Game", 1280, 720);
-    m_GfxBackend = m_PersistentScope.AllocateObject<hd::gfx::Backend>(m_PersistentScope);
-    m_GfxDevice = m_PersistentScope.AllocateObject<hd::gfx::Device>(*m_GfxBackend, m_PersistentScope);
-    m_GfxQueue = m_PersistentScope.AllocateObject<hd::gfx::Queue>(*m_GfxDevice, hd::gfx::QueueType::Graphics, m_PersistentScope);
-    m_GfxSwapchain = m_PersistentScope.AllocateObject<hd::gfx::Swapchain>(*m_GfxBackend, *m_GfxDevice, *m_GfxQueue, *m_MainWindow, backBufferFormat, m_PersistentScope);
-    m_DebugOverlay = m_PersistentScope.AllocateObject<hd::ui::DebugOverlay>(*m_GfxBackend, *m_GfxDevice, m_MainWindow->GetWidth(), m_MainWindow->GetHeight(), backBufferFormat, 
-        m_PersistentScope, 64);
-    m_StatsDebugTool = m_PersistentScope.AllocateObject<hd::ui::StatsDebugTool>();
-    m_CommandsDebugTool = m_PersistentScope.AllocateObject<hd::ui::CommandsDebugTool>(*m_GfxDevice);
-    m_SceneTextureCollection = m_PersistentScope.AllocateObject<hd::render::TextureCollection>(m_PersistentScope, *m_GfxDevice);
+    m_FrameTimer = hdNew(hd::mem::Persistent(), hd::sys::Timer)();
+    m_MainWindow = hdNew(hd::mem::Persistent(), hd::sys::SystemWindow)(u8"Droid Engine : Sample Game", 1280, 720);
+    m_GfxBackend = hdNew(hd::mem::Persistent(), hd::gfx::Backend)(hd::mem::Persistent());
+    m_GfxDevice = hdNew(hd::mem::Persistent(), hd::gfx::Device)(hd::mem::Persistent(), hd::mem::General(), *m_GfxBackend);
+    m_GfxQueue = hdNew(hd::mem::Persistent(), hd::gfx::Queue)(hd::mem::Persistent(), *m_GfxDevice, hd::gfx::QueueType::Graphics);
+    m_GfxSwapchain = hdNew(hd::mem::Persistent(), hd::gfx::Swapchain)(hd::mem::Persistent(), *m_GfxBackend, *m_GfxDevice, *m_GfxQueue, *m_MainWindow, backBufferFormat);
+    m_DebugOverlay = hdNew(hd::mem::Persistent(), hd::ui::DebugOverlay)(*m_GfxBackend, *m_GfxDevice, m_MainWindow->GetWidth(), m_MainWindow->GetHeight(), backBufferFormat);
+    m_StatsDebugTool = hdNew(hd::mem::Persistent(), hd::ui::StatsDebugTool)();
+    m_CommandsDebugTool = hdNew(hd::mem::Persistent(), hd::ui::CommandsDebugTool)(*m_GfxDevice);
 
-    m_FpsCamera = m_PersistentScope.AllocateObject<hd::scene::FpsCamera>();
+    m_FpsCamera = hdNew(hd::mem::Persistent(), hd::scene::FpsCamera)();
     m_FpsCamera->SetFPSCameraLens(hd::math::ConvertToRadians(60.0f), float(m_MainWindow->GetWidth()) / m_MainWindow->GetHeight(), 10000.0f, 0.1f);
 
-    m_GBufferPass = m_PersistentScope.AllocateObject<GBufferPass>(*m_GfxBackend, *m_GfxDevice, m_MainWindow->GetWidth(), m_MainWindow->GetHeight());
-    m_LightingPass = m_PersistentScope.AllocateObject<LightingPass>(*m_GfxBackend, *m_GfxDevice, backBufferFormat);
+    m_GBufferPass = hdNew(hd::mem::Persistent(), GBufferPass)(*m_GfxBackend, *m_GfxDevice, m_MainWindow->GetWidth(), m_MainWindow->GetHeight());
+    m_LightingPass = hdNew(hd::mem::Persistent(), LightingPass)(*m_GfxBackend, *m_GfxDevice, backBufferFormat);
 
     m_DebugOverlay->RegisterDebugTool(*m_StatsDebugTool);
     m_DebugOverlay->RegisterDebugTool(*m_CommandsDebugTool);
@@ -59,8 +56,22 @@ SampleGame::~SampleGame()
 {
     m_GfxQueue->Flush();
 
+    hdSafeDelete(hd::mem::Persistent(), m_SceneMeshCollection);
+    hdSafeDelete(hd::mem::Persistent(), m_SceneTextureCollection);
+    hdSafeDelete(hd::mem::Persistent(), m_LightingPass);
+    hdSafeDelete(hd::mem::Persistent(), m_GBufferPass);
+    hdSafeDelete(hd::mem::Persistent(), m_FpsCamera);
+    hdSafeDelete(hd::mem::Persistent(), m_CommandsDebugTool);
+    hdSafeDelete(hd::mem::Persistent(), m_StatsDebugTool);
+    hdSafeDelete(hd::mem::Persistent(), m_GfxSwapchain);
+    hdSafeDelete(hd::mem::Persistent(), m_GfxQueue);
+    hdSafeDelete(hd::mem::Persistent(), m_GfxDevice);
+    hdSafeDelete(hd::mem::Persistent(), m_MainWindow);
+
     m_FrameTimer->Tick();
     hdLogInfo(u8"Engine shutdown took % seconds.", m_FrameTimer->GetDeltaSeconds());
+
+    hdSafeDelete(hd::mem::Persistent(), m_FrameTimer);
 }
 
 void SampleGame::Run()
@@ -78,8 +89,6 @@ void SampleGame::Run()
     while (m_IsRunning)
     {
         m_FrameTimer->Tick();
-
-        hd::mem::AllocationScope frameScope(hd::mem::GetFrameAllocator());
 
         m_MainWindow->ProcessSystemEvents(m_SystemCommands);
 
@@ -102,76 +111,68 @@ void SampleGame::RequestExit()
 
 void SampleGame::PrepareResouces()
 {
-    hd::mem::AllocationScope scratchScope{ hd::mem::GetScratchAllocator() };
+    hd::ScopedScratchMemory scopedScratch{};
 
     // Starting point for sponza
     m_FpsCamera->SetPosition({ 698.0f, 583.0f, -42.0f });
     m_FpsCamera->SetRotation({ 4.7f, 0.36f, 0.0f });
 
-    hd::mem::Buffer materials{ scratchScope };
-    hd::mem::Buffer meshes{ scratchScope };
-    hd::util::LoadMesh(scratchScope, u8"Meshes/Sponza/sponza.obj", materials, meshes);
+    std::pmr::vector<hd::util::MaterialResouce> materials{ &hd::mem::Scratch() };
+    std::pmr::vector<hd::util::MeshResource> meshes{ &hd::mem::Scratch() };
+    hd::util::LoadMesh(u8"Meshes/Sponza/sponza.obj", materials, meshes);
 
-    hd::util::MaterialResouce* materialsArray = materials.GetDataAs<hd::util::MaterialResouce*>();
-    uint32_t materialCount = uint32_t(materials.GetSize() / sizeof(hd::util::MaterialResouce));
+    std::pmr::vector<hd::render::MeshCollection::MaterialData> materialsToUpload{ materials.size(), &hd::mem::Scratch() };
+    std::pmr::vector<hd::render::MeshCollection::MeshData> meshesToUpload{ meshes.size(), &hd::mem::Scratch() };
 
-    hd::util::MeshResource* meshesArray = meshes.GetDataAs<hd::util::MeshResource*>();
-    uint32_t meshCount = uint32_t(meshes.GetSize() / sizeof(hd::util::MeshResource));
+    m_SceneTextureCollection = hdNew(hd::mem::Persistent(), hd::render::TextureCollection)(*m_GfxDevice);
 
-    hd::util::BufferArray<hd::render::MeshCollection::MaterialData> materialsToUpload{ scratchScope, materialCount };
-    materialsToUpload.ResizeToMax();
-    hd::util::BufferArray<hd::render::MeshCollection::MeshData> meshesToUpload{ scratchScope, meshCount };
-    meshesToUpload.ResizeToMax();
-
-    for (uint32_t materialIdx = 0; materialIdx < materialCount; ++materialIdx)
+    for (uint32_t materialIdx = 0; materialIdx < materials.size(); ++materialIdx)
     {
-        materialsToUpload[materialIdx].DiffuseColor = materialsArray[materialIdx].DiffuseColor;
-        materialsToUpload[materialIdx].AmbientColor = materialsArray[materialIdx].AmbientColor;
-        materialsToUpload[materialIdx].SpecularColor = materialsArray[materialIdx].SpecularColor;
+        materialsToUpload[materialIdx].DiffuseColor = materials[materialIdx].DiffuseColor;
+        materialsToUpload[materialIdx].AmbientColor = materials[materialIdx].AmbientColor;
+        materialsToUpload[materialIdx].SpecularColor = materials[materialIdx].SpecularColor;
 
-        materialsToUpload[materialIdx].SpecularPower = materialsArray[materialIdx].SpecularPower;
-        materialsToUpload[materialIdx].FresnelR0 = (1.0f - materialsArray[materialIdx].RefractionIndex) / (1.0f + materialsArray[materialIdx].RefractionIndex);
+        materialsToUpload[materialIdx].SpecularPower = materials[materialIdx].SpecularPower;
+        materialsToUpload[materialIdx].FresnelR0 = (1.0f - materials[materialIdx].RefractionIndex) / (1.0f + materials[materialIdx].RefractionIndex);
         materialsToUpload[materialIdx].FresnelR0 *= materialsToUpload[materialIdx].FresnelR0;
         materialsToUpload[materialIdx].DiffuseTextureIdx = -1;
         materialsToUpload[materialIdx].NormalTextureIdx = -1;
         materialsToUpload[materialIdx].RoughnessTextureIdx = -1;
         materialsToUpload[materialIdx].MetalnessTextureIdx = -1;
 
-        if (materialsArray[materialIdx].DiffuseTexture)
+        if (!materials[materialIdx].DiffuseTexture.empty())
         {
-            hd::gfx::TextureHandle diffuseTexture = m_SceneTextureCollection->UploadTexture(materialsArray[materialIdx].DiffuseTexture, m_GraphicCommands);
+            hd::gfx::TextureHandle diffuseTexture = m_SceneTextureCollection->UploadTexture(materials[materialIdx].DiffuseTexture.c_str(), m_GraphicCommands);
             materialsToUpload[materialIdx].DiffuseTextureIdx = m_GfxDevice->GetSRVShaderIndex(diffuseTexture);
         }
 
-        if (materialsArray[materialIdx].NormalTexture)
+        if (!materials[materialIdx].NormalTexture.empty())
         {
-            hd::gfx::TextureHandle normalTexture = m_SceneTextureCollection->UploadTexture(materialsArray[materialIdx].NormalTexture, m_GraphicCommands);
+            hd::gfx::TextureHandle normalTexture = m_SceneTextureCollection->UploadTexture(materials[materialIdx].NormalTexture.c_str(), m_GraphicCommands);
             materialsToUpload[materialIdx].NormalTextureIdx = m_GfxDevice->GetSRVShaderIndex(normalTexture);
         }
 
-        if (materialsArray[materialIdx].RoughnessTexture)
+        if (!materials[materialIdx].RoughnessTexture.empty())
         {
-            hd::gfx::TextureHandle roughnessTexture = m_SceneTextureCollection->UploadTexture(materialsArray[materialIdx].RoughnessTexture, m_GraphicCommands);
+            hd::gfx::TextureHandle roughnessTexture = m_SceneTextureCollection->UploadTexture(materials[materialIdx].RoughnessTexture.c_str(), m_GraphicCommands);
             materialsToUpload[materialIdx].RoughnessTextureIdx = m_GfxDevice->GetSRVShaderIndex(roughnessTexture);
         }
 
-        if (materialsArray[materialIdx].MetalnessTexture)
+        if (!materials[materialIdx].MetalnessTexture.empty())
         {
-            hd::gfx::TextureHandle metalnessTexture = m_SceneTextureCollection->UploadTexture(materialsArray[materialIdx].MetalnessTexture, m_GraphicCommands);
+            hd::gfx::TextureHandle metalnessTexture = m_SceneTextureCollection->UploadTexture(materials[materialIdx].MetalnessTexture.c_str(), m_GraphicCommands);
             materialsToUpload[materialIdx].MetalnessTextureIdx = m_GfxDevice->GetSRVShaderIndex(metalnessTexture);
         }
     }
 
-    for (uint32_t meshIdx = 0; meshIdx < meshCount; ++meshIdx)
+    for (uint32_t meshIdx = 0; meshIdx < meshes.size(); ++meshIdx)
     {
-        meshesToUpload[meshIdx].Vertices = meshesArray[meshIdx].Vertices;
-        meshesToUpload[meshIdx].VertexCount = meshesArray[meshIdx].VertexCount;
-        meshesToUpload[meshIdx].Indices = meshesArray[meshIdx].Indices;
-        meshesToUpload[meshIdx].IndexCount = meshesArray[meshIdx].IndexCount;
-        meshesToUpload[meshIdx].MaterialIndex = meshesArray[meshIdx].MaterialIndex;
+        meshesToUpload[meshIdx].Vertices = std::move(meshes[meshIdx].Vertices);
+        meshesToUpload[meshIdx].Indices = std::move(meshes[meshIdx].Indices);
+        meshesToUpload[meshIdx].MaterialIndex = meshes[meshIdx].MaterialIndex;
     }
 
-    m_SceneMeshCollection = m_PersistentScope.AllocateObject<hd::render::MeshCollection>(m_PersistentScope, *m_GfxDevice, m_GraphicCommands, materialsToUpload, meshesToUpload);
+    m_SceneMeshCollection = hdNew(hd::mem::Persistent(), hd::render::MeshCollection)(*m_GfxDevice, m_GraphicCommands, materialsToUpload, meshesToUpload);
 
     m_DebugOverlay->UploadFont(m_GraphicCommands);
 

@@ -18,12 +18,7 @@ namespace hd
 
         void* FixedLinearAllocator::Allocate(size_t size, size_t align)
         {
-            return AllocateWithOffset(0, size, align);
-        }
-
-        void* FixedLinearAllocator::AllocateWithOffset(size_t offset, size_t size, size_t align)
-        {
-            std::byte* allocation = m_MemoryPointer + offset;
+            std::byte* allocation = m_MemoryPointer;
             std::byte* alignedAllocation = reinterpret_cast<std::byte*>(AlignAbove(allocation, align));
 
             if (alignedAllocation + size > m_MemoryEnd)
@@ -32,6 +27,11 @@ namespace hd
             m_MemoryPointer = alignedAllocation + size;
 
             return alignedAllocation;
+        }
+
+        void FixedLinearAllocator::Deallocate(void* memory, size_t sizeInBytes, size_t alignInBytes)
+        {
+            // NOP
         }
 
         size_t FixedLinearAllocator::GetMarker() const
@@ -48,6 +48,5 @@ namespace hd
         {
             m_MemoryPointer = reinterpret_cast<std::byte*>(marker);
         }
-
     }
 }

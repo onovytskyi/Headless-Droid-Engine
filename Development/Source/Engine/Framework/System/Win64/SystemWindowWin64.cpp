@@ -5,9 +5,7 @@
 #if defined(HD_PLATFORM_WIN64)
 
 #include "Engine/Debug/Assert.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
-#include "Engine/Framework/String/String.h"
 #include "Engine/Framework/System/SystemCommands.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
 
@@ -21,12 +19,14 @@ namespace hd
             : m_Handle{}
             , m_Params{}
         {
+            ScopedScratchMemory scopedScratch{};
+
             m_Params.Width = width;
             m_Params.Height = height;
 
-            mem::AllocationScope scratchScope(mem::GetScratchAllocator());
-
-            str::String titleString(scratchScope, title);
+            std::pmr::u8string titleString{ title, &mem::Scratch() };
+            std::pmr::wstring wideTitleString{ &mem::Scratch() };
+            str::ToWide(titleString, wideTitleString);
 
             HMODULE moduleHandle = ::GetModuleHandleW(nullptr);
             WNDCLASSEXW windowClass{};
@@ -56,7 +56,7 @@ namespace hd
             m_Handle = ::CreateWindowExW(
                 dwExStyle,
                 g_ClassName,
-                titleString.AsWide(scratchScope),
+                wideTitleString.c_str(),
                 WS_OVERLAPPEDWINDOW,
                 CW_USEDEFAULT,
                 0,

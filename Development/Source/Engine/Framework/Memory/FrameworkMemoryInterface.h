@@ -1,11 +1,16 @@
 #pragma once
 
+#include "Engine/Framework/Memory/ScopedScratchMemory.h"
+
 namespace hd
 {
+    class Allocator;
+    class AllocatorMemoryResource;
+
     namespace mem
     {
-        class LinearAllocator;
-
-        LinearAllocator& GetScratchAllocator();
+        Allocator& Scratch();
+        size_t GetScratchMarker();
+        void ResetScratchMarker(size_t marker);
     }
 }

@@ -6,21 +6,22 @@
 
 #include "Engine/Debug/Assert.h"
 #include "Engine/Debug/Log.h"
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Backend.h"
 #include "Engine/Framework/Graphics/DX12/TextureDX12.h"
 #include "Engine/Framework/Graphics/DX12/UtilsDX12.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/Fence.h"
 #include "Engine/Framework/Graphics/Queue.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/System/SystemWindow.h"
 
 namespace hd
 {
     namespace gfx
     {
-        SwapchainPlatform::SwapchainPlatform(Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format, mem::AllocationScope& allocationScope)
-            : m_OwnerDevice{ &device }
+        SwapchainPlatform::SwapchainPlatform(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format)
+            : m_PersistentAllocator{ persistentAllocator }
+            , m_OwnerDevice{ &device }
             , m_FlipQueue{ &queue }
             , m_Format{ format }
             , m_FramebufferIndex{}
@@ -59,7 +60,7 @@ namespace hd
 
             CreateFramebufferTextures();
 
-            m_FrameFence = allocationScope.AllocateObject<Fence>(*m_OwnerDevice, 0U);
+            m_FrameFence = hdNew(m_PersistentAllocator, Fence)(*m_OwnerDevice, 0U);
         }
 
         SwapchainPlatform::~SwapchainPlatform()
@@ -67,6 +68,8 @@ namespace hd
             m_FlipQueue->Flush();
 
             ReleaseFrameBufferTextures();
+
+            hdSafeDelete(m_PersistentAllocator, m_FrameFence);
         }
 
         void SwapchainPlatform::UpdateGPUFrame()

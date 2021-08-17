@@ -1,12 +1,12 @@
 #include "Engine/Config/Bootstrap.h"
 
+#include "Engine/Engine/Memory/EngineMemoryInterface.h"
 #include "Engine/Engine/Render/MeshCollection.h"
 #include "Engine/Engine/Utils/ResourceLoader.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Math/Math.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
-#include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
+#include "Engine/Framework/Memory/PlainDataArray.h"
 
 namespace hd
 {
@@ -25,57 +25,81 @@ namespace hd
             math::Matrix4x4 ViewProj;
         };
 
-        MeshCollection::MeshCollection(mem::AllocationScope& allocationScope, gfx::Device& device, util::CommandBuffer& graphicsCommands, util::BufferArray<MaterialData> const& materials,
-            util::BufferArray<MeshData> const& meshes)
+        MeshCollection::MeshData::MeshData(allocator_type allocator)
+            : Vertices{ allocator }
+            , Indices{ allocator }
+            , MaterialIndex{}
+        {
+
+        }
+
+        MeshCollection::MeshData::MeshData(MeshData const& other, allocator_type const& allocator)
+            : Vertices{ other.Vertices, allocator }
+            , Indices{ other.Indices, allocator }
+            , MaterialIndex{ other.MaterialIndex }
+        {
+
+        }
+
+        MeshCollection::MeshData::MeshData(MeshData&& other, allocator_type const& allocator)
+            : Vertices{ std::move(other.Vertices), allocator }
+            , Indices{ std::move(other.Indices), allocator }
+            , MaterialIndex{ other.MaterialIndex }
+        {
+
+        }
+
+        MeshCollection::MeshCollection(gfx::Device& device, util::CommandBuffer& graphicsCommands, std::pmr::vector<MaterialData> const& materials, std::pmr::vector<MeshData> const& meshes)
             : m_Device{ device }
             , m_Materials{}
             , m_Meshes{}
             , m_Indices{}
             , m_Vertices{}
-            , m_DrawData{ allocationScope, meshes.GetSize() }
+            , m_DrawData{ &mem::General() }
         {
+            m_DrawData.Resize(meshes.size());
+
             gfx::GraphicCommandsStream commandStream{ graphicsCommands };
 
-            m_Materials = m_Device.CreateBuffer(uint32_t(materials.GetSize()), sizeof(MaterialData), gfx::BufferFlagsBits::ShaderResource);
-            commandStream.UpdateBuffer(m_Materials, 0, (void*)materials.GetData(), materials.GetSize() * sizeof(MaterialData));
+            m_Materials = m_Device.CreateBuffer(uint32_t(materials.size()), sizeof(MaterialData), gfx::BufferFlagsBits::ShaderResource);
+            commandStream.UpdateBuffer(m_Materials, 0, materials.data(), materials.size() * sizeof(MaterialData));
 
             uint32_t indexCount{};
             uint32_t vertexCount{};
             for (MeshData const& meshData : meshes)
             {
-                indexCount += meshData.IndexCount;
-                vertexCount += meshData.VertexCount;
+                indexCount += uint32_t(meshData.Indices.Size());
+                vertexCount += uint32_t(meshData.Vertices.Size());
             }
 
             m_Indices = m_Device.CreateBuffer(indexCount, sizeof(uint32_t), gfx::BufferFlagsBits::ShaderResource);
             m_Vertices = m_Device.CreateBuffer(vertexCount, sizeof(util::MeshResourceVertex), gfx::BufferFlagsBits::ShaderResource);
 
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
+            ScopedScratchMemory scopedScratch{};
 
-            util::BufferArray<MeshInfo> gpuMeshInfo{ scratchScope, meshes.GetSize() };
-            gpuMeshInfo.ResizeToMax();
+            PlainDataArray<MeshInfo> gpuMeshInfo{ meshes.size(), &mem::Scratch() };
 
             uint32_t startVertex{};
             uint32_t startIndex{};
-            for (uint32_t meshIdx = 0; meshIdx < meshes.GetSize(); ++meshIdx)
+            for (uint32_t meshIdx = 0; meshIdx < meshes.size(); ++meshIdx)
             {
                 gpuMeshInfo[meshIdx].StartIndex = startIndex;
                 gpuMeshInfo[meshIdx].StartVertex = startVertex;
-                gpuMeshInfo[meshIdx].IndexCount = meshes[meshIdx].IndexCount;
+                gpuMeshInfo[meshIdx].IndexCount = uint32_t(meshes[meshIdx].Indices.Size());
                 gpuMeshInfo[meshIdx].MaterialIndex = meshes[meshIdx].MaterialIndex;
 
-                commandStream.UpdateBuffer(m_Indices, startIndex * sizeof(uint32_t), meshes[meshIdx].Indices, meshes[meshIdx].IndexCount * sizeof(uint32_t));
-                commandStream.UpdateBuffer(m_Vertices, startVertex * sizeof(util::MeshResourceVertex), meshes[meshIdx].Vertices, meshes[meshIdx].VertexCount * sizeof(util::MeshResourceVertex));
+                commandStream.UpdateBuffer(m_Indices, startIndex * sizeof(uint32_t), meshes[meshIdx].Indices.Data(), meshes[meshIdx].Indices.Size() * sizeof(uint32_t));
+                commandStream.UpdateBuffer(m_Vertices, startVertex * sizeof(util::MeshResourceVertex), meshes[meshIdx].Vertices.Data(), 
+                    meshes[meshIdx].Vertices.Size() * sizeof(util::MeshResourceVertex));
 
-                MeshDrawData drawData{ gpuMeshInfo[meshIdx].IndexCount, MaterialType::Opaque };
-                m_DrawData.Add(drawData);
+                m_DrawData[meshIdx] = { gpuMeshInfo[meshIdx].IndexCount, MaterialType::Opaque };
 
-                startIndex += meshes[meshIdx].IndexCount;
-                startVertex += meshes[meshIdx].VertexCount;
+                startIndex += uint32_t(meshes[meshIdx].Indices.Size());
+                startVertex += uint32_t(meshes[meshIdx].Vertices.Size());
             }
 
-            m_Meshes = m_Device.CreateBuffer(uint32_t(meshes.GetSize()), sizeof(MeshInfo), gfx::BufferFlagsBits::ShaderResource);
-            commandStream.UpdateBuffer(m_Meshes, 0, gpuMeshInfo.GetData(), gpuMeshInfo.GetSize() * sizeof(MeshInfo));
+            m_Meshes = m_Device.CreateBuffer(uint32_t(meshes.size()), sizeof(MeshInfo), gfx::BufferFlagsBits::ShaderResource);
+            commandStream.UpdateBuffer(m_Meshes, 0, gpuMeshInfo.Data(), gpuMeshInfo.Size() * sizeof(MeshInfo));
 
             // After initial setup those resources must be always in readable state.
             commandStream.UseAsReadableResource(m_Materials);
@@ -114,7 +138,7 @@ namespace hd
 
         uint32_t MeshCollection::GetMeshCount() const
         {
-            return uint32_t(m_DrawData.GetSize());
+            return uint32_t(m_DrawData.Size());
         }
 
         uint32_t MeshCollection::GetMeshIndexCount(uint32_t meshIndex) const

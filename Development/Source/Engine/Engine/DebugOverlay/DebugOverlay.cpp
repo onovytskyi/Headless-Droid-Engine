@@ -3,23 +3,23 @@
 #include "Engine/Engine/DebugOverlay/DebugOverlay.h"
 
 #include "Engine/Debug/Assert.h"
+#include "Engine/Engine/Memory/EngineMemoryInterface.h"
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Graphics/RenderState.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 
 namespace hd
 {
     namespace ui
     {
-        DebugOverlay::DebugOverlay(gfx::Backend& backend, gfx::Device& device, uint32_t width, uint32_t height, gfx::GraphicFormat targetFormat, mem::AllocationScope& allocationScope, 
-            size_t maxTools)
+        DebugOverlay::DebugOverlay(gfx::Backend& backend, gfx::Device& device, uint32_t width, uint32_t height, gfx::GraphicFormat targetFormat)
             : m_Device{ &device }
             , m_DefaultFont{}
             , m_GuiProjectionMatrix{}
             , m_GuiDrawRenderState{}
             , m_Visible{ false }
-            , m_Tools{ allocationScope, maxTools }
+            , m_Tools{ &mem::General() }
         {
             ImGui::CreateContext();
             ImGui::StyleColorsDark();
@@ -34,7 +34,7 @@ namespace hd
 
             imguiIO.IniFilename = nullptr;
 
-            m_GuiDrawRenderState = allocationScope.AllocateObject<gfx::RenderState>(backend);
+            m_GuiDrawRenderState = hdNew(mem::Persistent(), gfx::RenderState)(backend);
             m_GuiDrawRenderState->SetVS(u8"DrawGui.hlsl", u8"MainVS");
             m_GuiDrawRenderState->SetPS(u8"DrawGui.hlsl", u8"MainPS");
             m_GuiDrawRenderState->SetRenderTargetFormat(0, targetFormat);
@@ -44,11 +44,15 @@ namespace hd
             m_GuiDrawRenderState->SetBlendType(gfx::BlendType::Alpha, gfx::BlendType::None);
 
             Resize(width, height);
+
+            m_Tools.reserve(32);
         }
 
         DebugOverlay::~DebugOverlay()
         {
             m_Device->DestroyTexture(m_DefaultFont);
+
+            hdSafeDelete(mem::Persistent(), m_GuiDrawRenderState);
         }
 
         void DebugOverlay::UploadFont(hd::util::CommandBuffer& commandBuffer)
@@ -74,10 +78,10 @@ namespace hd
 
         void DebugOverlay::RegisterDebugTool(Tool& tool)
         {
-            m_Tools.Add(&tool);
+            m_Tools.push_back(&tool);
 
             Tool** firstTool = &m_Tools[0];
-            Tool** pastLastTool = firstTool + m_Tools.GetSize();
+            Tool** pastLastTool = firstTool + m_Tools.size();
             std::stable_sort(firstTool, pastLastTool, [](const Tool* a, const Tool* b) {
                 return strcmp(a->GetMenuName(), b->GetMenuName()) > 0;
                 });
@@ -262,9 +266,8 @@ namespace hd
             {
                 if (ImGui::BeginMainMenuBar())
                 {
-                    for (size_t toolIdx = 0; toolIdx < m_Tools.GetSize(); ++toolIdx)
+                    for (Tool* tool : m_Tools)
                     {
-                        Tool* tool = m_Tools[toolIdx];
                         if (tool->GetType() != Tool::ToolType::AlwaysVisible)
                         {
                             if (ImGui::BeginMenu(tool->GetMenuName()))
@@ -289,10 +292,8 @@ namespace hd
                     ImGui::EndMainMenuBar();
                 }
 
-                for (size_t toolIdx = 0; toolIdx < m_Tools.GetSize(); ++toolIdx)
+                for (Tool* tool : m_Tools)
                 {
-                    Tool* tool = m_Tools[toolIdx];
-
                     if (tool->GetVisibleRef() && tool->GetType() == Tool::ToolType::Gadget)
                     {
                         tool->Draw();
@@ -300,14 +301,14 @@ namespace hd
                 }
             }
 
-            for (size_t toolIdx = 0; toolIdx < m_Tools.GetSize(); ++toolIdx)
+            for (Tool* tool : m_Tools)
             {
-                if (m_Tools[toolIdx]->GetType() == Tool::ToolType::AlwaysVisible)
+                if (tool->GetType() == Tool::ToolType::AlwaysVisible)
                 {
-                    m_Tools[toolIdx]->Draw();
+                    tool->Draw();
                 }
 
-                m_Tools[toolIdx]->ProcessShortcuts();
+                tool->ProcessShortcuts();
             }
 
             ImGui::Render();

@@ -6,8 +6,8 @@ namespace hd
 {
     namespace gfx
     {
-        Backend::Backend(mem::AllocationScope& allocationScope)
-            : BackendPlatform{ allocationScope }
+        Backend::Backend(Allocator& persistentAllocator)
+            : BackendPlatform{ persistentAllocator }
         {
 
         }

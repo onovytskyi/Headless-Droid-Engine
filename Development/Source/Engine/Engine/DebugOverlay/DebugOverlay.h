@@ -2,7 +2,6 @@
 
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Math/Math.h"
-#include "Engine/Framework/Utils/BufferArray.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
 
 #include "Externals/imgui/imgui.h"
@@ -10,16 +9,13 @@
 
 namespace hd
 {
+    class Allocator;
+
     namespace gfx
     {
         class Backend;
         class Device;
         class RenderState;
-    }
-
-    namespace mem
-    {
-        class AllocationScope;
     }
 
     namespace ui
@@ -47,7 +43,7 @@ namespace hd
                 virtual void Draw() = 0;
             };
 
-            DebugOverlay(gfx::Backend& backend, gfx::Device& device, uint32_t width, uint32_t height, gfx::GraphicFormat targetFormat, mem::AllocationScope& allocationScope, size_t maxTools);
+            DebugOverlay(gfx::Backend& backend, gfx::Device& device, uint32_t width, uint32_t height, gfx::GraphicFormat targetFormat);
             ~DebugOverlay();
 
             void UploadFont(hd::util::CommandBuffer& commandBuffer);
@@ -75,7 +71,7 @@ namespace hd
 
             bool m_Visible;
 
-            util::BufferArray<Tool*> m_Tools;
+            std::pmr::vector<Tool*> m_Tools;
         };
     }
 }

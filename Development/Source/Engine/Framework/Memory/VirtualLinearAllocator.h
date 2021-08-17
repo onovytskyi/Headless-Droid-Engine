@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Engine/Foundation/Memory/LinearAllocator.h"
 #include "Engine/Framework/Memory/VirtualBuffer.h"
 
 namespace hd
 {
     namespace mem
     {
-        class VirtualLinearAllocator : public LinearAllocator
+        class VirtualLinearAllocator : public Allocator
         {
         public:
             VirtualLinearAllocator(size_t maximumSize);
@@ -18,12 +17,12 @@ namespace hd
             hdNoncopyable(VirtualLinearAllocator)
 
             void* Allocate(size_t size, size_t align) override;
-            void* AllocateWithOffset(size_t offset, size_t size, size_t align) override;
+            void Deallocate(void* memory, size_t sizeInBytes, size_t alignInBytes) override;
 
-            size_t GetMarker() const override;
+            size_t GetMarker() const;
 
-            void Reset() override;
-            void Reset(size_t marker) override;
+            void Reset();
+            void Reset(size_t marker);
 
             void Shrink();
 

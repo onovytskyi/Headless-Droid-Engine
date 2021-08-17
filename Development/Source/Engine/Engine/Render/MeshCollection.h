@@ -2,18 +2,13 @@
 
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Math/Math.h"
-#include "Engine/Framework/Utils/BufferArray.h"
+#include "Engine/Framework/Memory/PlainDataArray.h"
 
 namespace hd
 {
     namespace gfx
     {
         class Device;
-    }
-
-    namespace mem
-    {
-        class AllocationScope;
     }
 
     namespace util
@@ -50,15 +45,20 @@ namespace hd
 
             struct MeshData
             {
-                util::MeshResourceVertex* Vertices;
-                uint32_t VertexCount;
-                uint32_t* Indices;
-                uint32_t IndexCount;
+                using allocator_type = std::pmr::polymorphic_allocator<char>;
+
+                explicit MeshData(allocator_type allocator);
+                MeshData(MeshData const& other, allocator_type const& allocator);
+                MeshData(MeshData&& other, allocator_type const& allocator);
+                MeshData& operator=(MeshData const& other) = default;
+                MeshData& operator=(MeshData&& other) = default;
+
+                PlainDataArray<util::MeshResourceVertex> Vertices;
+                PlainDataArray<uint32_t> Indices;
                 uint32_t MaterialIndex;
             };
 
-            MeshCollection(mem::AllocationScope& allocationScope, gfx::Device& device, util::CommandBuffer& graphicsCommands, util::BufferArray<MaterialData> const& materials,
-                util::BufferArray<MeshData> const& meshes);
+            MeshCollection(gfx::Device& device, util::CommandBuffer& graphicsCommands, std::pmr::vector<MaterialData> const& materials, std::pmr::vector<MeshData> const& meshes);
             ~MeshCollection();
 
             hdNoncopyable(MeshCollection)
@@ -85,7 +85,7 @@ namespace hd
             gfx::BufferHandle m_Indices;
             gfx::BufferHandle m_Vertices;
 
-            util::BufferArray<MeshDrawData> m_DrawData;
+            PlainDataArray<MeshDrawData> m_DrawData;
         };
     }
 }

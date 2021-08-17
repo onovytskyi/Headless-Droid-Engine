@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Engine/Foundation/Memory/LinearAllocator.h"
-
 namespace hd
 {
     namespace mem
     {
-        class FixedLinearAllocator : public LinearAllocator
+        class FixedLinearAllocator : public Allocator
         {
         public:
             FixedLinearAllocator(void* memory, size_t size);
@@ -14,10 +12,10 @@ namespace hd
             hdNoncopyable(FixedLinearAllocator)
 
             void* Allocate(size_t size, size_t align) override;
-            void* AllocateWithOffset(size_t offset, size_t size, size_t align) override;
-            size_t GetMarker() const override;
-            void Reset() override;
-            void Reset(size_t marker) override;
+            void Deallocate(void* memory, size_t sizeInBytes, size_t alignInBytes) override;
+            size_t GetMarker() const;
+            void Reset();
+            void Reset(size_t marker);
 
         private:
             std::byte* m_MemoryBegin;

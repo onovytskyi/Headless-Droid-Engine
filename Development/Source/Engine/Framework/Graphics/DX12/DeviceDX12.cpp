@@ -15,7 +15,6 @@
 #include "Engine/Framework/Graphics/GraphicCommands.h"
 #include "Engine/Framework/Graphics/Queue.h"
 #include "Engine/Framework/Graphics/RenderState.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 #include "Engine/Framework/Utils/CommandBufferReader.h"
 
@@ -23,8 +22,10 @@ namespace hd
 {
     namespace gfx
     {
-        DevicePlatform::DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope)
-            : m_Backend{ &backend }
+        DevicePlatform::DevicePlatform(Allocator& persistentAllocator, Allocator& generalAllocator, Backend& backend)
+            : m_PersistentAllocator{ persistentAllocator }
+            , m_GeneralAllocator{ generalAllocator }
+            , m_Backend{ &backend }
 #if defined(HD_ENABLE_GFX_DEBUG)
             , m_MessageCallbackCookie{}
 #endif
@@ -34,12 +35,12 @@ namespace hd
             , m_ResourceStateTracker{}
             , m_DescriptorManager{}
             , m_HeapAllocator{}
-            , m_BuffersToFree{ allocationScope, cfg::MaxBuffersToFreeInQueue() }
-            , m_TexturesToFree{ allocationScope, cfg::MaxTexturesToFreeInQueue() }
-            , m_RecentBuffersToFree{ allocationScope, cfg::MaxBuffersToFreePerFrame() }
-            , m_RecentTexturesToFree{ allocationScope, cfg::MaxTexturesToFreePerFrame() }
+            , m_BuffersToFree{ &m_GeneralAllocator }
+            , m_TexturesToFree{ &m_GeneralAllocator }
+            , m_RecentBuffersToFree{ &m_GeneralAllocator }
+            , m_RecentTexturesToFree{ &m_GeneralAllocator }
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            , m_RenderStatesToRebuild{ allocationScope, cfg::MaxRenderStatesToRebuild() }
+            , m_RenderStatesToRebuild{ &m_GeneralAllocator }
 #endif
         {
             m_Adapter = backend.GetBestAdapter();
@@ -83,15 +84,18 @@ namespace hd
 #endif
             CreateUnifiedRootSignature();
 
-            m_GraphicsCommandListManager = allocationScope.AllocateObject<CommandListManager>(*this, allocationScope, D3D12_COMMAND_LIST_TYPE_DIRECT, cfg::MaxGraphicsCommandLists(), 
-                cfg::MaxGraphicsCommandAllocators());
-            m_ComputeCommandListManager = allocationScope.AllocateObject<CommandListManager>(*this, allocationScope, D3D12_COMMAND_LIST_TYPE_COMPUTE, cfg::MaxComputeCommandLists(),
-                cfg::MaxComputeCommandAllocators());
-            m_CopyCommandListManager = allocationScope.AllocateObject<CommandListManager>(*this, allocationScope, D3D12_COMMAND_LIST_TYPE_COPY, cfg::MaxCopyCommandLists(),
-                cfg::MaxCopyCommandAllocators());
-            m_ResourceStateTracker = allocationScope.AllocateObject<ResourceStateTracker>(allocationScope);
-            m_DescriptorManager = allocationScope.AllocateObject<DescriptorManager>(*this, allocationScope);
-            m_HeapAllocator = allocationScope.AllocateObject<HeapAllocator>(*static_cast<Device*>(this), allocationScope, cfg::GPUHeapSize(), cfg::MaxGPUHeaps(), cfg::KeepHeapsAliveForFrames());
+            m_GraphicsCommandListManager = hdNew(m_PersistentAllocator, CommandListManager)(m_GeneralAllocator , *this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+            m_ComputeCommandListManager = hdNew(m_PersistentAllocator, CommandListManager)(m_GeneralAllocator, *this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+            m_CopyCommandListManager = hdNew(m_PersistentAllocator, CommandListManager)(m_GeneralAllocator, *this, D3D12_COMMAND_LIST_TYPE_COPY);
+            m_ResourceStateTracker = hdNew(m_PersistentAllocator, ResourceStateTracker)(m_GeneralAllocator);
+            m_DescriptorManager = hdNew(m_PersistentAllocator, DescriptorManager)(m_GeneralAllocator, *this);
+            m_HeapAllocator = hdNew(m_PersistentAllocator, HeapAllocator)(m_GeneralAllocator, *static_cast<Device*>(this), cfg::GPUHeapSize(), cfg::KeepHeapsAliveForFrames());
+        
+            m_BuffersToFree.reserve(64);
+            m_TexturesToFree.reserve(64);
+            m_RecentBuffersToFree.reserve(32);
+            m_RecentTexturesToFree.reserve(32);
+            m_RenderStatesToRebuild.reserve(32);
         }
 
         DevicePlatform::~DevicePlatform()
@@ -147,7 +151,7 @@ namespace hd
 
         void DevicePlatform::SubmitToQueue(Queue& queue, util::CommandBuffer& commandBuffer)
         {
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
+            ScopedScratchMemory scopedScratch{};
 
             // #TODO #HACK As of right now we're submitting commands to queue right away, but this will not work for multithreaded recording.
             util::CommandBufferReader commandBufferReader{ commandBuffer };
@@ -157,7 +161,7 @@ namespace hd
             ID3D12DescriptorHeap* bindlessHeaps[2] = { m_DescriptorManager->GetResourceHeap(), m_DescriptorManager->GetSamplerHeap() };
             commandList->SetDescriptorHeaps(_countof(bindlessHeaps), bindlessHeaps);
 
-            VolatileStateTracker* volatileState = scratchScope.AllocatePOD<VolatileStateTracker>();
+            VolatileStateTracker* volatileState = hdNew(mem::Scratch(), VolatileStateTracker)();
             volatileState->SetRootSignature(m_RootSignature.Get());
 
             while (commandBufferReader.HasCommands())
@@ -224,7 +228,7 @@ namespace hd
                     uint32_t firstSubresource = command.FirstSubresource;
                     uint32_t numSubresources = command.NumSubresources == ALL_SUBRESOURCES ? target.GetSubresourceCount() - command.FirstSubresource : command.NumSubresources;
 
-                    D3D12_PLACED_SUBRESOURCE_FOOTPRINT* copyableFootprints = scratchScope.AllocatePODArray<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(numSubresources);
+                    D3D12_PLACED_SUBRESOURCE_FOOTPRINT* copyableFootprints = hdAllocate(mem::Scratch(), D3D12_PLACED_SUBRESOURCE_FOOTPRINT, numSubresources);
                     uint64_t totalSizeInBytes{};
                     D3D12_RESOURCE_DESC resouceDesc = target.GetNativeResource()->GetDesc();
                     m_Device->GetCopyableFootprints(&resouceDesc, firstSubresource, numSubresources, 0, copyableFootprints, nullptr, nullptr, &totalSizeInBytes);
@@ -363,7 +367,7 @@ namespace hd
                 {
                     SetViewportsCommand& command = SetViewportsCommand::ReadFrom(commandBufferReader);
 
-                    D3D12_VIEWPORT* viewports = scratchScope.AllocatePODArray<D3D12_VIEWPORT>(command.Count);
+                    D3D12_VIEWPORT* viewports = hdAllocate(mem::Scratch(), D3D12_VIEWPORT, command.Count);
 
                     for (uint32_t viewportIdx = 0; viewportIdx < command.Count; ++viewportIdx)
                     {
@@ -387,7 +391,7 @@ namespace hd
                 {
                     SetScissorRectsCommand& command = SetScissorRectsCommand::ReadFrom(commandBufferReader);
 
-                    D3D12_RECT* rects = scratchScope.AllocatePODArray<D3D12_RECT>(command.Count);
+                    D3D12_RECT* rects = hdAllocate(mem::Scratch(), D3D12_RECT, command.Count);
 
                     for (uint32_t rectIdx = 0; rectIdx < command.Count; ++rectIdx)
                     {
@@ -526,10 +530,10 @@ namespace hd
 
         void DevicePlatform::CreateUnifiedRootSignature()
         {
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
+            ScopedScratchMemory scopedScratch{};
 
             const uint32_t numRootParameters = 1;
-            D3D12_ROOT_PARAMETER1* rootParameters = scratchScope.AllocatePODArray<D3D12_ROOT_PARAMETER1>(numRootParameters);
+            D3D12_ROOT_PARAMETER1* rootParameters = hdAllocate(mem::Scratch(), D3D12_ROOT_PARAMETER1, numRootParameters);
 
             rootParameters[0] = {};
             rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -539,7 +543,7 @@ namespace hd
             rootParameters[0].Constants.RegisterSpace = 0;
 
             const uint32_t numStaticSamplers = 3;
-            D3D12_STATIC_SAMPLER_DESC* staticSamplers = scratchScope.AllocatePODArray<D3D12_STATIC_SAMPLER_DESC>(numStaticSamplers);
+            D3D12_STATIC_SAMPLER_DESC* staticSamplers = hdAllocate(mem::Scratch(), D3D12_STATIC_SAMPLER_DESC, numStaticSamplers);
 
             staticSamplers[0] = {};
             staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -597,18 +601,12 @@ namespace hd
 #if defined(HD_ENABLE_RESOURCE_COOKING)
         void DevicePlatform::RegisterRenderStateForRebuild(RenderStatePlatform* renderState)
         {
-            m_RenderStatesToRebuild.Add(renderState);
+            m_RenderStatesToRebuild.push_back(renderState);
         }
 
         void DevicePlatform::UnregisterRenderStateForRebuild(RenderStatePlatform* renderState)
         {
-            for (size_t renderStateIdx = 0; renderStateIdx < m_RenderStatesToRebuild.GetSize(); ++renderStateIdx)
-            {
-                if (m_RenderStatesToRebuild[renderStateIdx] == renderState)
-                {
-                    m_RenderStatesToRebuild.RemoveFast(renderStateIdx);
-                }
-            }
+            std::erase(m_RenderStatesToRebuild, renderState);
         }
 #endif
 
@@ -639,7 +637,7 @@ namespace hd
         {
             if (m_Backend->GetBufferAllocator().IsValid(uint64_t(handle)))
             {
-                m_RecentBuffersToFree.Add(handle);
+                m_RecentBuffersToFree.push_back(handle);
             }
         }
 
@@ -783,7 +781,7 @@ namespace hd
         {
             if (m_Backend->GetTextureAllocator().IsValid(uint64_t(handle)))
             {
-                m_RecentTexturesToFree.Add(handle);
+                m_RecentTexturesToFree.push_back(handle);
             }
         }
 
@@ -847,18 +845,18 @@ namespace hd
 
             for (BufferHandle& buffer : m_RecentBuffersToFree)
             {
-                m_BuffersToFree.Add({ currentMarker, buffer });
+                m_BuffersToFree.emplace_back(currentMarker, buffer);
             }
-            m_RecentBuffersToFree.Clear();
+            m_RecentBuffersToFree.clear();
 
             for (TextureHandle& texture : m_RecentTexturesToFree)
             {
-                m_TexturesToFree.Add({ currentMarker, texture });
+                m_TexturesToFree.emplace_back(currentMarker, texture);
             }
-            m_RecentTexturesToFree.Clear();
+            m_RecentTexturesToFree.clear();
 
             util::VirtualPoolAllocator<Buffer>& bufferAllocator = m_Backend->GetBufferAllocator();
-            for (uint32_t bufferIdx = 0; bufferIdx < m_BuffersToFree.GetSize(); ++bufferIdx)
+            for (uint32_t bufferIdx = 0; bufferIdx < m_BuffersToFree.size(); ++bufferIdx)
             {
                 ResourceHolder<BufferHandle>& holder = m_BuffersToFree[bufferIdx];
 
@@ -868,13 +866,13 @@ namespace hd
                     texture.Free(*this);
                     bufferAllocator.Free(uint64_t(holder.Resource));
 
-                    m_BuffersToFree.RemoveFast(bufferIdx);
+                    m_BuffersToFree.erase(std::next(m_BuffersToFree.begin(), bufferIdx));
                     bufferIdx -= 1;
                 }
             }
 
             util::VirtualPoolAllocator<Texture>& textureAllocator = m_Backend->GetTextureAllocator();
-            for (uint32_t textureIdx = 0; textureIdx < m_TexturesToFree.GetSize(); ++textureIdx)
+            for (uint32_t textureIdx = 0; textureIdx < m_TexturesToFree.size(); ++textureIdx)
             {
                 ResourceHolder<TextureHandle>& holder = m_TexturesToFree[textureIdx];
 
@@ -884,7 +882,7 @@ namespace hd
                     texture.Free(*this);
                     textureAllocator.Free(uint64_t(holder.Resource));
 
-                    m_TexturesToFree.RemoveFast(textureIdx);
+                    m_TexturesToFree.erase(std::next(m_TexturesToFree.begin(), textureIdx));
                     textureIdx -= 1;
                 }
             }
@@ -912,7 +910,7 @@ namespace hd
         {
             m_Backend->GetShaderManager().ResetShaderCache();
 
-            for (size_t renderStateIdx = 0; renderStateIdx < m_RenderStatesToRebuild.GetSize(); ++renderStateIdx)
+            for (size_t renderStateIdx = 0; renderStateIdx < m_RenderStatesToRebuild.size(); ++renderStateIdx)
             {
                 m_RenderStatesToRebuild[renderStateIdx]->Rebuild(ignoreCache);
             }

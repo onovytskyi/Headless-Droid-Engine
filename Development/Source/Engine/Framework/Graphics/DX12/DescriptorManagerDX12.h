@@ -6,10 +6,7 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -50,7 +47,7 @@ namespace hd
         class DescriptorManager
         {
         public:
-            DescriptorManager(DevicePlatform& device, mem::AllocationScope& allocationScope);
+            DescriptorManager(Allocator& generalAllocator, DevicePlatform& device);
             ~DescriptorManager();
 
             DescriptorRTV AllocateRTV();
@@ -70,7 +67,7 @@ namespace hd
             class DescriptorAllocator
             {
             public:
-                DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors);
+                DescriptorAllocator(Allocator& generalAllocator, DevicePlatform& device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors);
 
                 uint32_t Allocate();
                 void Free(D3D12_CPU_DESCRIPTOR_HANDLE handleCPU);

@@ -9,10 +9,7 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -22,7 +19,7 @@ namespace hd
         class BackendPlatform
         {
         public:
-            BackendPlatform(mem::AllocationScope& allocationScope);
+            BackendPlatform(Allocator& persistentAllocator);
             ~BackendPlatform();
 
             ComPtr<IDXGIAdapter4> GetBestAdapter() const;
@@ -33,6 +30,8 @@ namespace hd
             util::VirtualPoolAllocator<Texture>& GetTextureAllocator();
 
         protected:
+            Allocator& m_PersistentAllocator;
+
             ComPtr<IDXGIFactory6> m_Factory;
             ShaderManager* m_ShaderManager;
 

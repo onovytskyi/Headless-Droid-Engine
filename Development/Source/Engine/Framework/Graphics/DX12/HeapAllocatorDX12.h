@@ -4,14 +4,10 @@
 
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Utils/BestFitAllocatorHelper.h"
-#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -37,7 +33,7 @@ namespace hd
                 ResourceStateTracker::StateTrackedData* ResourceData;
             };
 
-            HeapAllocator(Device& device, mem::AllocationScope& allocationScope, size_t heapSize, size_t maxHeaps, size_t keepAliveFrames);
+            HeapAllocator(Allocator& generalAllocator, Device& device, size_t heapSize, size_t keepAliveFrames);
             ~HeapAllocator();
 
             Allocation Allocate(size_t size, size_t alignment, D3D12_HEAP_TYPE type, D3D12_HEAP_FLAGS flags, Usage usage);
@@ -48,7 +44,7 @@ namespace hd
             class Heap
             {
             public:
-                Heap(mem::AllocationScope& allocationScope, size_t size);
+                Heap(Allocator& generalAllocator, size_t size);
 
                 void ChangeUsage(Usage usage);
                 Usage GetUsage() const;
@@ -88,14 +84,15 @@ namespace hd
                 void* m_CPUMappedData;
             };
 
-            mem::AllocationScope& m_AllocationScope;
+            Allocator& m_GeneralAllocator;
+
             Device& m_OwnerDevice;
             size_t m_HeapSize;
             size_t m_KeepAliveFrames;
-            util::BufferArray<Heap*> m_Heaps;
-            util::BufferArray<Heap*> m_PendingHeaps;
-            util::BufferArray<Heap*> m_FreeHeaps;
-            util::BufferArray<Heap*> m_NonresidentHeaps;
+            std::pmr::vector<Heap*> m_Heaps;
+            std::pmr::vector<Heap*> m_PendingHeaps;
+            std::pmr::vector<Heap*> m_FreeHeaps;
+            std::pmr::vector<Heap*> m_NonresidentHeaps;
         };
     }
 }

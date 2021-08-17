@@ -162,25 +162,25 @@ namespace hd
             if (m_VS != nullptr)
             {
                 hdAssert(m_VSShaderName != nullptr && m_VSEntryPoint != nullptr);
-                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_VSShaderName, m_VSEntryPoint, cfg::GetVSProfile(), flags);
-                m_VS->pShaderBytecode = shaderMicrocode.GetData();
-                m_VS->BytecodeLength = shaderMicrocode.GetSize();
+                PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_VSShaderName, m_VSEntryPoint, cfg::GetVSProfile(), flags);
+                m_VS->pShaderBytecode = shaderMicrocode.Data();
+                m_VS->BytecodeLength = shaderMicrocode.Size();
             }
 
             if (m_PS != nullptr)
             {
                 hdAssert(m_PSShaderName != nullptr && m_PSEntryPoint != nullptr);
-                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_PSShaderName, m_PSEntryPoint, cfg::GetPSProfile(), flags);
-                m_PS->pShaderBytecode = shaderMicrocode.GetData();
-                m_PS->BytecodeLength = shaderMicrocode.GetSize();
+                PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_PSShaderName, m_PSEntryPoint, cfg::GetPSProfile(), flags);
+                m_PS->pShaderBytecode = shaderMicrocode.Data();
+                m_PS->BytecodeLength = shaderMicrocode.Size();
             }
 
             if (m_CS != nullptr)
             {
                 hdAssert(m_CSShaderName != nullptr && m_CSEntryPoint != nullptr);
-                mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_CSShaderName, m_CSEntryPoint, cfg::GetCSProfile(), flags);
-                m_CS->pShaderBytecode = shaderMicrocode.GetData();
-                m_CS->BytecodeLength = shaderMicrocode.GetSize();
+                PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(m_CSShaderName, m_CSEntryPoint, cfg::GetCSProfile(), flags);
+                m_CS->pShaderBytecode = shaderMicrocode.Data();
+                m_CS->BytecodeLength = shaderMicrocode.Size();
             }
 
             m_PipelineState.Reset();
@@ -238,9 +238,9 @@ namespace hd
 #endif
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetVSProfile(), ShaderFlagsBits::GenerateSymbols);
-            m_VS->pShaderBytecode = shaderMicrocode.GetData();
-            m_VS->BytecodeLength = shaderMicrocode.GetSize();
+            PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetVSProfile(), ShaderFlagsBits::GenerateSymbols);
+            m_VS->pShaderBytecode = shaderMicrocode.Data();
+            m_VS->BytecodeLength = shaderMicrocode.Size();
         }
 
         void RenderState::SetPS(char8_t const* shaderName, char8_t const* entryPoint)
@@ -257,9 +257,9 @@ namespace hd
 #endif
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetPSProfile(), ShaderFlagsBits::GenerateSymbols);
-            m_PS->pShaderBytecode = shaderMicrocode.GetData();
-            m_PS->BytecodeLength = shaderMicrocode.GetSize();
+            PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetPSProfile(), ShaderFlagsBits::GenerateSymbols);
+            m_PS->pShaderBytecode = shaderMicrocode.Data();
+            m_PS->BytecodeLength = shaderMicrocode.Size();
         }
 
         void RenderState::SetCS(char8_t const* shaderName, char8_t const* entryPoint)
@@ -276,9 +276,9 @@ namespace hd
 #endif
             }
 
-            mem::Buffer& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetCSProfile(), ShaderFlagsBits::GenerateSymbols);
-            m_CS->pShaderBytecode = shaderMicrocode.GetData();
-            m_CS->BytecodeLength = shaderMicrocode.GetSize();
+            PlainDataArray<std::byte> const& shaderMicrocode = m_Backend.GetShaderManager().GetShader(shaderName, entryPoint, cfg::GetCSProfile(), ShaderFlagsBits::GenerateSymbols);
+            m_CS->pShaderBytecode = shaderMicrocode.Data();
+            m_CS->BytecodeLength = shaderMicrocode.Size();
         }
 
         void RenderState::SetRenderTargetFormat(uint32_t index, GraphicFormat format)

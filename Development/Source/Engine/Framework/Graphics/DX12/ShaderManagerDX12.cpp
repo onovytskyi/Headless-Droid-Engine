@@ -4,6 +4,7 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Debug/Assert.h"
 #include "Engine/Debug/Log.h"
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/File/Utils.h"
@@ -15,8 +16,7 @@ namespace hd
     {
         ShaderManager::ShaderManager()
             : m_LocalAllocator{ mem::MB(500) }
-            , m_LocalScope{ m_LocalAllocator }
-            , m_FirstShaderHolder{}
+            , m_Shaders{ &m_LocalAllocator }
         {
 
         }
@@ -26,64 +26,53 @@ namespace hd
 
         }
 
-        hd::mem::Buffer& ShaderManager::GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags)
+        PlainDataArray<std::byte> const& ShaderManager::GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags)
         {
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
-            str::String shaderNameString{ scratchScope, shaderName };
-            str::String entryPointString{ scratchScope, entryPoint };
-            str::String profileString{ scratchScope, profile };
+            ScopedScratchMemory scopedScratch{};
 
-            str::String cookedFilePath{ scratchScope };
-            file::ConvertToCookedPathPrefixed(scratchScope, shaderNameString, entryPointString, cookedFilePath);
+            std::pmr::u8string shaderNameString{ shaderName, &mem::Scratch() };
+            std::pmr::u8string entryPointString{ entryPoint, &mem::Scratch() };
+            std::pmr::u8string profileString{ profile, &mem::Scratch() };
 
-#if defined(HD_ENABLE_RESOURCE_COOKING)
-            str::String shaderFilePath{ scratchScope };
-            file::ConvertToShaderPath(scratchScope, shaderNameString, shaderFilePath);
-#endif
-
-            ShaderHolder* holder = m_FirstShaderHolder;
-            while (holder)
-            {
-                if (holder->ShaderKey == cookedFilePath)
-                {
-                    break;
-                }
-
-                holder = holder->Next;
-            }
-
-            if (holder == nullptr)
-            {
-                holder = m_LocalScope.AllocateObject<ShaderHolder>(m_LocalScope);
-                holder->ShaderKey.Assign(cookedFilePath.CStr());
+            std::pmr::u8string cookedFilePath{ &mem::Scratch() };
+            file::ConvertToCookedPathPrefixed(shaderNameString, entryPointString, cookedFilePath);
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-                if (flags.IsSet(ShaderFlagsBits::IgnoreCache) || file::DestinationOlder(shaderFilePath, cookedFilePath))
-                {
-                    CookShader(scratchScope, shaderFilePath, entryPointString, profileString, cookedFilePath, flags);
-                }
+            std::pmr::u8string shaderFilePath{ &mem::Scratch() };
+            file::ConvertToShaderPath(shaderNameString, shaderFilePath);
 #endif
-                file::ReadWholeFile(scratchScope, cookedFilePath, holder->ShaderMicrocode);
-
-                hdLogInfo(u8"Shader %:% loaded.", shaderNameString.CStr(), entryPointString.CStr());
-
-                holder->Next = m_FirstShaderHolder;
-                m_FirstShaderHolder = holder;
+            auto shaderItem = m_Shaders.find(cookedFilePath);
+            if (shaderItem != m_Shaders.end())
+            {
+                return shaderItem->second;
             }
 
-            return holder->ShaderMicrocode;
+#if defined(HD_ENABLE_RESOURCE_COOKING)
+            if (flags.IsSet(ShaderFlagsBits::IgnoreCache) || file::DestinationOlder(shaderFilePath, cookedFilePath))
+            {
+                CookShader(shaderFilePath, entryPointString, profileString, cookedFilePath, flags);
+            }
+#endif
+            PlainDataArray<std::byte>& shaderMicrocode = m_Shaders[cookedFilePath];
+            file::ReadWholeFile(cookedFilePath, shaderMicrocode);
+
+            hdLogInfo(u8"Shader %:% loaded.", shaderNameString.c_str(), entryPointString.c_str());
+
+            return shaderMicrocode;
         }
 
         void ShaderManager::ResetShaderCache()
         {
-            m_LocalScope.Reset();
-            m_FirstShaderHolder = nullptr;
+            m_Shaders.clear();
+            m_LocalAllocator.Reset();
         }
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-        void ShaderManager::CookShader(mem::AllocationScope& scratch, str::String const& shaderFilePath, str::String const& entryPoint, str::String const& profile, 
-            str::String const& cookedFilePath, ShaderFlags flags)
+        void ShaderManager::CookShader(std::pmr::u8string const& shaderFilePath, std::pmr::u8string const& entryPoint, std::pmr::u8string const& profile, 
+            std::pmr::u8string const& cookedFilePath, ShaderFlags flags)
         {
+            ScopedScratchMemory scopedScratch{};
+
             struct DXCRuntime
             {
                 bool Initialized;
@@ -102,14 +91,17 @@ namespace hd
                 s_DXCRuntime.Initialized = true;
             }
 
-            str::String pdbFilePath{ scratch };
-            str::String pdbExtension{ scratch, u8".pdb" };
-            file::ReplaceExtension(scratch, cookedFilePath, pdbExtension, pdbFilePath);
+            std::pmr::u8string pdbFilePath{ &mem::Scratch() };
+            std::pmr::u8string pdbExtension{ u8".pdb", &mem::Scratch() };
+            file::ReplaceExtension(cookedFilePath, pdbExtension, pdbFilePath);
+
+            std::pmr::wstring wideShaderFilePath{ &mem::Scratch() };
+            str::ToWide(shaderFilePath, wideShaderFilePath);
 
             HRESULT result;
             uint32_t codePage = CP_UTF8;
             ComPtr<IDxcBlobEncoding> sourceBlob;
-            result = s_DXCRuntime.Utils->LoadFile(shaderFilePath.AsWide(scratch), &codePage, &sourceBlob);
+            result = s_DXCRuntime.Utils->LoadFile(wideShaderFilePath.c_str(), &codePage, &sourceBlob);
             hdEnsure(result, u8"Cannot create shader blob from file %. Check if file exist.");
 
             DxcBuffer sourceBuffer{};
@@ -120,13 +112,19 @@ namespace hd
 
             std::vector<LPCWSTR> arguments;
 
+            std::pmr::wstring wideEntryPoint{ &mem::Scratch() };
+            str::ToWide(entryPoint, wideEntryPoint);
+
             // Entrypoint
             arguments.push_back(L"-E");
-            arguments.push_back(entryPoint.AsWide(scratch));
+            arguments.push_back(wideEntryPoint.c_str());
+
+            std::pmr::wstring wideProfile{ &mem::Scratch() };
+            str::ToWide(profile, wideProfile);
 
             // Shader model
             arguments.push_back(L"-T");
-            arguments.push_back(profile.AsWide(scratch));
+            arguments.push_back(wideProfile.c_str());
 
             // Optimizations
 #if defined(HD_ENABLE_GFX_DEBUG)
@@ -143,16 +141,19 @@ namespace hd
             // Generate symbols
             if (flags.IsSet(ShaderFlagsBits::GenerateSymbols))
             {
+                std::pmr::wstring widePdbFilePath{ &mem::Scratch() };
+                str::ToWide(pdbFilePath, widePdbFilePath);
+
                 arguments.push_back(DXC_ARG_DEBUG);
                 arguments.push_back(L"-Fd");
-                arguments.push_back(pdbFilePath.AsWide(scratch));
+                arguments.push_back(widePdbFilePath.c_str());
             }
 
             ComPtr<IDxcResult> operationResult;
             result = s_DXCRuntime.Compiler->Compile(&sourceBuffer, arguments.data(), uint32_t(arguments.size()), s_DXCRuntime.IncludeHandler, IID_PPV_ARGS(&operationResult));
             if (FAILED(result) || !operationResult)
             {
-                hdAssert(false, u8"Shader % % % failed to compile. Operation result is not available.", shaderFilePath.CStr(), entryPoint.CStr(), profile.CStr());
+                hdAssert(false, u8"Shader % % % failed to compile. Operation result is not available.", shaderFilePath.c_str(), entryPoint.c_str(), profile.c_str());
             }
 
             ComPtr<IDxcBlobUtf16> dummyName;
@@ -161,7 +162,7 @@ namespace hd
             operationResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errorBlob), dummyName.ReleaseAndGetAddressOf());
             if (errorBlob && errorBlob->GetStringLength() > 0)
             {
-                hdAssert(false, u8"Shader % % % failed to compile.\n Error: %.", shaderFilePath.CStr(), entryPoint.CStr(), profile.CStr(), 
+                hdAssert(false, u8"Shader % % % failed to compile.\n Error: %.", shaderFilePath.c_str(), entryPoint.c_str(), profile.c_str(), 
                     reinterpret_cast<char8_t const*>(errorBlob->GetStringPointer()));
             }
 
@@ -171,14 +172,14 @@ namespace hd
             operationResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&shaderBlob), dummyName.ReleaseAndGetAddressOf());
             if (shaderBlob && shaderBlob->GetBufferSize() > 0)
             {
-                mem::Buffer buffer{ scratch };
-                buffer.Assign(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+                PlainDataArray<std::byte> buffer{ &mem::Scratch() };
+                buffer.Assign(reinterpret_cast<std::byte*>(shaderBlob->GetBufferPointer()), shaderBlob->GetBufferSize());
 
                 file::WriteWholeFile(cookedFilePath, buffer);
             }
             else
             {
-                hdAssert(false, u8"Shader % % % doesn't have shader microcode artifact.\n Error: %.", shaderFilePath.CStr(), entryPoint.CStr(), profile.CStr(), 
+                hdAssert(false, u8"Shader % % % doesn't have shader microcode artifact.\n Error: %.", shaderFilePath.c_str(), entryPoint.c_str(), profile.c_str(), 
                     reinterpret_cast<char8_t const*>(errorBlob->GetStringPointer()));
             }
 
@@ -188,30 +189,21 @@ namespace hd
                 operationResult->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(&pdbBlob), dummyName.ReleaseAndGetAddressOf());
                 if (pdbBlob && pdbBlob->GetBufferSize() > 0)
                 {
-                    size_t narrowSize = str::SizeAsNarrow(dummyName->GetStringPointer());
-                    char8_t* pdbFileName = reinterpret_cast<char8_t*>(scratch.AllocateMemory(narrowSize, alignof(char8_t)));
-                    str::ToNarrow(dummyName->GetStringPointer(), pdbFileName, narrowSize);
+                    std::pmr::wstring widePdbFileName{ dummyName->GetStringPointer(), &mem::Scratch() };
+                    std::pmr::u8string pdbFileName{ &mem::Scratch() };
 
-                    str::String pdbFileNameString{ scratch, pdbFileName };
+                    str::ToNarrow(widePdbFileName, pdbFileName);
 
-                    mem::Buffer buffer{ scratch };
-                    buffer.Assign(pdbBlob->GetBufferPointer(), pdbBlob->GetBufferSize());
+                    PlainDataArray<std::byte> buffer{ &mem::Scratch() };
+                    buffer.Assign(reinterpret_cast<std::byte*>(pdbBlob->GetBufferPointer()), pdbBlob->GetBufferSize());
 
-                    file::WriteWholeFile(pdbFileNameString, buffer);
+                    file::WriteWholeFile(pdbFileName, buffer);
                 }
             }
 
-            hdLogInfo(u8"Shader % cooked to % % debug symbols.", shaderFilePath.CStr(), cookedFilePath.CStr(), flags.IsSet(ShaderFlagsBits::GenerateSymbols) ? u8"with" : u8"without");
+            hdLogInfo(u8"Shader % cooked to % % debug symbols.", shaderFilePath.c_str(), cookedFilePath.c_str(), flags.IsSet(ShaderFlagsBits::GenerateSymbols) ? u8"with" : u8"without");
         }
 #endif
-
-        ShaderManager::ShaderHolder::ShaderHolder(mem::AllocationScope& allocationScope)
-            : ShaderKey{ allocationScope }
-            , ShaderMicrocode{ allocationScope }
-            , Next{}
-        {
-
-        }
     }
 }
 

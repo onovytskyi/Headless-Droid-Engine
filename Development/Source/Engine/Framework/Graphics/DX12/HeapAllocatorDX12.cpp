@@ -4,6 +4,8 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Debug/Assert.h"
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Device.h"
 
 namespace hd
@@ -11,17 +13,20 @@ namespace hd
     namespace gfx
     {
 
-        HeapAllocator::HeapAllocator(Device& device, mem::AllocationScope& allocationScope, size_t heapSize, size_t maxHeaps, size_t keepAliveFrames)
-            : m_OwnerDevice{ device }
-            , m_AllocationScope{ allocationScope }
+        HeapAllocator::HeapAllocator(Allocator& generalAllocator, Device& device, size_t heapSize, size_t keepAliveFrames)
+            : m_GeneralAllocator{ generalAllocator }
+            , m_OwnerDevice{ device }
             , m_HeapSize{ heapSize }
             , m_KeepAliveFrames{ keepAliveFrames }
-            , m_Heaps{ allocationScope, maxHeaps }
-            , m_PendingHeaps{ allocationScope, maxHeaps }
-            , m_FreeHeaps{ allocationScope, maxHeaps }
-            , m_NonresidentHeaps{ allocationScope, maxHeaps }
+            , m_Heaps{ &m_GeneralAllocator }
+            , m_PendingHeaps{ &m_GeneralAllocator }
+            , m_FreeHeaps{ &m_GeneralAllocator }
+            , m_NonresidentHeaps{ &m_GeneralAllocator }
         {
-
+            m_Heaps.reserve(16);
+            m_PendingHeaps.reserve(16);
+            m_FreeHeaps.reserve(16);
+            m_NonresidentHeaps.reserve(16);
         }
 
         HeapAllocator::~HeapAllocator()
@@ -29,16 +34,19 @@ namespace hd
             for (Heap* heap : m_Heaps)
             {
                 heap->Destroy();
+                hdSafeDelete(m_GeneralAllocator, heap);
             }
 
             for (Heap* heap : m_PendingHeaps)
             {
                 heap->Destroy();
+                hdSafeDelete(m_GeneralAllocator, heap);
             }
 
             for (Heap* heap : m_FreeHeaps)
             {
                 heap->Destroy();
+                hdSafeDelete(m_GeneralAllocator, heap);
             }
         }
 
@@ -58,7 +66,7 @@ namespace hd
                 }
             }
 
-            for (size_t heapIdx = 0; heapIdx < m_FreeHeaps.GetSize(); ++heapIdx)
+            for (size_t heapIdx = 0; heapIdx < m_FreeHeaps.size(); ++heapIdx)
             {
                 if (m_FreeHeaps[heapIdx]->IsCompatible(type, flags))
                 {
@@ -67,30 +75,30 @@ namespace hd
 
                     if (allocation.Offset != util::BestFitAllocatorHelper::INVALID_INDEX)
                     {
-                        m_FreeHeaps.RemoveFast(heapIdx);
+                        m_FreeHeaps.erase(std::next(m_FreeHeaps.begin(), heapIdx));
 
                         heapToUse->ChangeUsage(usage);
-                        m_Heaps.Add(heapToUse);
+                        m_Heaps.push_back(heapToUse);
 
                         return allocation;
                     }
                 }
             }
 
-            if (m_NonresidentHeaps.GetSize() != 0)
+            if (m_NonresidentHeaps.size() != 0)
             {
                 Heap* heapToUse = m_NonresidentHeaps[0];
-                m_NonresidentHeaps.RemoveFast(0);
+                m_NonresidentHeaps.erase(m_NonresidentHeaps.begin());
 
                 heapToUse->Create(m_OwnerDevice, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, type, flags, usage);
-                m_Heaps.Add(heapToUse);
+                m_Heaps.push_back(heapToUse);
 
                 return heapToUse->Allocate(size, alignment);
             }
 
-            Heap* newHeap = m_AllocationScope.AllocateObject<Heap>(m_AllocationScope, m_HeapSize);
+            Heap* newHeap = hdNew(m_GeneralAllocator, Heap)(m_GeneralAllocator, m_HeapSize);
             newHeap->Create(m_OwnerDevice, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, type, flags, usage);
-            m_Heaps.Add(newHeap);
+            m_Heaps.push_back(newHeap);
 
             return newHeap->Allocate(size, alignment);
         }
@@ -109,62 +117,62 @@ namespace hd
         void HeapAllocator::RecycleResources(uint64_t currentMarker, uint64_t completedMarker)
         {
             // Check if we can make some of the heaps nonresident
-            for (size_t heapIdx = 0; heapIdx < m_FreeHeaps.GetSize(); ++heapIdx)
+            for (size_t heapIdx = 0; heapIdx < m_FreeHeaps.size(); ++heapIdx)
             {
                 Heap* heap = m_FreeHeaps[heapIdx];
                 if ((completedMarker - heap->GetMarker()) >= m_KeepAliveFrames)
                 {
-                    m_FreeHeaps.RemoveFast(heapIdx);
+                    m_FreeHeaps.erase(std::next(m_FreeHeaps.begin(), heapIdx));
                     heapIdx -= 1;
 
                     heap->Destroy();
-                    m_NonresidentHeaps.Add(heap);
+                    m_NonresidentHeaps.push_back(heap);
                 }
             }
 
             // Check if we can make transient heaps free
-            for (size_t heapIdx = 0; heapIdx < m_PendingHeaps.GetSize(); ++heapIdx)
+            for (size_t heapIdx = 0; heapIdx < m_PendingHeaps.size(); ++heapIdx)
             {
                 Heap* heap = m_PendingHeaps[heapIdx];
                 if (heap->GetMarker() <= completedMarker)
                 {
-                    m_PendingHeaps.RemoveFast(heapIdx);
+                    m_PendingHeaps.erase(std::next(m_PendingHeaps.begin(), heapIdx));
                     heapIdx -= 1;
 
-                    m_FreeHeaps.Add(heap);
+                    m_FreeHeaps.push_back(heap);
                 }
             }
 
             // Check if we can free some of the heaps
-            for (size_t heapIdx = 0; heapIdx < m_Heaps.GetSize(); ++heapIdx)
+            for (size_t heapIdx = 0; heapIdx < m_Heaps.size(); ++heapIdx)
             {
                 Heap* heap = m_Heaps[heapIdx];
                 if (heap->IsEmpty())
                 {
-                    m_Heaps.RemoveFast(heapIdx);
+                    m_Heaps.erase(std::next(m_Heaps.begin(), heapIdx));
                     heapIdx -= 1;
 
                     heap->SetMarker(currentMarker);
 
                     if (heap->GetUsage() == Usage::Transient)
                     {
-                        m_PendingHeaps.Add(heap);
+                        m_PendingHeaps.push_back(heap);
                         heap->Reset();
                     }
                     else
                     {
-                        m_FreeHeaps.Add(heap);
+                        m_FreeHeaps.push_back(heap);
                     }
                 }
             }
         }
 
-        HeapAllocator::Heap::Heap(mem::AllocationScope& allocationScope, size_t size)
+        HeapAllocator::Heap::Heap(Allocator& generalAllocator, size_t size)
             : m_Marker{ std::numeric_limits<size_t>::max() }
             , m_Type{ D3D12_HEAP_TYPE_CUSTOM }
             , m_Flags{ D3D12_HEAP_FLAG_NONE }
             , m_Usage{ Usage::Persistent }
-            , m_Allocator{ allocationScope, size }
+            , m_Allocator{ generalAllocator, size }
             , m_NumTransientAllocations{}
             , m_Heap{}
             , m_ResourceData{}

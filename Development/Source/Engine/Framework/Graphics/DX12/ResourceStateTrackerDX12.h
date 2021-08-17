@@ -2,14 +2,9 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
-#include "Engine/Framework/Utils/BufferArray.h"
-
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -28,7 +23,7 @@ namespace hd
                 bool SubresourceStatesDirty;
             };
 
-            ResourceStateTracker(mem::AllocationScope& allocationScope);
+            ResourceStateTracker(Allocator& generalAllocator);
 
             void RequestTransition(StateTrackedData& data, D3D12_RESOURCE_STATES toState);
             void RequestSubresourceTransition(StateTrackedData& data, uint32_t subresource, D3D12_RESOURCE_STATES toState);
@@ -36,6 +31,8 @@ namespace hd
             void ApplyTransitions(ID3D12GraphicsCommandList& commandList);
 
         private:
+            Allocator& m_GeneralAllocator;
+
             struct StateTransitionRequest
             {
                 StateTrackedData* Data;
@@ -43,7 +40,7 @@ namespace hd
                 uint32_t Subresource;
             };
 
-            util::BufferArray<StateTransitionRequest> m_TransitionRequests;
+            std::pmr::vector<StateTransitionRequest> m_TransitionRequests;
         };
     }
 }

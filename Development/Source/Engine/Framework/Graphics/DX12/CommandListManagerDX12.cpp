@@ -9,19 +9,21 @@ namespace hd
 {
     namespace gfx
     {
-        CommandListManager::CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_COMMAND_LIST_TYPE type, size_t maxLists, size_t maxAllocators)
-            : m_OwnerDevice{ &device }
+        CommandListManager::CommandListManager(Allocator& generalAllocator, DevicePlatform& device, D3D12_COMMAND_LIST_TYPE type)
+            : m_GeneralAllocator{ generalAllocator }
+            , m_OwnerDevice{ &device }
             , m_Type{ type }
-            , m_CommandLists{ allocationScope, maxLists }
+            , m_CommandLists{ &m_GeneralAllocator }
             , m_CommandListsInUse{ 0 }
-            , m_CommandAllocators{ allocationScope, maxAllocators }
+            , m_CommandAllocators{ &m_GeneralAllocator }
         {
-
+            m_CommandLists.reserve(16);
+            m_CommandAllocators.reserve(16);
         }
 
         CommandListManager::~CommandListManager()
         {
-            for (uint32_t commandListIdx = 0; commandListIdx < m_CommandLists.GetSize(); ++commandListIdx)
+            for (uint32_t commandListIdx = 0; commandListIdx < m_CommandLists.size(); ++commandListIdx)
             {
                 if (m_CommandLists[commandListIdx])
                 {
@@ -29,7 +31,7 @@ namespace hd
                 }
             }
 
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.size(); ++allocatorIdx)
             {
                 if (m_CommandAllocators[allocatorIdx].Allocator)
                 {
@@ -43,10 +45,10 @@ namespace hd
             ID3D12CommandAllocator* commandAllocator = GetCommandAllocator();
 
             ID3D12GraphicsCommandList* result{};
-            if (m_CommandListsInUse == m_CommandLists.GetSize())
+            if (m_CommandListsInUse == m_CommandLists.size())
             {
                 hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandList(0, m_Type, commandAllocator, pipelineState, IID_PPV_ARGS(&result)));
-                m_CommandLists.Add(result);
+                m_CommandLists.push_back(result);
             }
             else
             {
@@ -84,7 +86,7 @@ namespace hd
         {
             m_CommandListsInUse = 0;
 
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.size(); ++allocatorIdx)
             {
                 CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
 
@@ -113,7 +115,7 @@ namespace hd
         {
             std::thread::id currentThread = std::this_thread::get_id();
 
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.size(); ++allocatorIdx)
             {
                 CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
 
@@ -124,7 +126,7 @@ namespace hd
                 }
             }
 
-            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.GetSize(); ++allocatorIdx)
+            for (uint32_t allocatorIdx = 0; allocatorIdx < m_CommandAllocators.size(); ++allocatorIdx)
             {
                 CommandAllocatorHolder& holder = m_CommandAllocators[allocatorIdx];
 
@@ -140,7 +142,7 @@ namespace hd
             hdEnsure(m_OwnerDevice->GetNativeDevice()->CreateCommandAllocator(m_Type, IID_PPV_ARGS(&holder.Allocator)));
             holder.Thread = currentThread;
 
-            m_CommandAllocators.Add(holder);
+            m_CommandAllocators.push_back(holder);
 
             return holder.Allocator;
         }

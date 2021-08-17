@@ -39,12 +39,7 @@ namespace hd
 
         void* VirtualLinearAllocator::Allocate(size_t size, size_t align)
         {
-            return AllocateWithOffset(0, size, align);
-        }
-
-        void* VirtualLinearAllocator::AllocateWithOffset(size_t offset, size_t size, size_t align)
-        {
-            std::byte* allocation = m_Memory.GetData() + m_UsedSize + offset;
+            std::byte* allocation = m_Memory.GetData() + m_UsedSize;
             std::byte* alignedAllocation = reinterpret_cast<std::byte*>(AlignAbove(allocation, align));
 
             m_UsedSize = (alignedAllocation + size) - m_Memory.GetData();
@@ -55,6 +50,11 @@ namespace hd
             }
 
             return alignedAllocation;
+        }
+
+        void VirtualLinearAllocator::Deallocate(void* memory, size_t sizeInBytes, size_t alignInBytes)
+        {
+            // NOP
         }
 
         size_t VirtualLinearAllocator::GetMarker() const

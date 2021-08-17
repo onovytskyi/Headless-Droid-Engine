@@ -5,11 +5,11 @@
 
 int main(int argc, char* argv[])
 {
-    hd::mem::AllocationScope persistentScope(hd::mem::GetPersistentAllocator());
-
-    SampleGame* game = persistentScope.AllocateObject<SampleGame>();
+    SampleGame* game = hdNew(hd::mem::Persistent(), SampleGame)();
 
     game->Run();
+
+    hdSafeDelete(hd::mem::Persistent(), game);
 
     return 0;
 }

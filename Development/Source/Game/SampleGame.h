@@ -10,7 +10,6 @@
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/Queue.h"
 #include "Engine/Framework/Graphics/Swapchain.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/System/SystemCommands.h"
 #include "Engine/Framework/System/SystemWindow.h"
 #include "Engine/Framework/System/Timer.h"
@@ -35,8 +34,6 @@ private:
     void RecordFrame(hd::util::CommandBuffer& commandBuffer);
 
     bool m_IsRunning;
-
-    hd::mem::AllocationScope m_PersistentScope;
 
     hd::sys::Timer* m_FrameTimer;
 

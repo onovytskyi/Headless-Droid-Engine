@@ -1,13 +1,8 @@
 #pragma once
 
-#include "Engine/Framework/Memory/CachedPoolAllocationScope.h"
-
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace util
     {
@@ -16,7 +11,8 @@ namespace hd
         public:
             static const size_t INVALID_INDEX = std::numeric_limits<size_t>::max();
 
-            BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size);
+            BestFitAllocatorHelper(Allocator& generalAllocator, size_t size);
+            ~BestFitAllocatorHelper();
 
             size_t Allocate(size_t count, size_t align);
             void Deallocate(size_t offset, size_t count);
@@ -29,6 +25,9 @@ namespace hd
             size_t GetSize();
 
         private:
+            void ClearAllRanges();
+
+            Allocator& m_GeneralAllocator;
             struct Range
             {
                 Range* m_NextRange;
@@ -38,7 +37,6 @@ namespace hd
                 size_t Size;
             };
 
-            mem::CachedPoolAllocationScope<Range> m_RangesAllocator;
             Range* m_FirstFreeRange;
             size_t m_Size;
         };

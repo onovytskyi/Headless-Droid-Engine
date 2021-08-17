@@ -3,78 +3,62 @@
 #include "Engine/Engine/Render/TextureCollection.h"
 
 #include "Engine/Debug/Log.h"
+#include "Engine/Engine/Memory/EngineMemoryInterface.h"
 #include "Engine/Engine/Utils/ResourceLoader.h"
 #include "Engine/Framework/Graphics/Device.h"
 #include "Engine/Framework/Graphics/GraphicCommands.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
-#include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
-#include "Engine/Framework/String/String.h"
+#include "Engine/Framework/Memory/PlainDataArray.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
 
 namespace hd
 {
     namespace render
     {
-        TextureCollection::TextureCollection(mem::AllocationScope& allocationScope, gfx::Device& device)
-            : m_AllocationScope{ allocationScope }
-            , m_Device{ device }
-            , m_FirstTextureHolder{}
+        TextureCollection::TextureCollection(gfx::Device& device)
+            : m_Device{ device }
+            , m_Textures{ &mem::General() }
         {
 
         }
 
         TextureCollection::~TextureCollection()
         {
-            for (TextureHolder* textureHolder = m_FirstTextureHolder; textureHolder != nullptr; textureHolder = textureHolder->Next)
+            for (auto& [textureName, textureHandle] : m_Textures)
             {
-                m_Device.DestroyTexture(textureHolder->Handle);
+                m_Device.DestroyTexture(textureHandle);
             }
         }
 
         hd::gfx::TextureHandle TextureCollection::UploadTexture(char8_t const* textureFilePath, util::CommandBuffer& graphicsCommands)
         {
-            mem::AllocationScope scratchScope{ mem::GetScratchAllocator() };
-            str::String textureFilePathStr{ scratchScope, textureFilePath };
+            ScopedScratchMemory scopedScratch{};
 
-            TextureHolder* holder = m_FirstTextureHolder;
-            while (holder)
+            Allocator& scratch = mem::Scratch();
+
+            std::pmr::u8string textureFilePathStr(textureFilePath, &mem::Scratch());
+
+            auto textureItem = m_Textures.find(textureFilePathStr);
+            if (textureItem != m_Textures.end())
             {
-                if (holder->TextureKey == textureFilePathStr)
-                {
-                    return holder->Handle;
-                }
-
-                holder = holder->Next;
+                return textureItem->second;
             }
 
-            TextureHolder* newHolder = m_AllocationScope.AllocateObject<TextureHolder>(m_AllocationScope);
-            newHolder->TextureKey.Assign(textureFilePathStr.CStr());
-
-            mem::Buffer textureData{ scratchScope };
+            PlainDataArray<std::byte> textureData{ &mem::Scratch() };
             util::ImageResource textureDesc{};
-            util::LoadImage(scratchScope, textureFilePath, textureData, textureDesc);
+            util::LoadImage(textureFilePath, textureData, textureDesc);
 
-            newHolder->Handle = m_Device.CreateTexture(textureDesc.Width, textureDesc.Height, 1, textureDesc.MipCount, textureDesc.Format, gfx::TextureFlagsBits::ShaderResource,
+            gfx::TextureHandle handle = m_Device.CreateTexture(textureDesc.Width, textureDesc.Height, 1, textureDesc.MipCount, textureDesc.Format, gfx::TextureFlagsBits::ShaderResource,
                 textureDesc.IsCube ? gfx::TextureDimenstion::TextureCube : gfx::TextureDimenstion::Texture2D, nullptr);
 
             gfx::GraphicCommandsStream commandStream{ graphicsCommands };
-            commandStream.UpdateTexture(newHolder->Handle, 0, gfx::ALL_SUBRESOURCES, textureData.GetData(), textureData.GetSize());
-            commandStream.UseAsReadableResource(newHolder->Handle);
+            commandStream.UpdateTexture(handle, 0, gfx::ALL_SUBRESOURCES, textureData.Data(), textureData.Size());
+            commandStream.UseAsReadableResource(handle);
 
-            hdLogInfo(u8"Texture % loaded.", textureFilePathStr.CStr());
+            hdLogInfo(u8"Texture % loaded.", textureFilePathStr.c_str());
 
-            newHolder->Next = m_FirstTextureHolder;
-            m_FirstTextureHolder = newHolder;
+            m_Textures[textureFilePathStr] = handle;
 
-            return newHolder->Handle;
-        }
-
-        TextureCollection::TextureHolder::TextureHolder(mem::AllocationScope& allocationScope)
-            : TextureKey{ allocationScope }
-            , Handle{}
-            , Next{}
-        {
-
+            return handle;
         }
     }
 }

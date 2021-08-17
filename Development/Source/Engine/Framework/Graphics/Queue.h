@@ -6,10 +6,7 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace util
     {
@@ -24,7 +21,7 @@ namespace hd
         class Queue : public QueuePlatform
         {
         public:
-            Queue(Device& device, QueueType type, mem::AllocationScope& allocationScope);
+            Queue(Allocator& persistentAllocator, Device& device, QueueType type);
             ~Queue();
 
             hdNoncopyable(Queue)
@@ -36,6 +33,8 @@ namespace hd
             void Flush();
 
         private:
+            Allocator& m_PersistentAllocator;
+
             QueueType m_Type;
             uint64_t m_LastFlushValue;
             Fence* m_FlushFence;

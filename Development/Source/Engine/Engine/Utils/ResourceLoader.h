@@ -2,19 +2,22 @@
 
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
 #include "Engine/Framework/Math/Math.h"
+#include "Engine/Framework/Memory/PlainDataArray.h"
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-        class Buffer;
-    }
-
     namespace util
     {
         struct MaterialResouce
         {
+            using allocator_type = std::pmr::polymorphic_allocator<char>;
+
+            explicit MaterialResouce(allocator_type allocator);
+            MaterialResouce(MaterialResouce const& other, allocator_type const& allocator);
+            MaterialResouce(MaterialResouce&& other, allocator_type const& allocator);
+            MaterialResouce& operator=(MaterialResouce const& other) = default;
+            MaterialResouce& operator=(MaterialResouce&& other) = default;
+
             math::Vectorf4 DiffuseColor;
             math::Vectorf4 AmbientColor;
             math::Vectorf3 SpecularColor;
@@ -22,10 +25,10 @@ namespace hd
             float SpecularPower;
             float RefractionIndex;
 
-            char8_t* DiffuseTexture;
-            char8_t* NormalTexture;
-            char8_t* RoughnessTexture;
-            char8_t* MetalnessTexture;
+            std::pmr::u8string DiffuseTexture;
+            std::pmr::u8string NormalTexture;
+            std::pmr::u8string RoughnessTexture;
+            std::pmr::u8string MetalnessTexture;
         };
 
         struct MeshResourceVertex
@@ -37,10 +40,16 @@ namespace hd
 
         struct MeshResource
         {
-            MeshResourceVertex* Vertices;
-            uint32_t VertexCount;
-            uint32_t* Indices;
-            uint32_t IndexCount;
+            using allocator_type = std::pmr::polymorphic_allocator<char>;
+
+            explicit MeshResource(allocator_type allocator);
+            MeshResource(MeshResource const& other, allocator_type const& allocator);
+            MeshResource(MeshResource&& other, allocator_type const& allocator);
+            MeshResource& operator=(MeshResource const& other) = default;
+            MeshResource& operator=(MeshResource&& other) = default;
+
+            PlainDataArray<MeshResourceVertex> Vertices;
+            PlainDataArray<uint32_t> Indices;
             uint32_t MaterialIndex;
         };
 
@@ -53,7 +62,7 @@ namespace hd
             gfx::GraphicFormat Format;
         };
 
-        void LoadMesh(mem::AllocationScope& scratch, char8_t const* fileName, mem::Buffer& outMaterials, mem::Buffer& outMeshes);
-        void LoadImage(mem::AllocationScope& scratch, char8_t const* fileName, mem::Buffer& outData, ImageResource& outImageDesc);
+        void LoadMesh(char8_t const* fileName, std::pmr::vector<MaterialResouce>& outMaterials, std::pmr::vector<MeshResource>& outMeshes);
+        void LoadImage(char8_t const* fileName, PlainDataArray<std::byte>& outData, ImageResource& outImageDesc);
     }
 }

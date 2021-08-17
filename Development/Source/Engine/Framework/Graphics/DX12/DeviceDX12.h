@@ -7,14 +7,10 @@
 #include "Engine/Framework/Graphics/DX12/HeapAllocatorDX12.h"
 #include "Engine/Framework/Graphics/DX12/ResourceStateTrackerDX12.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
-#include "Engine/Framework/Utils/BufferArray.h"
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace util
     {
@@ -30,7 +26,7 @@ namespace hd
         class DevicePlatform
         {
         public:
-            DevicePlatform(Backend& backend, mem::AllocationScope& allocationScope);
+            DevicePlatform(Allocator& persistentAllocator, Allocator& generalAllocator, Backend& backend);
             ~DevicePlatform();
 
             ID3D12Device2* GetNativeDevice() const;
@@ -51,6 +47,9 @@ namespace hd
 
         protected:
             void CreateUnifiedRootSignature();
+
+            Allocator& m_PersistentAllocator;
+            Allocator& m_GeneralAllocator;
 
             Backend* m_Backend;
 
@@ -76,14 +75,14 @@ namespace hd
                 T Resource;
             };
 
-            util::BufferArray<ResourceHolder<BufferHandle>> m_BuffersToFree;
-            util::BufferArray<ResourceHolder<TextureHandle>> m_TexturesToFree;
+            std::pmr::vector<ResourceHolder<BufferHandle>> m_BuffersToFree;
+            std::pmr::vector<ResourceHolder<TextureHandle>> m_TexturesToFree;
 
-            util::BufferArray<BufferHandle> m_RecentBuffersToFree;
-            util::BufferArray<TextureHandle> m_RecentTexturesToFree;
+            std::pmr::vector<BufferHandle> m_RecentBuffersToFree;
+            std::pmr::vector<TextureHandle> m_RecentTexturesToFree;
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            util::BufferArray<RenderStatePlatform*> m_RenderStatesToRebuild;
+            std::pmr::vector<RenderStatePlatform*> m_RenderStatesToRebuild;
 #endif
         };
     }

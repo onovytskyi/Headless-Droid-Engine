@@ -6,10 +6,7 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -18,7 +15,7 @@ namespace hd
         class Device : public DevicePlatform
         {
         public:
-            Device(Backend& backend, mem::AllocationScope& allocationScope);
+            Device(Allocator& persistentAllocator, Allocator& generalAllocator, Backend& backend);
             ~Device();
 
             hdNoncopyable(Device)

@@ -1,41 +1,36 @@
 #pragma once
 
+#include "Engine/Framework/Memory/PlainDataArray.h"
+
 namespace hd
 {
     namespace mem
     {
-        class AllocationScope;
-        class Buffer;
         class VirtualBuffer;
-    }
-
-    namespace str
-    {
-        class String;
     }
 
     namespace file
     {
-        void ReadWholeFile(mem::AllocationScope& scratch, str::String const& filePath, mem::Buffer& output);
-        void ReadWholeFile(mem::AllocationScope& scratch, str::String const& filePath, mem::VirtualBuffer& output);
-        void WriteWholeFile(str::String const& filePath, mem::Buffer const& data);
-        void WriteWholeFile(str::String const& filePath, mem::VirtualBuffer const& data);
-        void WriteWholeFile(str::String const& filePath, std::byte const* data, size_t size);
+        void ReadWholeFile(std::pmr::u8string const& filePath, PlainDataArray<std::byte>& output);
+        void ReadWholeFile(std::pmr::u8string const& filePath, mem::VirtualBuffer& output);
+        void WriteWholeFile(std::pmr::u8string const& filePath, PlainDataArray<std::byte> const& data);
+        void WriteWholeFile(std::pmr::u8string const& filePath, mem::VirtualBuffer const& data);
+        void WriteWholeFile(std::pmr::u8string const& filePath, std::byte const* data, size_t size);
 
-        void CreateDirectories(str::String const& dirPath);
-        void GetDirectory(mem::AllocationScope& scratch, str::String const& filePath, str::String& output);
+        void CreateDirectories(std::pmr::u8string const& dirPath);
+        void GetDirectory(std::pmr::u8string const& filePath, std::pmr::u8string& output);
 
-        bool FileExist(str::String const& filePath);
-        bool DestinationOlder(str::String const& sourceFilePath, str::String const& destinationFilePath);
+        bool FileExist(std::pmr::u8string const& filePath);
+        bool DestinationOlder(std::pmr::u8string const& sourceFilePath, std::pmr::u8string const& destinationFilePath);
 
-        void Merge(mem::AllocationScope& scratch, str::String const& left, str::String const& right, str::String& output);
-        void GetFileBasename(mem::AllocationScope& scratch, str::String const& filePath, str::String& output);
-        void ReplaceFilename(mem::AllocationScope& scratch, str::String const& filePath, str::String const& newName, str::String& output);
-        void ReplaceExtension(mem::AllocationScope& scratch, str::String const& filePath, str::String const& newExtension, str::String& output);
+        void Merge(std::pmr::u8string const& left, std::pmr::u8string const& right, std::pmr::u8string& output);
+        void GetFileBasename(std::pmr::u8string const& filePath, std::pmr::u8string& output);
+        void ReplaceFilename(std::pmr::u8string const& filePath, std::pmr::u8string const& newName, std::pmr::u8string& output);
+        void ReplaceExtension(std::pmr::u8string const& filePath, std::pmr::u8string const& newExtension, std::pmr::u8string& output);
 
-        void ConvertToShaderPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
-        void ConvertToMediaPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
-        void ConvertToCookedPath(mem::AllocationScope& scratch, str::String const& path, str::String& output);
-        void ConvertToCookedPathPrefixed(mem::AllocationScope& scratch, str::String const& path, str::String const& prefix, str::String& output);
+        void ConvertToShaderPath(std::pmr::u8string const& path, std::pmr::u8string& output);
+        void ConvertToMediaPath(std::pmr::u8string const& path, std::pmr::u8string& output);
+        void ConvertToCookedPath(std::pmr::u8string const& path, std::pmr::u8string& output);
+        void ConvertToCookedPathPrefixed(std::pmr::u8string const& path, std::pmr::u8string const& prefix, std::pmr::u8string& output);
     }
 }

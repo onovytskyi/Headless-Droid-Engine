@@ -6,11 +6,6 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
-
     namespace sys
     {
         class SystemWindow;
@@ -26,7 +21,7 @@ namespace hd
         class SwapchainPlatform
         {
         public:
-            SwapchainPlatform(Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format, mem::AllocationScope& allocationScope);
+            SwapchainPlatform(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format);
             ~SwapchainPlatform();
 
         protected:
@@ -35,6 +30,7 @@ namespace hd
             void CreateFramebufferTextures();
             void ReleaseFrameBufferTextures();
 
+            Allocator& m_PersistentAllocator;
             ComPtr<IDXGISwapChain3> m_SwapChain;
             Device* m_OwnerDevice;
             Queue* m_FlipQueue;

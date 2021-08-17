@@ -178,8 +178,8 @@ namespace hd
 
             void ClearRenderTarget(TextureHandle target, std::array<float, 4> color);
             void ClearDepthStencil(TextureHandle depthStencil, float depth, uint32_t stencil);
-            void UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size);
-            void UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void* data, size_t size);
+            void UpdateBuffer(BufferHandle target, size_t offset, void const* data, size_t size);
+            void UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void const* data, size_t size);
             void SetRenderState(RenderState* renderState);
             void SetTopologyType(TopologyType type);
             void DrawInstanced(uint32_t vertexCount, uint32_t indexCount);

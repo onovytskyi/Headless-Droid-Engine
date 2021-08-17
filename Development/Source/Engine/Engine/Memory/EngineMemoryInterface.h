@@ -4,12 +4,11 @@
 
 namespace hd
 {
+    class Allocator;
+
     namespace mem
     {
-        class LinearAllocator;
-
-        LinearAllocator& GetPersistentAllocator();
-        LinearAllocator& GetSceneAllocator();
-        LinearAllocator& GetFrameAllocator();
+        Allocator& Persistent();
+        Allocator& General();
     }
 }

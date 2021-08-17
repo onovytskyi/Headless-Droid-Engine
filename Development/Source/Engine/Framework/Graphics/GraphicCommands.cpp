@@ -223,7 +223,7 @@ namespace hd
             command.Stencil = stencil;
         }
 
-        void GraphicCommandsStream::UpdateBuffer(BufferHandle target, size_t offset, void* data, size_t size)
+        void GraphicCommandsStream::UpdateBuffer(BufferHandle target, size_t offset, void const* data, size_t size)
         {
             gfx::UpdateBufferCommand& command = gfx::UpdateBufferCommand::WriteTo(m_CommandBuffer, size);
             command.Target = target;
@@ -232,7 +232,7 @@ namespace hd
             memcpy_s(command.Data, command.Size, data, command.Size);
         }
 
-        void GraphicCommandsStream::UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void* data, size_t size)
+        void GraphicCommandsStream::UpdateTexture(TextureHandle target, uint32_t firstSubresource, uint32_t numSubresources, void const* data, size_t size)
         {
             gfx::UpdateTextureCommand& command = gfx::UpdateTextureCommand::WriteTo(m_CommandBuffer, size);
             command.Target = target;

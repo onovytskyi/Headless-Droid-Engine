@@ -1,40 +1,42 @@
 #include "Game/Bootstrap.h"
 
 #include "Engine/Engine/Memory/EngineMemoryInterface.h"
-#include "Engine/Framework/Memory/LinearAllocatorConcurrentAdapter.h"
-#include "Engine/Framework/Memory/VirtualLinearAllocator.h"
 #include "Engine/Foundation/Memory/FixedLinearAllocator.h"
+#include "Engine/Foundation/Memory/SystemAllocator.h"
 #include "Engine/Foundation/Memory/Utils.h"
+#include "Engine/Framework/Memory/AllocatorConcurrentAdapter.h"
+#include "Engine/Framework/Memory/VirtualLinearAllocator.h"
 
-hd::mem::LinearAllocator& hd::mem::GetScratchAllocator()
+static const size_t scratchArenaSize = hd::mem::MB(50);
+static thread_local std::byte scratchArena[scratchArenaSize];
+static thread_local hd::mem::FixedLinearAllocator scratchAllocator{ scratchArena, scratchArenaSize };
+
+hd::Allocator& hd::mem::Scratch()
 {
-    static const size_t memoryArenaSize = MB(50);
-    static thread_local std::byte memoryArena[memoryArenaSize];
-    static thread_local FixedLinearAllocator memoryAllocator{ memoryArena, memoryArenaSize };
-
-    return memoryAllocator;
+    return scratchAllocator;
 }
 
-hd::mem::LinearAllocator& hd::mem::GetPersistentAllocator()
+size_t hd::mem::GetScratchMarker()
 {
-    static VirtualLinearAllocator memoryAllocator{ GB(1) };
-    static LinearAllocatorConcurrentAdaper concurrentAdapter{ memoryAllocator };
-
-    return concurrentAdapter;
+    return scratchAllocator.GetMarker();
 }
 
-hd::mem::LinearAllocator& hd::mem::GetSceneAllocator()
+void hd::mem::ResetScratchMarker(size_t marker)
 {
-    static VirtualLinearAllocator memoryAllocator{ GB(4) };
-    static LinearAllocatorConcurrentAdaper concurrentAdapter{ memoryAllocator };
-
-    return concurrentAdapter;
+    scratchAllocator.Reset(marker);
 }
 
-hd::mem::LinearAllocator& hd::mem::GetFrameAllocator()
-{
-    static VirtualLinearAllocator memoryAllocator{ GB(3), MB(500), false };
-    static LinearAllocatorConcurrentAdaper concurrentAdapter{ memoryAllocator };
+static hd::mem::VirtualLinearAllocator persistentAllocatorST{ hd::mem::GB(1) };
+static hd::mem::AllocatorConcurrentAdaper persistentAllocatorMT{ persistentAllocatorST };
 
-    return concurrentAdapter;
+hd::Allocator& hd::mem::Persistent()
+{
+    return persistentAllocatorMT;
+}
+
+static hd::SystemAllocator generalAllocatorMT{};
+
+hd::Allocator& hd::mem::General()
+{
+    return generalAllocatorMT;
 }

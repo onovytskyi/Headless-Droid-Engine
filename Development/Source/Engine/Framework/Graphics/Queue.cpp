@@ -2,25 +2,26 @@
 
 #include "Engine/Framework/Graphics/Queue.h"
 
+#include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/Fence.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 
 namespace hd
 {
     namespace gfx
     {
-        Queue::Queue(Device& device, QueueType type, mem::AllocationScope& allocationScope)
+        Queue::Queue(Allocator& persistentAllocator, Device& device, QueueType type)
             : QueuePlatform{ device, type }
+            , m_PersistentAllocator{ persistentAllocator }
             , m_Type{ type }
             , m_LastFlushValue{ 0 }
             , m_FlushFence{}
         {
-            m_FlushFence = allocationScope.AllocateObject<Fence>(device, m_LastFlushValue);
+            m_FlushFence = hdNew(m_PersistentAllocator, Fence)(device, m_LastFlushValue);
         }
 
         Queue::~Queue()
         {
-
+            hdSafeDelete(m_PersistentAllocator, m_FlushFence);
         }
 
         void Queue::Flush()

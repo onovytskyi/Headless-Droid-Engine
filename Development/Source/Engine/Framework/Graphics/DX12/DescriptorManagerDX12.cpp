@@ -11,11 +11,11 @@ namespace hd
 {
     namespace gfx
     {
-        DescriptorManager::DescriptorManager(DevicePlatform& device, mem::AllocationScope& allocationScope)
-            : m_RTV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, cfg::MaxDescriptorsRTV() }
-            , m_DSV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, cfg::MaxDescriptorsDSV() }
-            , m_SRV{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cfg::MaxDescriptorsSRV() }
-            , m_Sampler{ device, allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, cfg::MaxDescriptorsSampler() }
+        DescriptorManager::DescriptorManager(Allocator& generalAllocator, DevicePlatform& device)
+            : m_RTV{ generalAllocator, device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, cfg::MaxDescriptorsRTV() }
+            , m_DSV{ generalAllocator,device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, cfg::MaxDescriptorsDSV() }
+            , m_SRV{ generalAllocator,device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, cfg::MaxDescriptorsSRV() }
+            , m_Sampler{ generalAllocator,device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, cfg::MaxDescriptorsSampler() }
             , m_DefaultDescriptorResource{}
         {
             D3D12_HEAP_PROPERTIES heapProperties{};
@@ -118,8 +118,8 @@ namespace hd
             return m_Sampler.GetDescriptorHeap();
         }
 
-        DescriptorManager::DescriptorAllocator::DescriptorAllocator(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors)
-            : m_Allocator{ allocationScope, maxDescriptors }
+        DescriptorManager::DescriptorAllocator::DescriptorAllocator(Allocator& generalAllocator, DevicePlatform& device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t maxDescriptors)
+            : m_Allocator{ generalAllocator, maxDescriptors }
             , m_HandleIncrementSize{}
         {
             m_HandleIncrementSize = device.GetNativeDevice()->GetDescriptorHandleIncrementSize(type);

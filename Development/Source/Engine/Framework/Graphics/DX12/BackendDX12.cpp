@@ -8,7 +8,6 @@
 #include "Engine/Debug/Log.h"
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/Graphics/DX12/ShaderManagerDX12.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 
 namespace hd
 {
@@ -17,8 +16,9 @@ namespace hd
         BufferHandle INVALID_BUFFER_HANDLE = BufferHandle(util::VirtualPoolAllocator<Buffer>::InvalidHandle());
         TextureHandle INVALID_TEXTURE_HANDLE = TextureHandle(util::VirtualPoolAllocator<Buffer>::InvalidHandle());
 
-        BackendPlatform::BackendPlatform(mem::AllocationScope& allocationScope)
-            : m_ShaderManager{}
+        BackendPlatform::BackendPlatform(Allocator& persistentAllocator)
+            : m_PersistentAllocator{ persistentAllocator }
+            , m_ShaderManager{}
             , m_BufferAllocator{ 4096 }
             , m_TextureAllocator{ 4096 }
         {
@@ -60,11 +60,13 @@ namespace hd
             hdEnsure(::CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(factory2.GetAddressOf())));
             hdEnsure(factory2.As<IDXGIFactory6>(&m_Factory));
 
-            m_ShaderManager = allocationScope.AllocateObject<ShaderManager>();
+            m_ShaderManager = hdNew(m_PersistentAllocator, ShaderManager)();
         }
 
         BackendPlatform::~BackendPlatform()
         {
+            hdSafeDelete(m_PersistentAllocator, m_ShaderManager);
+
             m_Factory.Reset();
 
 #if defined(HD_ENABLE_GFX_DEBUG)

@@ -4,18 +4,19 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
+#include "Engine/Debug/Assert.h"
 #include "Engine/Framework/Graphics/GraphicsTypes.h"
-#include "Engine/Framework/Memory/AllocationScope.h"
 #include "Engine/Framework/Memory/FrameworkMemoryInterface.h"
 
 namespace hd
 {
     namespace gfx
     {
-        ResourceStateTracker::ResourceStateTracker(mem::AllocationScope& allocationScope)
-            : m_TransitionRequests{ allocationScope, cfg::MaxTransitionRequests() }
+        ResourceStateTracker::ResourceStateTracker(Allocator& generalAllocator)
+            : m_GeneralAllocator{ generalAllocator }
+            , m_TransitionRequests{ &m_GeneralAllocator }
         {
-
+            m_TransitionRequests.reserve(128);
         }
 
         void ResourceStateTracker::RequestTransition(StateTrackedData& data, D3D12_RESOURCE_STATES toState)
@@ -25,7 +26,7 @@ namespace hd
 
         void ResourceStateTracker::RequestSubresourceTransition(StateTrackedData& data, uint32_t subresource, D3D12_RESOURCE_STATES toState)
         {
-            m_TransitionRequests.Add({ &data, toState, subresource });
+            m_TransitionRequests.emplace_back(&data, toState, subresource);
         }
 
         bool IsReadOnlyState(D3D12_RESOURCE_STATES state)
@@ -73,13 +74,13 @@ namespace hd
 
         void ResourceStateTracker::ApplyTransitions(ID3D12GraphicsCommandList& commandList)
         {
-            mem::AllocationScope scratchScope(mem::GetScratchAllocator());
+            ScopedScratchMemory scopedScratch{};
 
-            size_t transitionsAllocationSize = sizeof(D3D12_RESOURCE_BARRIER) * m_TransitionRequests.GetSize() * StateTrackedData::MAX_SUBRESOURCES;
-            D3D12_RESOURCE_BARRIER* transitionBarriers = reinterpret_cast<D3D12_RESOURCE_BARRIER*>(scratchScope.AllocateMemory(transitionsAllocationSize, alignof(D3D12_RESOURCE_BARRIER)));
+            size_t resourceBarrierCount = m_TransitionRequests.size() * StateTrackedData::MAX_SUBRESOURCES;
+            D3D12_RESOURCE_BARRIER* transitionBarriers = hdAllocate(mem::Scratch(), D3D12_RESOURCE_BARRIER, resourceBarrierCount);
 
             uint32_t barriersCount = 0;
-            for (uint32_t requestIdx = 0; requestIdx < m_TransitionRequests.GetSize(); ++requestIdx)
+            for (uint32_t requestIdx = 0; requestIdx < m_TransitionRequests.size(); ++requestIdx)
             {
                 StateTransitionRequest& request = m_TransitionRequests[requestIdx];
                 ID3D12Resource* nativeResource = request.Data->Resource;
@@ -133,7 +134,7 @@ namespace hd
                 commandList.ResourceBarrier(barriersCount, transitionBarriers);
             }
 
-            m_TransitionRequests.Clear();
+            m_TransitionRequests.clear();
         }
     }
 }

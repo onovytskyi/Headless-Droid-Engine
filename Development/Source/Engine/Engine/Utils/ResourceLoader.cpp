@@ -4,9 +4,9 @@
 
 #include "Engine/Debug/Assert.h"
 #include "Engine/Debug/Log.h"
+#include "Engine/Engine/Memory/EngineMemoryInterface.h"
 #include "Engine/Foundation/Memory/Utils.h"
 #include "Engine/Framework/File/Utils.h"
-#include "Engine/Framework/String/String.h"
 #include "Engine/Framework/Utils/CommandBuffer.h"
 #include "Engine/Framework/Utils/CommandBufferReader.h"
 
@@ -20,20 +20,83 @@ namespace hd
     {
         static const uint32_t MESH_MAGIC_NUMBER = 0x12FEED21;
 
-        void LoadRawMesh(mem::AllocationScope& scratch, str::String const& filePath, MeshResource*& outMeshes, uint32_t& outMeshCount, MaterialResouce*& outMaterials, 
-            uint32_t& outMaterialCount)
+        MaterialResouce::MaterialResouce(allocator_type allocator)
+            : DiffuseColor{}
+            , AmbientColor{}
+            , SpecularColor{}
+            , SpecularPower{}
+            , RefractionIndex{}
+            , DiffuseTexture{ allocator }
+            , NormalTexture{ allocator }
+            , RoughnessTexture{ allocator}
+            , MetalnessTexture{ allocator }
+        {
+
+        }
+
+        MaterialResouce::MaterialResouce(MaterialResouce const& other, allocator_type const& allocator)
+            : DiffuseColor{ other.DiffuseColor }
+            , AmbientColor{ other.AmbientColor }
+            , SpecularColor{ other.SpecularColor }
+            , SpecularPower{ other.SpecularPower }
+            , RefractionIndex{ other.RefractionIndex }
+            , DiffuseTexture{ other.DiffuseTexture, allocator }
+            , NormalTexture{ other.NormalTexture, allocator }
+            , RoughnessTexture{ other.RoughnessTexture, allocator }
+            , MetalnessTexture{ other.MetalnessTexture, allocator }
+        {
+
+        }
+
+        MaterialResouce::MaterialResouce(MaterialResouce&& other, allocator_type const& allocator)
+            : DiffuseColor{ other.DiffuseColor }
+            , AmbientColor{ other.AmbientColor }
+            , SpecularColor{ other.SpecularColor }
+            , SpecularPower{ other.SpecularPower }
+            , RefractionIndex{ other.RefractionIndex }
+            , DiffuseTexture{ std::move(other.DiffuseTexture), allocator }
+            , NormalTexture{ std::move(other.NormalTexture), allocator }
+            , RoughnessTexture{ std::move(other.RoughnessTexture), allocator }
+            , MetalnessTexture{ std::move(other.MetalnessTexture), allocator }
+        {
+
+        }
+
+        MeshResource::MeshResource(allocator_type allocator)
+            : Vertices{ allocator }
+            , Indices{ allocator }
+            , MaterialIndex{}
+        {
+
+        }
+
+        MeshResource::MeshResource(MeshResource const& other, allocator_type const& allocator)
+            : Vertices{ other.Vertices, allocator }
+            , Indices{ other.Indices, allocator }
+            , MaterialIndex{ other.MaterialIndex }
+        {
+
+        }
+
+        MeshResource::MeshResource(MeshResource&& other, allocator_type const& allocator)
+            : Vertices{ std::move(other.Vertices), allocator }
+            , Indices{ std::move(other.Indices), allocator }
+            , MaterialIndex{ other.MaterialIndex }
+        {
+
+        }
+
+        void LoadRawMesh(std::pmr::u8string const& filePath, std::pmr::vector<MeshResource>& outMeshes, std::pmr::vector<MaterialResouce>& outMaterials)
         {
             // #HACK Fast obj only supports ASCII in file path, consider rewrite it to use wide chars
             // #Optimization use our allocator with fast obj
-            fastObjMesh* mesh = fast_obj_read(reinterpret_cast<char const*>(filePath.CStr()));
-            hdAssert(mesh != nullptr, u8"Fast obj failed to load mesh file %s.", filePath.CStr());
+            fastObjMesh* mesh = fast_obj_read(reinterpret_cast<char const*>(filePath.c_str()));
+            hdAssert(mesh != nullptr, u8"Fast obj failed to load mesh file %s.", filePath.c_str());
 
-            outMaterialCount = mesh->material_count;
-            outMaterials = scratch.AllocatePODArray<MaterialResouce>(outMaterialCount);
-            for (uint32_t materialIdx = 0; materialIdx < outMaterialCount; ++materialIdx)
+            outMaterials.resize(mesh->material_count);
+            for (uint32_t materialIdx = 0; materialIdx < outMaterials.size(); ++materialIdx)
             {
                 MaterialResouce& material = outMaterials[materialIdx];
-                material = {};
                 fastObjMaterial& materialData = mesh->materials[materialIdx];
 
                 material.DiffuseColor.w = materialData.d;
@@ -55,35 +118,29 @@ namespace hd
 
                 if (materialData.map_Kd.path)
                 {
-                    str::String path{ scratch, reinterpret_cast<char8_t*>(materialData.map_Kd.path) };
-                    material.DiffuseTexture = path.Str();
+                    material.DiffuseTexture = reinterpret_cast<char8_t*>(materialData.map_Kd.path);
                 }
 
                 if (materialData.map_bump.path)
                 {
-                    str::String path{ scratch, reinterpret_cast<char8_t*>(materialData.map_bump.path) };
-                    material.NormalTexture = path.Str();
+                    material.NormalTexture = reinterpret_cast<char8_t*>(materialData.map_bump.path);
                 }
 
                 if (materialData.map_Ns.path)
                 {
-                    str::String path{ scratch, reinterpret_cast<char8_t*>(materialData.map_Ns.path) };
-                    material.RoughnessTexture = path.Str();
+                    material.RoughnessTexture = reinterpret_cast<char8_t*>(materialData.map_Ns.path);
                 }
 
                 if (materialData.map_Ka.path)
                 {
-                    str::String path{ scratch, reinterpret_cast<char8_t*>(materialData.map_Ka.path) };
-                    material.MetalnessTexture = path.Str();
+                    material.MetalnessTexture = reinterpret_cast<char8_t*>(materialData.map_Ka.path);
                 }
             }
 
-            outMeshCount = mesh->group_count;
-            outMeshes = scratch.AllocatePODArray<MeshResource>(outMeshCount);
-            for (uint32_t submeshIdx = 0; submeshIdx < outMeshCount; ++submeshIdx)
+            outMeshes.resize(mesh->group_count);
+            for (uint32_t submeshIdx = 0; submeshIdx < outMeshes.size(); ++submeshIdx)
             {
                 MeshResource& submesh = outMeshes[submeshIdx];
-                submesh = {};
                 fastObjGroup& submeshData = mesh->groups[submeshIdx];
 
                 uint64_t totalIndices = 0;
@@ -98,7 +155,7 @@ namespace hd
                     totalIndices += uint64_t(3) * (mesh->face_vertices[faceIdx] - 2);
                 }
 
-                MeshResourceVertex* vertices = scratch.AllocatePODArray<MeshResourceVertex>(totalIndices);
+                MeshResourceVertex* vertices = hdAllocate(mem::Scratch(), MeshResourceVertex, totalIndices);
                 uint64_t vertexOffset = 0;
                 uint64_t indexOffset = submeshData.index_offset;
                 for (uint32_t faceIdx = firstFace; faceIdx < nextToLastFace; ++faceIdx)
@@ -132,34 +189,32 @@ namespace hd
                     indexOffset += mesh->face_vertices[faceIdx];
                 }
 
-                uint32_t* remapTable = scratch.AllocatePODArray<uint32_t>(totalIndices);
+                uint32_t* remapTable = hdAllocate(mem::Scratch(), uint32_t, totalIndices);
                 size_t totalVertices = meshopt_generateVertexRemap(remapTable, nullptr, totalIndices, vertices, totalIndices, sizeof(MeshResourceVertex));
 
                 hdAssert(totalIndices <= std::numeric_limits<uint32_t>::max());
-                submesh.IndexCount = uint32_t(totalIndices);
-                submesh.Indices = scratch.AllocatePODArray<uint32_t>(submesh.IndexCount);
-                meshopt_remapIndexBuffer(submesh.Indices, nullptr, totalIndices, remapTable);
+                submesh.Indices.Resize(totalIndices);
+                meshopt_remapIndexBuffer(submesh.Indices.Data(), nullptr, totalIndices, remapTable);
 
                 hdAssert(totalVertices <= std::numeric_limits<uint32_t>::max());
-                submesh.VertexCount = uint32_t(totalVertices);
-                submesh.Vertices = scratch.AllocatePODArray<MeshResourceVertex>(submesh.VertexCount);
-                meshopt_remapVertexBuffer(submesh.Vertices, vertices, totalIndices, sizeof(MeshResourceVertex), remapTable);
+                submesh.Vertices.Resize(totalVertices);
+                meshopt_remapVertexBuffer(submesh.Vertices.Data(), vertices, totalIndices, sizeof(MeshResourceVertex), remapTable);
             }
 
             fast_obj_destroy(mesh);
         }
 
-        void CookMesh(mem::AllocationScope& scratch, str::String const& meshPath, str::String const& cookedMeshPath)
+        void CookMesh(std::pmr::u8string const& meshPath, std::pmr::u8string const& cookedMeshPath)
         {
-            hdLogInfo(u8"Mesh \"%\" cooking to \"%\" started.", meshPath.CStr(), cookedMeshPath.CStr());
-            hdAssert(file::FileExist(meshPath), u8"Mesh source file % doesn't exist.", meshPath.CStr());
+            hdLogInfo(u8"Mesh \"%\" cooking to \"%\" started.", meshPath.c_str(), cookedMeshPath.c_str());
+            hdAssert(file::FileExist(meshPath), u8"Mesh source file % doesn't exist.", meshPath.c_str());
 
-            MeshResource* meshes{};
-            uint32_t meshCount{};
-            MaterialResouce* materials{};
-            uint32_t materialCount{};
+            ScopedScratchMemory scopedScratch{};
 
-            LoadRawMesh(scratch, meshPath, meshes, meshCount, materials, materialCount);
+            std::pmr::vector<MeshResource> meshes{ &mem::Scratch() };
+            std::pmr::vector<MaterialResouce> materials{ &mem::Scratch() };
+
+            LoadRawMesh(meshPath, meshes, materials);
 
             util::CommandBuffer memoryFileStream{ mem::MB(32) };
 
@@ -168,8 +223,8 @@ namespace hd
 
             // Write materials array
             uint32_t& materialCountFile = memoryFileStream.Write<uint32_t>();
-            materialCountFile = materialCount;
-            for (uint32_t materialIdx = 0; materialIdx < materialCount; ++materialIdx)
+            materialCountFile = uint32_t(materials.size());
+            for (uint32_t materialIdx = 0; materialIdx < materialCountFile; ++materialIdx)
             {
                 math::Vectorf4& diffuseColor = memoryFileStream.Write<math::Vectorf4>();
                 diffuseColor = materials[materialIdx].DiffuseColor;
@@ -188,141 +243,131 @@ namespace hd
 
                 // #TODO pack texture data into cooked binary
                 size_t& diffuseTexturePathLength = memoryFileStream.Write<size_t>();
-                diffuseTexturePathLength = materials[materialIdx].DiffuseTexture ? strlen(reinterpret_cast<char const*>(materials[materialIdx].DiffuseTexture)) : 0;
+                diffuseTexturePathLength = materials[materialIdx].DiffuseTexture.size();
                 if (diffuseTexturePathLength > 0)
                 {
                     char8_t* diffuseTexturePath = &memoryFileStream.Write<char8_t>(diffuseTexturePathLength);
-                    memcpy_s(diffuseTexturePath, diffuseTexturePathLength, materials[materialIdx].DiffuseTexture, diffuseTexturePathLength);
+                    memcpy_s(diffuseTexturePath, diffuseTexturePathLength, materials[materialIdx].DiffuseTexture.data(), diffuseTexturePathLength);
                 }
 
                 size_t& normalTexturePathLength = memoryFileStream.Write<size_t>();
-                normalTexturePathLength = materials[materialIdx].NormalTexture ? strlen(reinterpret_cast<char const*>(materials[materialIdx].NormalTexture)) : 0;
+                normalTexturePathLength = materials[materialIdx].NormalTexture.size();
                 if (normalTexturePathLength > 0)
                 {
                     char8_t* normalTexturePath = &memoryFileStream.Write<char8_t>(normalTexturePathLength);
-                    memcpy_s(normalTexturePath, normalTexturePathLength, materials[materialIdx].NormalTexture, normalTexturePathLength);
+                    memcpy_s(normalTexturePath, normalTexturePathLength, materials[materialIdx].NormalTexture.data(), normalTexturePathLength);
                 }
 
                 size_t& roughnessTexturePathLength = memoryFileStream.Write<size_t>();
-                roughnessTexturePathLength = materials[materialIdx].RoughnessTexture ? strlen(reinterpret_cast<char const*>(materials[materialIdx].RoughnessTexture)) : 0;
+                roughnessTexturePathLength = materials[materialIdx].RoughnessTexture.size();
                 if (roughnessTexturePathLength > 0)
                 {
                     char8_t* roughnessTexturePath = &memoryFileStream.Write<char8_t>(roughnessTexturePathLength);
-                    memcpy_s(roughnessTexturePath, roughnessTexturePathLength, materials[materialIdx].RoughnessTexture, roughnessTexturePathLength);
+                    memcpy_s(roughnessTexturePath, roughnessTexturePathLength, materials[materialIdx].RoughnessTexture.data(), roughnessTexturePathLength);
                 }
 
                 size_t& metalnessTexturePathLength = memoryFileStream.Write<size_t>();
-                metalnessTexturePathLength = materials[materialIdx].MetalnessTexture ? strlen(reinterpret_cast<char const*>(materials[materialIdx].MetalnessTexture)) : 0;
+                metalnessTexturePathLength = materials[materialIdx].MetalnessTexture.size();
                 if (metalnessTexturePathLength > 0)
                 {
                     char8_t* metalnessTexturePath = &memoryFileStream.Write<char8_t>(metalnessTexturePathLength);
-                    memcpy_s(metalnessTexturePath, metalnessTexturePathLength, materials[materialIdx].MetalnessTexture, metalnessTexturePathLength);
+                    memcpy_s(metalnessTexturePath, metalnessTexturePathLength, materials[materialIdx].MetalnessTexture.data(), metalnessTexturePathLength);
                 }
             }
 
             // Write mesh subobjects
             uint32_t& meshCountFile = memoryFileStream.Write<uint32_t>();
-            meshCountFile = meshCount;
-            for (uint32_t meshIdx = 0; meshIdx < meshCount; ++meshIdx)
+            meshCountFile = uint32_t(meshes.size());
+            for (uint32_t meshIdx = 0; meshIdx < meshCountFile; ++meshIdx)
             {
                 uint32_t& vertexCount = memoryFileStream.Write<uint32_t>();
-                vertexCount = meshes[meshIdx].VertexCount;
+                vertexCount = uint32_t(meshes[meshIdx].Vertices.Size());
                 MeshResourceVertex* vertices = &memoryFileStream.Write<MeshResourceVertex>(vertexCount);
-                memcpy_s(vertices, sizeof(MeshResourceVertex) * vertexCount, meshes[meshIdx].Vertices, sizeof(MeshResourceVertex) * vertexCount);
+                memcpy_s(vertices, sizeof(MeshResourceVertex) * vertexCount, meshes[meshIdx].Vertices.Data(), sizeof(MeshResourceVertex) * vertexCount);
 
                 uint32_t& indexCount = memoryFileStream.Write<uint32_t>();
-                indexCount = meshes[meshIdx].IndexCount;
+                indexCount = uint32_t(meshes[meshIdx].Indices.Size());
                 uint32_t* indices = &memoryFileStream.Write<uint32_t>(indexCount);
-                memcpy_s(indices, sizeof(uint32_t) * indexCount, meshes[meshIdx].Indices, sizeof(uint32_t) * indexCount);
+                memcpy_s(indices, sizeof(uint32_t) * indexCount, meshes[meshIdx].Indices.Data(), sizeof(uint32_t) * indexCount);
 
                 uint32_t& materialIndex = memoryFileStream.Write<uint32_t>();
                 materialIndex = meshes[meshIdx].MaterialIndex;
             }
 
-            hdLogInfo(u8"[Data] Writing cooked file \"%\"", cookedMeshPath.CStr());
+            hdLogInfo(u8"[Data] Writing cooked file \"%\"", cookedMeshPath.c_str());
             file::WriteWholeFile(cookedMeshPath, memoryFileStream.GetBuffer().GetData(), memoryFileStream.GetBuffer().GetSize());
 
-            hdLogInfo(u8"[Data] Mesh \"%\" cooking to \"%\" finished", meshPath.CStr(), cookedMeshPath.CStr());
+            hdLogInfo(u8"[Data] Mesh \"%\" cooking to \"%\" finished", meshPath.c_str(), cookedMeshPath.c_str());
         }
 
-        void LoadMesh(mem::AllocationScope& scratch, char8_t const* fileName, mem::Buffer& outMaterials, mem::Buffer& outMeshes)
+        void LoadMesh(char8_t const* fileName, std::pmr::vector<MaterialResouce>& outMaterials, std::pmr::vector<MeshResource>& outMeshes)
         {
-            str::String meshFileName{ scratch, fileName };
+            std::pmr::u8string meshFileName{ fileName, &mem::Scratch() };
 
-            str::String cookedMeshFilePath{ scratch };
-            file::ConvertToCookedPath(scratch, meshFileName, cookedMeshFilePath);
-            str::String cookedFileExtension{ scratch, u8".bin" };
-            file::ReplaceExtension(scratch, cookedMeshFilePath, cookedFileExtension, cookedMeshFilePath);
+            std::pmr::u8string cookedMeshFilePath{ &mem::Scratch() };
+            file::ConvertToCookedPath(meshFileName, cookedMeshFilePath);
+            std::pmr::u8string cookedFileExtension{ u8".bin", &mem::Scratch() };
+            file::ReplaceExtension(cookedMeshFilePath, cookedFileExtension, cookedMeshFilePath);
 
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            str::String meshFilePath{ scratch };
-            file::ConvertToMediaPath(scratch, meshFileName, meshFilePath);
+            std::pmr::u8string meshFilePath{ &mem::Scratch() };
+            file::ConvertToMediaPath(meshFileName, meshFilePath);
             if (file::DestinationOlder(meshFilePath, cookedMeshFilePath))
             {
-                CookMesh(scratch, meshFilePath, cookedMeshFilePath);
+                CookMesh(meshFilePath, cookedMeshFilePath);
             }
 #endif
 
-            hdEnsure(file::FileExist(cookedMeshFilePath), u8"Mesh file % is not found.", cookedMeshFilePath.CStr());
+            hdEnsure(file::FileExist(cookedMeshFilePath), u8"Mesh file % is not found.", cookedMeshFilePath.c_str());
 
             util::CommandBuffer memoryFileStream{ mem::MB(32) };
 
-            file::ReadWholeFile(scratch, cookedMeshFilePath, memoryFileStream.GetBuffer());
+            file::ReadWholeFile(cookedMeshFilePath, memoryFileStream.GetBuffer());
 
             util::CommandBufferReader fileReader{ memoryFileStream };
 
             uint32_t& magic = fileReader.Read<uint32_t>();
-            hdEnsure(magic == MESH_MAGIC_NUMBER, u8"Mesh file % corrupted.", cookedMeshFilePath.CStr());
+            hdEnsure(magic == MESH_MAGIC_NUMBER, u8"Mesh file % corrupted.", cookedMeshFilePath.c_str());
 
             // Read materials array
             uint32_t& materialCount = fileReader.Read<uint32_t>();
             if (materialCount > 0)
             {
-                outMaterials.Resize(sizeof(MaterialResouce) * materialCount);
-                MaterialResouce* materialsArray = outMaterials.GetDataAs<MaterialResouce*>();
+                outMaterials.resize(materialCount);
                 for (uint32_t materialIdx = 0; materialIdx < materialCount; ++materialIdx)
                 {
-                    materialsArray[materialIdx] = {};
-                    materialsArray[materialIdx].DiffuseColor = fileReader.Read<math::Vectorf4>();
-                    materialsArray[materialIdx].AmbientColor = fileReader.Read<math::Vectorf4>();
-                    materialsArray[materialIdx].SpecularColor = fileReader.Read<math::Vectorf3>();
-                    materialsArray[materialIdx].SpecularPower = fileReader.Read<float>();
-                    materialsArray[materialIdx].RefractionIndex = fileReader.Read<float>();
+                    outMaterials[materialIdx].DiffuseColor = fileReader.Read<math::Vectorf4>();
+                    outMaterials[materialIdx].AmbientColor = fileReader.Read<math::Vectorf4>();
+                    outMaterials[materialIdx].SpecularColor = fileReader.Read<math::Vectorf3>();
+                    outMaterials[materialIdx].SpecularPower = fileReader.Read<float>();
+                    outMaterials[materialIdx].RefractionIndex = fileReader.Read<float>();
 
                     size_t& diffuseTexturePathLength = fileReader.Read<size_t>();
                     if (diffuseTexturePathLength > 0)
                     {
-                        materialsArray[materialIdx].DiffuseTexture = scratch.AllocatePODArray<char8_t>(diffuseTexturePathLength + 1);
                         char8_t* diffusetTexturePath = &fileReader.Read<char8_t>(diffuseTexturePathLength);
-                        memcpy_s(materialsArray[materialIdx].DiffuseTexture, diffuseTexturePathLength, diffusetTexturePath, diffuseTexturePathLength);
-                        materialsArray[materialIdx].DiffuseTexture[diffuseTexturePathLength] = 0;
+                        outMaterials[materialIdx].DiffuseTexture.assign(diffusetTexturePath, diffuseTexturePathLength);
                     }
 
                     size_t& normalTexturePathLength = fileReader.Read<size_t>();
                     if (normalTexturePathLength > 0)
                     {
-                        materialsArray[materialIdx].NormalTexture = scratch.AllocatePODArray<char8_t>(normalTexturePathLength + 1);
                         char8_t* normalTexturePath = &fileReader.Read<char8_t>(normalTexturePathLength);
-                        memcpy_s(materialsArray[materialIdx].NormalTexture, normalTexturePathLength, normalTexturePath, normalTexturePathLength);
-                        materialsArray[materialIdx].NormalTexture[normalTexturePathLength] = 0;
+                        outMaterials[materialIdx].NormalTexture.assign(normalTexturePath, normalTexturePathLength);
                     }
 
                     size_t& roughnessTexturePathLength = fileReader.Read<size_t>();
                     if (roughnessTexturePathLength > 0)
                     {
-                        materialsArray[materialIdx].RoughnessTexture = scratch.AllocatePODArray<char8_t>(roughnessTexturePathLength + 1);
                         char8_t* roughnessTexturePath = &fileReader.Read<char8_t>(roughnessTexturePathLength);
-                        memcpy_s(materialsArray[materialIdx].RoughnessTexture, roughnessTexturePathLength, roughnessTexturePath, roughnessTexturePathLength);
-                        materialsArray[materialIdx].RoughnessTexture[roughnessTexturePathLength] = 0;
+                        outMaterials[materialIdx].RoughnessTexture.assign(roughnessTexturePath, roughnessTexturePathLength);
                     }
 
                     size_t& metalnessTexturePathLength = fileReader.Read<size_t>();
                     if (metalnessTexturePathLength > 0)
                     {
-                        materialsArray[materialIdx].MetalnessTexture = scratch.AllocatePODArray<char8_t>(metalnessTexturePathLength + 1);
                         char8_t* metalnessTexturePath = &fileReader.Read<char8_t>(metalnessTexturePathLength);
-                        memcpy_s(materialsArray[materialIdx].MetalnessTexture, metalnessTexturePathLength, metalnessTexturePath, metalnessTexturePathLength);
-                        materialsArray[materialIdx].MetalnessTexture[metalnessTexturePathLength] = 0;
+                        outMaterials[materialIdx].MetalnessTexture.assign(metalnessTexturePath, metalnessTexturePathLength);
                     }
                 }
             }
@@ -331,29 +376,24 @@ namespace hd
             uint32_t& meshCount = fileReader.Read<uint32_t>();
             if (meshCount > 0)
             {
-                outMeshes.Resize(sizeof(MeshResource) * meshCount);
-                MeshResource* meshesArray = outMeshes.GetDataAs<MeshResource*>();
+                outMeshes.resize(meshCount);
                 for (uint32_t meshIdx = 0; meshIdx < meshCount; ++meshIdx)
                 {
-                    meshesArray[meshIdx] = {};
+                    outMeshes[meshIdx].Vertices.Resize(fileReader.Read<uint32_t>());
+                    MeshResourceVertex* vertices = &fileReader.Read<MeshResourceVertex>(outMeshes[meshIdx].Vertices.Size());
+                    memcpy_s(outMeshes[meshIdx].Vertices.Data(), outMeshes[meshIdx].Vertices.Size() * sizeof(MeshResourceVertex), vertices,
+                        outMeshes[meshIdx].Vertices.Size() * sizeof(MeshResourceVertex));
 
-                    meshesArray[meshIdx].VertexCount = fileReader.Read<uint32_t>();
-                    meshesArray[meshIdx].Vertices = scratch.AllocatePODArray<MeshResourceVertex>(meshesArray[meshIdx].VertexCount);
-                    MeshResourceVertex* vertices = &fileReader.Read<MeshResourceVertex>(meshesArray[meshIdx].VertexCount);
-                    memcpy_s(meshesArray[meshIdx].Vertices, meshesArray[meshIdx].VertexCount * sizeof(MeshResourceVertex), vertices, 
-                        meshesArray[meshIdx].VertexCount * sizeof(MeshResourceVertex));
+                    outMeshes[meshIdx].Indices.Resize(fileReader.Read<uint32_t>());
+                    uint32_t* indices = &fileReader.Read<uint32_t>(outMeshes[meshIdx].Indices.Size());
+                    memcpy_s(outMeshes[meshIdx].Indices.Data(), outMeshes[meshIdx].Indices.Size() * sizeof(uint32_t), indices, outMeshes[meshIdx].Indices.Size() * sizeof(uint32_t));
 
-                    meshesArray[meshIdx].IndexCount = fileReader.Read<uint32_t>();
-                    meshesArray[meshIdx].Indices = scratch.AllocatePODArray<uint32_t>(meshesArray[meshIdx].IndexCount);
-                    uint32_t* indices = &fileReader.Read<uint32_t>(meshesArray[meshIdx].IndexCount);
-                    memcpy_s(meshesArray[meshIdx].Indices, meshesArray[meshIdx].IndexCount * sizeof(uint32_t), indices, meshesArray[meshIdx].IndexCount * sizeof(uint32_t));
-
-                    meshesArray[meshIdx].MaterialIndex = fileReader.Read<uint32_t>();
+                    outMeshes[meshIdx].MaterialIndex = fileReader.Read<uint32_t>();
                 }
             }
         }
 
-        void LoadImageDefault(char8_t const* filePath, mem::Buffer& outData, ImageResource& outImageDesc)
+        void LoadImageDefault(char8_t const* filePath, PlainDataArray<std::byte>& outData, ImageResource& outImageDesc)
         {
             stbi_set_flip_vertically_on_load_thread(true);
 
@@ -386,7 +426,7 @@ namespace hd
             outImageDesc.Height = uint32_t(height);
 
             outData.Resize(pixelSizeInBytes * outImageDesc.Width * outImageDesc.Height);
-            memcpy_s(outData.GetData(), outData.GetSize(), data, outData.GetSize());
+            memcpy_s(outData.Data(), outData.Size(), data, outData.Size());
 
             stbi_image_free(data);
         }
@@ -459,10 +499,10 @@ namespace hd
 
         const uint32_t DDS_CUBEMAP = 0x00000200;
 
-        void LoadImageDDS(mem::Buffer const& fileData, mem::Buffer& outData, ImageResource& outImageDesc)
+        void LoadImageDDS(PlainDataArray<std::byte> const& fileData, PlainDataArray<std::byte>& outData, ImageResource& outImageDesc)
         {
-            std::byte const* ddsBytesPointer = fileData.GetData();
-            size_t ddsBytesSize = fileData.GetSize();
+            std::byte const* ddsBytesPointer = fileData.Data();
+            size_t ddsBytesSize = fileData.Size();
 
             hdEnsure(*reinterpret_cast<const uint32_t*>(ddsBytesPointer) == MakeFourCC('D', 'D', 'S', ' '));
             ddsBytesSize -= sizeof(uint32_t);
@@ -631,16 +671,16 @@ namespace hd
             }
 
             outData.Resize(ddsBytesSize);
-            memcpy_s(outData.GetData(), outData.GetSize(), ddsBytesPointer, ddsBytesSize);
+            memcpy_s(outData.Data(), outData.Size(), ddsBytesPointer, ddsBytesSize);
         }
 
-        void LoadImage(mem::AllocationScope& scratch, char8_t const* fileName, mem::Buffer& outData, ImageResource& outImageDesc)
+        void LoadImage(char8_t const* fileName, PlainDataArray<std::byte>& outData, ImageResource& outImageDesc)
         {
-            mem::Buffer fileData{ scratch };
-            str::String filePath{ scratch, fileName };
-            file::ReadWholeFile(scratch, filePath, fileData);
+            PlainDataArray<std::byte> fileData{ &mem::Scratch() };
+            std::pmr::u8string filePath{ fileName, &mem::Scratch() };
+            file::ReadWholeFile(filePath, fileData);
 
-            uint32_t* ddsHeaderPointer = fileData.GetDataAs<uint32_t*>();
+            uint32_t* ddsHeaderPointer = reinterpret_cast<uint32_t*>(fileData.Data());
             if (*ddsHeaderPointer == MakeFourCC('D', 'D', 'S', ' '))
             {
                 LoadImageDDS(fileData, outData, outImageDesc);

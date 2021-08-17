@@ -2,19 +2,24 @@
 
 #include "Engine/Framework/Utils/BestFitAllocatorHelper.h"
 
+#include "Engine/Debug/Assert.h"
 #include "Engine/Foundation/Memory/Utils.h"
 
 namespace hd
 {
     namespace util
     {
-        BestFitAllocatorHelper::BestFitAllocatorHelper(mem::AllocationScope& allocationScope, size_t size)
-            : m_RangesAllocator{ allocationScope }
+        BestFitAllocatorHelper::BestFitAllocatorHelper(Allocator& generalAllocator, size_t size)
+            : m_GeneralAllocator{ generalAllocator }
             , m_FirstFreeRange{}
             , m_Size{ size }
         {
-            m_FirstFreeRange = m_RangesAllocator.Allocate();
-            *m_FirstFreeRange = { nullptr, nullptr,  0, size };
+            m_FirstFreeRange = hdNew(m_GeneralAllocator, Range){ nullptr, nullptr,  0, size };
+        }
+
+        BestFitAllocatorHelper::~BestFitAllocatorHelper()
+        {
+            ClearAllRanges();
         }
 
         size_t BestFitAllocatorHelper::Allocate(size_t size, size_t align)
@@ -64,7 +69,7 @@ namespace hd
                     // Otherwise we should split the range in two
                     else
                     {
-                        Range* secondRange = m_RangesAllocator.Allocate();
+                        Range* secondRange = hdNew(m_GeneralAllocator, Range)();
                         secondRange->Offset = result + size;
                         secondRange->Size = (bestFitRange->Offset + bestFitRange->Size) - secondRange->Offset;
                         secondRange->m_PrevRange = bestFitRange;
@@ -96,7 +101,7 @@ namespace hd
                             m_FirstFreeRange = bestFitRange->m_NextRange;
                         }
 
-                        m_RangesAllocator.Free(bestFitRange);
+                        hdSafeDelete(m_GeneralAllocator, bestFitRange);
                     }
 
                     return result;
@@ -163,7 +168,7 @@ namespace hd
                                     rangeToRemove->m_NextRange->m_PrevRange = range;
                                 }
 
-                                m_RangesAllocator.Free(rangeToRemove);
+                                hdSafeDelete(m_GeneralAllocator, rangeToRemove);
                             }
                         }
                         
@@ -177,8 +182,7 @@ namespace hd
 
             Range* insertNewRangeBefore = insertNewRangeAfter ? insertNewRangeAfter->m_NextRange : m_FirstFreeRange;
 
-            Range* newRange = m_RangesAllocator.Allocate();
-            *newRange = { insertNewRangeBefore, insertNewRangeAfter, offset, size };
+            Range* newRange = hdNew(m_GeneralAllocator, Range){ insertNewRangeBefore, insertNewRangeAfter, offset, size };
             if (newRange->m_PrevRange)
             {
                 newRange->m_PrevRange->m_NextRange = newRange;
@@ -197,16 +201,8 @@ namespace hd
 
         void BestFitAllocatorHelper::Reset()
         {
-            for (Range* range = m_FirstFreeRange; range;)
-            {
-                Range* rangeToFree = range;
-                range = range->m_NextRange;
-
-                m_RangesAllocator.Free(rangeToFree);
-            }
-
-            m_FirstFreeRange = m_RangesAllocator.Allocate();
-            *m_FirstFreeRange = { nullptr, nullptr,  0, m_Size };
+            ClearAllRanges();
+            m_FirstFreeRange = hdNew(m_GeneralAllocator, Range) { nullptr, nullptr, 0, m_Size };
         }
 
         bool BestFitAllocatorHelper::Empty()
@@ -217,6 +213,14 @@ namespace hd
         size_t BestFitAllocatorHelper::GetSize()
         {
             return m_Size;
+        }
+
+        void BestFitAllocatorHelper::ClearAllRanges()
+        {
+            for (Range* range = m_FirstFreeRange; range; range = range->m_NextRange)
+            {
+                hdSafeDelete(m_GeneralAllocator, range->m_PrevRange);
+            }
         }
     }
 }

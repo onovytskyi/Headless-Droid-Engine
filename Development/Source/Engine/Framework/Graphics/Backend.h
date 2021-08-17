@@ -4,17 +4,14 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
         class Backend : public BackendPlatform
         {
         public:
-            Backend(mem::AllocationScope& allocationScope);
+            Backend(Allocator& persistentAllocator);
             ~Backend();
 
             hdNoncopyable(Backend)

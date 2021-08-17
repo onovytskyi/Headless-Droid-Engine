@@ -2,14 +2,9 @@
 
 #if defined(HD_GRAPHICS_API_DX12)
 
-#include "Engine/Framework/Utils/BufferArray.h"
-
 namespace hd
 {
-    namespace mem
-    {
-        class AllocationScope;
-    }
+    class Allocator;
 
     namespace gfx
     {
@@ -18,7 +13,7 @@ namespace hd
         class CommandListManager
         {
         public:
-            CommandListManager(DevicePlatform& device, mem::AllocationScope& allocationScope, D3D12_COMMAND_LIST_TYPE type, size_t maxLists, size_t maxAllocators);
+            CommandListManager(Allocator& generalAllocator, DevicePlatform& device, D3D12_COMMAND_LIST_TYPE type);
             ~CommandListManager();
 
             hdNoncopyable(CommandListManager)
@@ -30,10 +25,12 @@ namespace hd
         private:
             ID3D12CommandAllocator* GetCommandAllocator();
 
+            Allocator& m_GeneralAllocator;
+
             DevicePlatform* m_OwnerDevice;
             D3D12_COMMAND_LIST_TYPE m_Type;
 
-            util::BufferArray<ID3D12GraphicsCommandList*> m_CommandLists;
+            std::pmr::vector<ID3D12GraphicsCommandList*> m_CommandLists;
             uint32_t m_CommandListsInUse;
 
             struct CommandAllocatorHolder
@@ -42,7 +39,7 @@ namespace hd
                 uint64_t Marker;
                 std::thread::id Thread;
             };
-            util::BufferArray<CommandAllocatorHolder> m_CommandAllocators;
+            std::pmr::vector<CommandAllocatorHolder> m_CommandAllocators;
         };
     }
 }
