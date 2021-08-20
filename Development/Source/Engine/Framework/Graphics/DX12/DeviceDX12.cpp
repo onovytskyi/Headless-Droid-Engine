@@ -109,6 +109,13 @@ namespace hd
                 infoQueue1->UnregisterMessageCallback(m_MessageCallbackCookie);
             }
 #endif
+
+            hdDelete(m_PersistentAllocator, m_GraphicsCommandListManager);
+            hdDelete(m_PersistentAllocator, m_ComputeCommandListManager);
+            hdDelete(m_PersistentAllocator, m_CopyCommandListManager);
+            hdDelete(m_PersistentAllocator, m_ResourceStateTracker);
+            hdDelete(m_PersistentAllocator, m_DescriptorManager);
+            hdDelete(m_PersistentAllocator, m_HeapAllocator);
         }
 
         ID3D12Device2* DevicePlatform::GetNativeDevice() const

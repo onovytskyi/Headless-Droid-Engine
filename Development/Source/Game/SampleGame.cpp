@@ -63,9 +63,11 @@ SampleGame::~SampleGame()
     hdSafeDelete(hd::mem::Persistent(), m_FpsCamera);
     hdSafeDelete(hd::mem::Persistent(), m_CommandsDebugTool);
     hdSafeDelete(hd::mem::Persistent(), m_StatsDebugTool);
+    hdSafeDelete(hd::mem::Persistent(), m_DebugOverlay);
     hdSafeDelete(hd::mem::Persistent(), m_GfxSwapchain);
     hdSafeDelete(hd::mem::Persistent(), m_GfxQueue);
     hdSafeDelete(hd::mem::Persistent(), m_GfxDevice);
+    hdSafeDelete(hd::mem::Persistent(), m_GfxBackend);
     hdSafeDelete(hd::mem::Persistent(), m_MainWindow);
 
     m_FrameTimer->Tick();

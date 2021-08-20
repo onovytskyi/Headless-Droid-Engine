@@ -122,7 +122,10 @@ namespace hd
         RenderStatePlatform::~RenderStatePlatform()
         {
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            m_Device->UnregisterRenderStateForRebuild(this);
+            if (m_Device)
+            {
+                m_Device->UnregisterRenderStateForRebuild(this);
+            }
 #endif
         }
 
