@@ -21,7 +21,7 @@ solution "HeadlessDroidEngine"
 	filter { "configurations:Development" }
 		targetsuffix "-Development"
 		defines { "HD_BUILD_DEVELOPMENT" }
-		optimize "Debug"
+		optimize "Speed"
                 characterset "Unicode"
                 symbols "On"
 		
