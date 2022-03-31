@@ -1,1 +1,1 @@
-tools\premake5.exe --file=tools\HeadlessDroidSolutionDescription.lua vs2019
+tools\premake5.exe --file=tools\HeadlessDroidSolutionDescription.lua vs2022

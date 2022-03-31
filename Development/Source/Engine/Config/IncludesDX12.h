@@ -1,7 +1,5 @@
 #pragma once
 
-#if defined(HD_GRAPHICS_API_DX12)
-
 #if !defined(HD_ENABLE_GFX_DEBUG) && !defined(HD_ENABLE_GFX_GPU_VALIDATION)
 #   define D3D12_IGNORE_SDK_LAYERS
 #endif
@@ -27,8 +25,6 @@ using Microsoft::WRL::ComPtr;
 #endif
 
 #if defined(HD_ENGINE_PROJECT)
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 4; }
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; }
-#endif
-
+extern "C" { __declspec(dllexport) extern inline constexpr UINT D3D12SDKVersion = 4; }
+extern "C" { __declspec(dllexport) extern inline const char* D3D12SDKPath = ".\\"; }
 #endif

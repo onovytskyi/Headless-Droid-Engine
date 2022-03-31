@@ -2,8 +2,8 @@
 
 #include "Engine/Config/BuildConfiguration.h"
 
-#include "Engine/Config/DX12/PlatformIncludesDX12.h"
-#include "Engine/Config/Win64/PlatformIncludesWin64.h"
+#include "Engine/Config/IncludesDX12.h"
+#include "Engine/Config/IncludesWin64.h"
 
 #include <algorithm>
 #include <array>

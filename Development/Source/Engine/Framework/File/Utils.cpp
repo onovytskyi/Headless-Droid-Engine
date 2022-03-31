@@ -19,7 +19,7 @@ namespace hd
             std::pmr::wstring wideFilePath{ &mem::Scratch() };
             str::ToWide(filePath, wideFilePath);
 
-            std::ifstream file{ wideFilePath, std::ios::binary | std::ios::ate };
+            std::ifstream file{ wideFilePath.c_str(), std::ios::binary | std::ios::ate};
 
             hdEnsure(file.good(), u8"Failed to open file %", filePath.c_str());
 
@@ -36,7 +36,7 @@ namespace hd
             std::pmr::wstring wideFilePath{ &mem::Scratch() };
             str::ToWide(filePath, wideFilePath);
 
-            std::ifstream file{ wideFilePath, std::ios::binary | std::ios::ate };
+            std::ifstream file{ wideFilePath.c_str(), std::ios::binary | std::ios::ate};
 
             hdEnsure(file.good(), u8"Failed to open file %", filePath.c_str());
 
@@ -67,7 +67,7 @@ namespace hd
 
             std::filesystem::create_directories(std::filesystem::path(wideFilePath).parent_path());
 
-            std::ofstream file{ wideFilePath, std::ios::binary | std::ios::trunc };
+            std::ofstream file{ wideFilePath.c_str(), std::ios::binary | std::ios::trunc};
 
             hdEnsure(file.good(), u8"Failed to create file %", filePath.c_str());
 

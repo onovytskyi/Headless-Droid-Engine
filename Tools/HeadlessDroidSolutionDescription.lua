@@ -3,7 +3,7 @@ solution "HeadlessDroidEngine"
 	configurations { "Debug", "Development", "Profile", "Final" }
 	platforms { "Win64" }
     startproject "Game"
-	systemversion "10.0.17763.0"
+	systemversion "10.0.22000.0"
 	
 	filter { "platforms:Win64" }
 		system "Windows"
@@ -103,18 +103,7 @@ project "Game"
 	pchheader ("Game/Bootstrap.h")
 	pchsource ("../Development/Source/Game/Bootstrap.cpp")
     buildoptions { "/Zm256" }
-	
-	configuration "Debug"
-		kind "WindowedApp"
-		
-	configuration "Development"
-		kind "WindowedApp"
-		
-	configuration "Profile"
-		kind "WindowedApp"
-	
-	configuration "Final"
-		kind "WindowedApp"
+	kind "WindowedApp"
 		
 project "Test"
 	location "../Development/Source/Test"
@@ -128,15 +117,4 @@ project "Test"
 	links { "Externals", "Engine" }
 	files { "../Development/Source/Test/**.h", "../Development/Source/Test/**.hpp", "../Development/Source/Test/**.cpp" }
     buildoptions { "/Zm256" }
-	
-	configuration "Debug"
-		kind "ConsoleApp"
-		
-	configuration "Development"
-		kind "ConsoleApp"
-		
-	configuration "Profile"
-		kind "ConsoleApp"
-	
-	configuration "Final"
-		kind "ConsoleApp"
+	kind "ConsoleApp"
