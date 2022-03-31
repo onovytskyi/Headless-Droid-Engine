@@ -8,15 +8,15 @@ namespace hd
 
         inline constexpr uint32_t MaxFrameLatency() { return 3; }
 
-        inline constexpr char8_t const* ShadersPath() { return u8"../Development/Source/Shaders/"; }
+        inline constexpr char8_t const* ShadersPath() { return u8"../Source/Shaders/"; }
         inline constexpr char8_t const* MediaPath() { return u8"../Media/"; }
 
 #if defined(HD_BUILD_DEBUG)
         inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/Debug/"; }
         inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Debug/"; }
 #elif defined(HD_BUILD_DEVELOPMENT)
-        inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/Development/"; }
-        inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Development/"; }
+        inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/"; }
+        inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/"; }
 #else
         inline constexpr char8_t const* CookedFilePath() { return u8"./Cooked/"; }
         inline constexpr char8_t const* SymbolsFilePath() { return u8"./Cooked/Symbols/Release/"; }

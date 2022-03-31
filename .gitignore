@@ -1,10 +1,10 @@
 # Binaries
 Bin/
-Development/Build/
-Development/Lib/
+Build/
+Lib/
 
 # Nuget packages
-Development/packages/
+packages/
 packages.config
 
 # Visual Studio
