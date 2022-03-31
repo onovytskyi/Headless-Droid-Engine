@@ -6,25 +6,22 @@
 
 namespace hd
 {
-    namespace gfx
-    {
-        class Device;
+	class Device;
 
-        class QueuePlatform
-        {
-        public:
-            QueuePlatform(Device& device, QueueType type);
-            ~QueuePlatform();
+	class QueuePlatform
+	{
+	public:
+		QueuePlatform(Device& device, QueueType type);
+		~QueuePlatform();
 
-            ID3D12CommandQueue* GetNativeQueue() const;
+		ID3D12CommandQueue* GetNativeQueue() const;
 
-            void PresentFrom(TextureHandle framebuffer);
+		void PresentFrom(TextureHandle framebuffer);
 
-        protected:
-            Device* m_OwnerDevice;
-            ComPtr<ID3D12CommandQueue> m_Queue;
-        };
-    }
+	protected:
+		Device* m_OwnerDevice;
+		ComPtr<ID3D12CommandQueue> m_Queue;
+	};
 }
 
 #endif

@@ -6,43 +6,40 @@ namespace hd
 {
     class Allocator;
 
-    namespace gfx
+    class ResourceStateTracker
     {
-        class ResourceStateTracker
+    public:
+        struct StateTrackedData
         {
-        public:
-            struct StateTrackedData
-            {
-                static const size_t MAX_SUBRESOURCES = 32;
+            static const size_t MAX_SUBRESOURCES = 32;
 
-                ID3D12Resource* Resource;
-                D3D12_RESOURCE_STATES State;
+            ID3D12Resource* Resource;
+            D3D12_RESOURCE_STATES State;
 
-                D3D12_RESOURCE_STATES SubresourceStates[MAX_SUBRESOURCES];
-                uint32_t UsedSubresources;
-                bool SubresourceStatesDirty;
-            };
-
-            ResourceStateTracker(Allocator& generalAllocator);
-
-            void RequestTransition(StateTrackedData& data, D3D12_RESOURCE_STATES toState);
-            void RequestSubresourceTransition(StateTrackedData& data, uint32_t subresource, D3D12_RESOURCE_STATES toState);
-
-            void ApplyTransitions(ID3D12GraphicsCommandList& commandList);
-
-        private:
-            Allocator& m_GeneralAllocator;
-
-            struct StateTransitionRequest
-            {
-                StateTrackedData* Data;
-                D3D12_RESOURCE_STATES TargetState;
-                uint32_t Subresource;
-            };
-
-            std::pmr::vector<StateTransitionRequest> m_TransitionRequests;
+            D3D12_RESOURCE_STATES SubresourceStates[MAX_SUBRESOURCES];
+            uint32_t UsedSubresources;
+            bool SubresourceStatesDirty;
         };
-    }
+
+        ResourceStateTracker(Allocator& generalAllocator);
+
+        void RequestTransition(StateTrackedData& data, D3D12_RESOURCE_STATES toState);
+        void RequestSubresourceTransition(StateTrackedData& data, uint32_t subresource, D3D12_RESOURCE_STATES toState);
+
+        void ApplyTransitions(ID3D12GraphicsCommandList& commandList);
+
+    private:
+        Allocator& m_GeneralAllocator;
+
+        struct StateTransitionRequest
+        {
+            StateTrackedData* Data;
+            D3D12_RESOURCE_STATES TargetState;
+            uint32_t Subresource;
+        };
+
+        std::pmr::vector<StateTransitionRequest> m_TransitionRequests;
+    };
 }
 
 #endif

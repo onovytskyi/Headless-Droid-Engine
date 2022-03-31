@@ -5,30 +5,19 @@
 namespace hd
 {
     class Allocator;
+	class CommandBuffer;
+	class Device;
 
-    namespace gfx
+    class TextureCollection
     {
-        class Device;
-    }
+    public:
+        TextureCollection(Device& device);
+        ~TextureCollection();
 
-    namespace util
-    {
-        class CommandBuffer;
-    }
+        TextureHandle UploadTexture(char8_t const* textureFilePath, CommandBuffer& graphicsCommands);
 
-    namespace render
-    {
-        class TextureCollection
-        {
-        public:
-            TextureCollection(gfx::Device& device);
-            ~TextureCollection();
-
-            gfx::TextureHandle UploadTexture(char8_t const* textureFilePath, util::CommandBuffer& graphicsCommands);
-
-        private:
-            gfx::Device& m_Device;
-            std::pmr::unordered_map<std::pmr::u8string, gfx::TextureHandle> m_Textures;
-        };
-    }
+    private:
+        Device& m_Device;
+        std::pmr::unordered_map<std::pmr::u8string, TextureHandle> m_Textures;
+    };
 }

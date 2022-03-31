@@ -4,28 +4,25 @@
 
 namespace hd
 {
-    namespace util
-    {
-        class CommandBufferReader
-        {
-        public:
-            CommandBufferReader(CommandBuffer& commandBuffer);
+	class CommandBufferReader
+	{
+	public:
+		CommandBufferReader(CommandBuffer& commandBuffer);
 
-            hdNoncopyable(CommandBufferReader)
+		hdNoncopyable(CommandBufferReader)
 
-            template<typename T>
-            T& Read();
+		template<typename T>
+		T& Read();
 
-            template<typename T>
-            T& Read(size_t count);
+		template<typename T>
+		T& Read(size_t count);
 
-            bool HasCommands() const;
+		bool HasCommands() const;
 
-        private:
-            CommandBuffer& m_CommandBuffer;
-            size_t m_ReadOffset;
-        };
-    }
+	private:
+		CommandBuffer& m_CommandBuffer;
+		size_t m_ReadOffset;
+	};
 }
 
 #include "Framework/Utils/CommandBufferReader.hpp"

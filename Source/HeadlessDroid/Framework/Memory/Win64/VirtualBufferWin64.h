@@ -4,17 +4,14 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class VirtualBufferPlatform
-        {
-        protected:
-            VirtualBufferPlatform();
+	class VirtualBufferPlatform
+	{
+	protected:
+		VirtualBufferPlatform();
 
-            static size_t s_PageSize;
-            static size_t s_AllocationGranularity;
-        };
-    }
+		static size_t s_PageSize;
+		static size_t s_AllocationGranularity;
+	};
 }
 
 #endif

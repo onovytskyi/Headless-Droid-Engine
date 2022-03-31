@@ -10,68 +10,61 @@
 namespace hd
 {
     class Allocator;
+    class Backend;
+    class Device;
+    class RenderState;
 
-    namespace gfx
+    class DebugOverlay
     {
-        class Backend;
-        class Device;
-        class RenderState;
-    }
-
-    namespace ui
-    {
-        class DebugOverlay
+    public:
+        class Tool
         {
         public:
-            class Tool
+            enum class ToolType
             {
-            public:
-                enum class ToolType
-                {
-                    AlwaysVisible,
-                    Gadget,
-                    Menu
-                };
-
-                virtual ~Tool() {}
-
-                virtual bool& GetVisibleRef() = 0;
-                virtual ToolType GetType() const = 0;
-                virtual const char* GetMenuName() const = 0;
-                virtual const char* GetToolName() const = 0;
-                virtual void ProcessShortcuts() = 0;
-                virtual void Draw() = 0;
+                AlwaysVisible,
+                Gadget,
+                Menu
             };
 
-            DebugOverlay(gfx::Backend& backend, gfx::Device& device, uint32_t width, uint32_t height, gfx::GraphicFormat targetFormat);
-            ~DebugOverlay();
+            virtual ~Tool() {}
 
-            void UploadFont(hd::util::CommandBuffer& commandBuffer);
-
-            void RegisterDebugTool(Tool& tool);
-
-            void Resize(uint32_t width, uint32_t height);
-
-            void OnMouseButon(float mouseX, float mouseY, uint32_t mouseButtonId, bool pressed);
-            void OnMouseWheel(float mouseX, float mouseY, float wheel);
-            void OnMouseMove(float mouseX, float mouseY);
-            void OnKeyboardKey(uint8_t keyID, bool pressed);
-
-            void Render(gfx::TextureHandle target, util::CommandBuffer& graphicCommands);
-
-        private:
-            void ConstructFrame();
-
-            gfx::Device* m_Device;
-
-            gfx::TextureHandle m_DefaultFont;
-            math::Matrix4x4 m_GuiProjectionMatrix;
-
-            gfx::RenderState* m_GuiDrawRenderState;
-
-            bool m_Visible;
-
-            std::pmr::vector<Tool*> m_Tools;
+            virtual bool& GetVisibleRef() = 0;
+            virtual ToolType GetType() const = 0;
+            virtual const char* GetMenuName() const = 0;
+            virtual const char* GetToolName() const = 0;
+            virtual void ProcessShortcuts() = 0;
+            virtual void Draw() = 0;
         };
-    }
+
+        DebugOverlay(Backend& backend, Device& device, uint32_t width, uint32_t height, GraphicFormat targetFormat);
+        ~DebugOverlay();
+
+        void UploadFont(hd::CommandBuffer& commandBuffer);
+
+        void RegisterDebugTool(Tool& tool);
+
+        void Resize(uint32_t width, uint32_t height);
+
+        void OnMouseButon(float mouseX, float mouseY, uint32_t mouseButtonId, bool pressed);
+        void OnMouseWheel(float mouseX, float mouseY, float wheel);
+        void OnMouseMove(float mouseX, float mouseY);
+        void OnKeyboardKey(uint8_t keyID, bool pressed);
+
+        void Render(TextureHandle target, CommandBuffer& graphicCommands);
+
+    private:
+        void ConstructFrame();
+
+        Device* m_Device;
+
+        TextureHandle m_DefaultFont;
+        Matrix4x4 m_GuiProjectionMatrix;
+
+        RenderState* m_GuiDrawRenderState;
+
+        bool m_Visible;
+
+        std::pmr::vector<Tool*> m_Tools;
+    };
 }

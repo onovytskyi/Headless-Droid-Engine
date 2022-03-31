@@ -1,6 +1,6 @@
 #pragma once
 
-namespace hd::mem
+namespace hd
 {
 	class FixedLinearAllocator final : public Allocator
 	{

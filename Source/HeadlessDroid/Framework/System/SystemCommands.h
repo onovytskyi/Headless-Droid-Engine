@@ -2,85 +2,79 @@
 
 namespace hd
 {
-    namespace util
+	class CommandBuffer;
+	class CommandBufferReader;
+
+    enum class SystemCommandType : uint32_t
     {
-        class CommandBuffer;
-        class CommandBufferReader;
-    }
+        WindowActivate,
+        WindowClosed,
+        WindowResize,
+        MouseButton,
+        MouseMove,
+        MouseWheel,
+        Keyboard
+    };
 
-    namespace sys
+    struct WindowActivateCommand
     {
-        enum class SystemCommandType : uint32_t
-        {
-            WindowActivate,
-            WindowClosed,
-            WindowResize,
-            MouseButton,
-            MouseMove,
-            MouseWheel,
-            Keyboard
-        };
+        static WindowActivateCommand& WriteTo(CommandBuffer& commandBuffer);
+        static WindowActivateCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct WindowActivateCommand
-        {
-            static WindowActivateCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static WindowActivateCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+        bool Active;
+    };
 
-            bool Active;
-        };
+    struct WindowClosedCommand
+    {
+        static WindowClosedCommand& WriteTo(CommandBuffer& commandBuffer);
+        static WindowClosedCommand& ReadFrom(CommandBufferReader& commandBuffer);
+    };
 
-        struct WindowClosedCommand
-        {
-            static WindowClosedCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static WindowClosedCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
-        };
+    struct WindowResizeCommand
+    {
+        static WindowResizeCommand& WriteTo(CommandBuffer& commandBuffer);
+        static WindowResizeCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct WindowResizeCommand
-        {
-            static WindowResizeCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static WindowResizeCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+        uint32_t Width;
+        uint32_t Height;
+    };
 
-            uint32_t Width;
-            uint32_t Height;
-        };
+    struct MouseButtonCommand
+    {
+        static MouseButtonCommand& WriteTo(CommandBuffer& commandBuffer);
+        static MouseButtonCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct MouseButtonCommand
-        {
-            static MouseButtonCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static MouseButtonCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+        uint32_t X;
+        uint32_t Y;
+        uint8_t ButtonID;
+        bool Pressed;
+    };
 
-            uint32_t X;
-            uint32_t Y;
-            uint8_t ButtonID;
-            bool Pressed;
-        };
+    struct MouseMoveCommand
+    {
+        static MouseMoveCommand& WriteTo(CommandBuffer& commandBuffer);
+        static MouseMoveCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct MouseMoveCommand
-        {
-            static MouseMoveCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static MouseMoveCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+        uint32_t X;
+        uint32_t Y;
+    };
 
-            uint32_t X;
-            uint32_t Y;
-        };
+    struct MouseWheelCommand
+    {
+        static MouseWheelCommand& WriteTo(CommandBuffer& commandBuffer);
+        static MouseWheelCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct MouseWheelCommand
-        {
-            static MouseWheelCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static MouseWheelCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
+        uint32_t X;
+        uint32_t Y;
+        int32_t Offset;
+    };
 
-            uint32_t X;
-            uint32_t Y;
-            int32_t Offset;
-        };
+    struct KeyboardCommand
+    {
+        static KeyboardCommand& WriteTo(CommandBuffer& commandBuffer);
+        static KeyboardCommand& ReadFrom(CommandBufferReader& commandBuffer);
 
-        struct KeyboardCommand
-        {
-            static KeyboardCommand& WriteTo(util::CommandBuffer& commandBuffer);
-            static KeyboardCommand& ReadFrom(util::CommandBufferReader& commandBuffer);
-
-            uint8_t KeyID;
-            bool Pressed;
-        };
-    }
+        uint8_t KeyID;
+        bool Pressed;
+    };
 }

@@ -5,51 +5,48 @@ template<typename T> struct is_bit_flags : std::false_type {};
 
 namespace hd
 {
-    namespace util
-    {
-        template<typename T>
-        class Flags
-        {
-        public:
-            using UType = typename std::underlying_type<T>::type;
+	template<typename T>
+	class Flags
+	{
+	public:
+		using UType = typename std::underlying_type<T>::type;
 
-            Flags();
-            Flags(T flag);
+		Flags();
+		Flags(T flag);
 
-            Flags(Flags<T> const& other);
-            Flags<T>& operator=(Flags<T> const& other);
+		Flags(Flags<T> const& other);
+		Flags<T>& operator=(Flags<T> const& other);
 
-            void Set(T flag);
-            void Unset(T flag);
-            void Switch(T flag);
+		void Set(T flag);
+		void Unset(T flag);
+		void Switch(T flag);
 
-            void Reset();
+		void Reset();
 
-            bool IsSet(T flag) const;
-            bool IsAllSet(Flags<T> const& other);
-            bool OnlyOneBitSet();
+		bool IsSet(T flag) const;
+		bool IsAllSet(Flags<T> const& other);
+		bool OnlyOneBitSet();
 
-            UType GetBitfield() const;
-            void SetBitfield(UType bitfield);
+		UType GetBitfield() const;
+		void SetBitfield(UType bitfield);
 
-        private:
-            static UType ConvertToBit(T flag);
-            UType m_Bitfield;
-        };
-    }
+	private:
+		static UType ConvertToBit(T flag);
+		UType m_Bitfield;
+	};
 }
 
 template<typename T>
-hd::util::Flags<T> operator|(hd::util::Flags<T> const& first, hd::util::Flags<T> const& second);
+hd::Flags<T> operator|(hd::Flags<T> const& first, hd::Flags<T> const& second);
 
 template<typename T, typename = std::enable_if_t<is_flags<T>::value>>
-hd::util::Flags<T> operator|(T first, T second);
+hd::Flags<T> operator|(T first, T second);
 
 template<typename T, typename = std::enable_if_t<is_flags<T>::value>>
-hd::util::Flags<T> operator|(hd::util::Flags<T> const& first, T second);
+hd::Flags<T> operator|(hd::Flags<T> const& first, T second);
 
 template<typename T, typename = std::enable_if_t<is_flags<T>::value>>
-hd::util::Flags<T> operator|(T first, hd::util::Flags<T> const& second);
+hd::Flags<T> operator|(T first, hd::Flags<T> const& second);
 
 #include "Framework/Utils/Flags.hpp"
 

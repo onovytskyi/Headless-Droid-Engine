@@ -11,15 +11,15 @@
 class LightingPass
 {
 public:
-    LightingPass(hd::gfx::Backend& backend, hd::gfx::Device& device, hd::gfx::GraphicFormat targetFormat);
+    LightingPass(hd::Backend& backend, hd::Device& device, hd::GraphicFormat targetFormat);
     ~LightingPass();
 
-    void RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::scene::FpsCamera& camera, hd::gfx::TextureHandle surface0, hd::gfx::TextureHandle surface1, 
-        hd::gfx::TextureHandle surface2, hd::gfx::TextureHandle depth, hd::gfx::TextureHandle target);
+    void RenderFrame(hd::CommandBuffer& graphicsCommands, hd::FpsCamera& camera, hd::TextureHandle surface0, hd::TextureHandle surface1, 
+        hd::TextureHandle surface2, hd::TextureHandle depth, hd::TextureHandle target);
 
 private:
-    hd::gfx::Device& m_Device;
+    hd::Device& m_Device;
 
-    hd::gfx::RenderState m_RenderState;
-    hd::gfx::BufferHandle m_FrameConstants;
+    hd::RenderState m_RenderState;
+    hd::BufferHandle m_FrameConstants;
 };

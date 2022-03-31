@@ -6,9 +6,6 @@ namespace hd
 {
     class Allocator;
 
-    namespace mem
-    {
-        Allocator& Persistent();
-        Allocator& General();
-    }
+	Allocator& Persistent();
+	Allocator& General();
 }

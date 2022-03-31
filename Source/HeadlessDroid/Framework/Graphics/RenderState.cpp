@@ -4,17 +4,14 @@
 
 namespace hd
 {
-    namespace gfx
-    {
-        RenderState::RenderState(Backend& backend)
-            : RenderStatePlatform{ backend }
-        {
+	RenderState::RenderState(Backend& backend)
+		: RenderStatePlatform{ backend }
+	{
 
-        }
+	}
 
-        RenderState::~RenderState()
-        {
+	RenderState::~RenderState()
+	{
 
-        }
-    }
+	}
 }

@@ -6,12 +6,12 @@
 namespace hd
 {
     ScopedScratchMemory::ScopedScratchMemory()
-        : m_Marker{ mem::GetScratchMarker() }
+        : m_Marker{ GetScratchMarker() }
     {
     }
 
     ScopedScratchMemory::~ScopedScratchMemory()
     {
-        mem::ResetScratchMarker(m_Marker);
+        ResetScratchMarker(m_Marker);
     }
 }

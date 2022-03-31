@@ -16,48 +16,45 @@ namespace hd
         bool do_is_equal(const std::pmr::memory_resource& resource) const noexcept override { return this == &resource; }
     };
 
-    namespace mem
+    template<typename T>
+    void* NewHelper(Allocator& allocator, char const* file, uint32_t line)
     {
-        template<typename T>
-        void* NewHelper(Allocator& allocator, char const* file, uint32_t line)
-        {
-            return allocator.Allocate(sizeof(T), alignof(T));
-        }
+        return allocator.Allocate(sizeof(T), alignof(T));
+    }
 
-        template<typename T>
-        void DeleteHelper(Allocator& allocator, T* object, char const* file, uint32_t line)
-        {
-            object->~T();
+    template<typename T>
+    void DeleteHelper(Allocator& allocator, T* object, char const* file, uint32_t line)
+    {
+        object->~T();
 
-            if constexpr (std::is_polymorphic_v<T>)
-            {
-                allocator.Deallocate(dynamic_cast<void*>(object), sizeof(T), alignof(T));
-            }
-            else
-            {
-                allocator.Deallocate(object, sizeof(T), alignof(T));
-            }
-        }
-
-        template<typename T>
-        T* AllocateHelper(Allocator& allocator, size_t count, char const* file, uint32_t line)
+        if constexpr (std::is_polymorphic_v<T>)
         {
-            return reinterpret_cast<T*>(allocator.Allocate(sizeof(T) * count, alignof(T)));
+            allocator.Deallocate(dynamic_cast<void*>(object), sizeof(T), alignof(T));
         }
-
-        template<typename T>
-        void FreeHelper(Allocator& allocator, T* memory, size_t count, char const* file, uint32_t line)
+        else
         {
-            allocator.Deallocate(memory, sizeof(T) * count, alignof(T));
+            allocator.Deallocate(object, sizeof(T), alignof(T));
         }
+    }
+
+    template<typename T>
+    T* AllocateHelper(Allocator& allocator, size_t count, char const* file, uint32_t line)
+    {
+        return reinterpret_cast<T*>(allocator.Allocate(sizeof(T) * count, alignof(T)));
+    }
+
+    template<typename T>
+    void FreeHelper(Allocator& allocator, T* memory, size_t count, char const* file, uint32_t line)
+    {
+        allocator.Deallocate(memory, sizeof(T) * count, alignof(T));
     }
 }
 
-#define hdNew(allocator, typeName) new(hd::mem::NewHelper<typeName>(allocator, __FILE__, __LINE__)) typeName
-#define hdAllocate(allocator, typeName, sizeInElements) hd::mem::AllocateHelper<typeName>(allocator, sizeInElements, __FILE__, __LINE__)
+#define hdNew(allocator, typeName) new(hd::NewHelper<typeName>(allocator, __FILE__, __LINE__)) typeName
+#define hdAllocate(allocator, typeName, sizeInElements) hd::AllocateHelper<typeName>(allocator, sizeInElements, __FILE__, __LINE__)
 
-#define hdDelete(allocator, object) hd::mem::DeleteHelper(allocator, object, __FILE__, __LINE__)
-#define hdSafeDelete(allocator, object) if (object != nullptr) { hd::mem::DeleteHelper(allocator, object, __FILE__, __LINE__); object = nullptr; }
+#define hdDelete(allocator, object) hd::DeleteHelper(allocator, object, __FILE__, __LINE__)
+#define hdSafeDelete(allocator, object) if (object != nullptr) { hd::DeleteHelper(allocator, object, __FILE__, __LINE__); object = nullptr; }
 
-#define hdFree(allocator, allocation, sizeInElements) hd::mem::FreeHelper(allocator, allocation, sizeInElements, __FILE__, __LINE__)
-#define hdSafeFree(allocator, allocation, sizeInElements) if (allocation != nullptr) { hd::mem::FreeHelper(allocator, allocation, sizeInElements, __FILE__, __LINE__); allocation = nullptr; }
+#define hdFree(allocator, allocation, sizeInElements) hd::FreeHelper(allocator, allocation, sizeInElements, __FILE__, __LINE__)
+#define hdSafeFree(allocator, allocation, sizeInElements) if (allocation != nullptr) { hd::FreeHelper(allocator, allocation, sizeInElements, __FILE__, __LINE__); allocation = nullptr; }

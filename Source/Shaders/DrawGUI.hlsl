@@ -1,4 +1,4 @@
-#include "../Development/Source/Shaders/Engine/Common.hlsl"
+#include "../Source/Shaders/Shared/Common.hlsl"
 
 struct FrameData
 {

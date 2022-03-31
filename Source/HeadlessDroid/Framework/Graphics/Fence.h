@@ -4,20 +4,17 @@
 
 namespace hd
 {
-    namespace gfx
-    {
-        class Device;
+	class Device;
 
-        class Fence : public FencePlatform
-        {
-        public:
-            Fence(Device& device, uint64_t initialValue);
-            ~Fence();
+	class Fence : public FencePlatform
+	{
+	public:
+		Fence(Device& device, uint64_t initialValue);
+		~Fence();
 
-            hdNoncopyable(Fence)
+		hdNoncopyable(Fence)
 
-            uint64_t GetValue() const;
-            void Wait(uint64_t targetValue);
-        };
-    }
+		uint64_t GetValue() const;
+		void Wait(uint64_t targetValue);
+	};
 }

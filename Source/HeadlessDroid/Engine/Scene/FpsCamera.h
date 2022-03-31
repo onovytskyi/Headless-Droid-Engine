@@ -4,74 +4,68 @@
 
 namespace hd
 {
-    namespace sys
+	class Timer;
+
+    class FpsCamera
     {
-        class Timer;
-    }
+    public:
+        FpsCamera();
+        ~FpsCamera();
 
-    namespace scene
-    {
-        class FpsCamera
-        {
-        public:
-            FpsCamera();
-            ~FpsCamera();
+        void SetFPSCameraLens(float fovY, float aspect, float near, float far);
 
-            void SetFPSCameraLens(float fovY, float aspect, float near, float far);
+        void OnMouseButon(float mouseX, float mouseY, uint32_t mouseButtonId, bool pressed);
+        void OnKeyboardKey(uint8_t keyID, bool pressed);
+        void UpdateCamera(Timer& gameTimer);
 
-            void OnMouseButon(float mouseX, float mouseY, uint32_t mouseButtonId, bool pressed);
-            void OnKeyboardKey(uint8_t keyID, bool pressed);
-            void UpdateCamera(sys::Timer& gameTimer);
+        void SetPosition(Vectorf3 const& position);
+        void SetRotation(Vectorf3 const& rotation);
 
-            void SetPosition(math::Vectorf3 const& position);
-            void SetRotation(math::Vectorf3 const& rotation);
+        Vectorf3 GetPosition();
 
-            math::Vectorf3 GetPosition();
+        Matrix4x4 GetViewMatrix();
+        Matrix4x4 GetProjectionMatrix();
+        Matrix4x4 GetViewProjectionMatrix();
 
-            math::Matrix4x4 GetViewMatrix();
-            math::Matrix4x4 GetProjectionMatrix();
-            math::Matrix4x4 GetViewProjectionMatrix();
+    private:
+        void MoveForward(float deltaOffset);
+        void MoveRight(float deltaOffset);
+        void Rotate(float yaw, float pitch, float roll);
 
-        private:
-            void MoveForward(float deltaOffset);
-            void MoveRight(float deltaOffset);
-            void Rotate(float yaw, float pitch, float roll);
+        Vectorf3 GetForwardVector();
+        Vectorf3 GetRightVector();
+        Vectorf3 GetUpVector();
 
-            math::Vectorf3 GetForwardVector();
-            math::Vectorf3 GetRightVector();
-            math::Vectorf3 GetUpVector();
+        void UpdateViewMatrix();
+        void UpdateProjectionMatrix();
 
-            void UpdateViewMatrix();
-            void UpdateProjectionMatrix();
+        float m_RotationRate;
+        float m_MaxSpeed;
 
-            float m_RotationRate;
-            float m_MaxSpeed;
+        bool m_IsRotating;
+        int32_t m_LastMouseX;
+        int32_t m_LastMouseY;
 
-            bool m_IsRotating;
-            int32_t m_LastMouseX;
-            int32_t m_LastMouseY;
+        bool m_IsBoosted;
+        Vectorf2 m_Velocity;
 
-            bool m_IsBoosted;
-            math::Vectorf2 m_Velocity;
+        Vectorf3 m_Position;
+        Vectorf3 m_Rotation;
+        Vectorf3 m_Up;
 
-            math::Vectorf3 m_Position;
-            math::Vectorf3 m_Rotation;
-            math::Vectorf3 m_Up;
+        float m_FovY;
+        float m_FovX;
+        float m_Aspect;
+        float m_NearClip;
+        float m_FarClip;
 
-            float m_FovY;
-            float m_FovX;
-            float m_Aspect;
-            float m_NearClip;
-            float m_FarClip;
+        float m_NearPlaneHeight;
+        float m_FarPlaneHeight;
 
-            float m_NearPlaneHeight;
-            float m_FarPlaneHeight;
+        Matrix4x4 m_View;
+        Matrix4x4 m_Projection;
 
-            math::Matrix4x4 m_View;
-            math::Matrix4x4 m_Projection;
-
-            bool m_ViewMatrixDirty;
-            bool m_ProjectionMatrixDirty;
-        };
-    }
+        bool m_ViewMatrixDirty;
+        bool m_ProjectionMatrixDirty;
+    };
 }

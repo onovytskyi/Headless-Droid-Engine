@@ -1,6 +1,6 @@
 #pragma once
 
-namespace hd::mem
+namespace hd
 {
 	constexpr size_t KB(const size_t value) { return value * 1024U; }
 	constexpr size_t MB(const size_t value) { return KB(value) * 1024U; }

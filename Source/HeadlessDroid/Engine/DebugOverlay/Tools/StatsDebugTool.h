@@ -4,45 +4,35 @@
 
 namespace hd
 {
-    namespace gfx
+	class Device;
+	class Swapchain;
+	class Timer;
+
+    class StatsDebugTool : public DebugOverlay::Tool
     {
-        class Device;
-        class Swapchain;
-    }
+    public:
+        StatsDebugTool();
 
-    namespace sys
-    {
-        class Timer;
-    }
+        bool& GetVisibleRef() override;
+        ToolType GetType() const override;
+        const char* GetMenuName() const override;
+        const char* GetToolName() const override;
+        void ProcessShortcuts() override;
+        void Draw() override;
 
-    namespace ui
-    {
-        class StatsDebugTool : public DebugOverlay::Tool
-        {
-        public:
-            StatsDebugTool();
+        void Update(Timer& timer, Swapchain& swapchain, Device& device);
 
-            bool& GetVisibleRef() override;
-            ToolType GetType() const override;
-            const char* GetMenuName() const override;
-            const char* GetToolName() const override;
-            void ProcessShortcuts() override;
-            void Draw() override;
+    private:
+        bool m_Visible;
 
-            void Update(sys::Timer& timer, gfx::Swapchain& swapchain, gfx::Device& device);
-
-        private:
-            bool m_Visible;
-
-            float m_FPS;
-            float m_CPU;
-            float m_GPU;
-            uint64_t m_CPUFrameId;
-            uint64_t m_GPUFrameId;
-            size_t m_LocalBudget;
-            size_t m_LocalUsage;
-            size_t m_NonlocalBudget;
-            size_t m_NonlocalUsage;
-        };
-    }
+        float m_FPS;
+        float m_CPU;
+        float m_GPU;
+        uint64_t m_CPUFrameId;
+        uint64_t m_GPUFrameId;
+        size_t m_LocalBudget;
+        size_t m_LocalUsage;
+        size_t m_NonlocalBudget;
+        size_t m_NonlocalUsage;
+    };
 }

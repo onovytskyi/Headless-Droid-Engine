@@ -7,10 +7,7 @@ namespace hd
     class Allocator;
     class AllocatorMemoryResource;
 
-    namespace mem
-    {
-        Allocator& Scratch();
-        size_t GetScratchMarker();
-        void ResetScratchMarker(size_t marker);
-    }
+    Allocator& Scratch();
+    size_t GetScratchMarker();
+    void ResetScratchMarker(size_t marker);
 }

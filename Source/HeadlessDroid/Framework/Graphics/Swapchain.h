@@ -7,33 +7,25 @@
 namespace hd
 {
     class Allocator;
+    class Backend;
+    class Device;
+    class Queue;
+	class SystemWindow;
 
-    namespace sys
+    class Swapchain : public SwapchainPlatform
     {
-        class SystemWindow;
-    }
+    public:
+        Swapchain(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, SystemWindow& window, GraphicFormat format);
+        ~Swapchain();
 
-    namespace gfx
-    {
-        class Backend;
-        class Device;
-        class Queue;
+        hdNoncopyable(Swapchain)
 
-        class Swapchain : public SwapchainPlatform
-        {
-        public:
-            Swapchain(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format);
-            ~Swapchain();
+        void Flip();
+        void Resize(uint32_t width, uint32_t height);
 
-            hdNoncopyable(Swapchain)
+        TextureHandle GetActiveFramebuffer() const;
 
-            void Flip();
-            void Resize(uint32_t width, uint32_t height);
-
-            TextureHandle GetActiveFramebuffer() const;
-
-            uint64_t GetCPUFrame() const;
-            uint64_t GetGPUFrame() const;
-        };
-    }
+        uint64_t GetCPUFrame() const;
+        uint64_t GetGPUFrame() const;
+    };
 }

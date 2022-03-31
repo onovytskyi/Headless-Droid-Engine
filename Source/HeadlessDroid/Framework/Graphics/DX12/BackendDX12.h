@@ -10,35 +10,31 @@
 namespace hd
 {
     class Allocator;
+	class Device;
+	class ShaderManager;
 
-    namespace gfx
+    class BackendPlatform
     {
-        class Device;
-        class ShaderManager;
+    public:
+        BackendPlatform(Allocator& persistentAllocator);
+        ~BackendPlatform();
 
-        class BackendPlatform
-        {
-        public:
-            BackendPlatform(Allocator& persistentAllocator);
-            ~BackendPlatform();
+        ComPtr<IDXGIAdapter4> GetBestAdapter() const;
+        IDXGIFactory6* GetNativeFactory() const;
 
-            ComPtr<IDXGIAdapter4> GetBestAdapter() const;
-            IDXGIFactory6* GetNativeFactory() const;
+        ShaderManager& GetShaderManager();
+        VirtualPoolAllocator<GfxBuffer>& GetBufferAllocator();
+        VirtualPoolAllocator<Texture>& GetTextureAllocator();
 
-            ShaderManager& GetShaderManager();
-            util::VirtualPoolAllocator<Buffer>& GetBufferAllocator();
-            util::VirtualPoolAllocator<Texture>& GetTextureAllocator();
+    protected:
+        Allocator& m_PersistentAllocator;
 
-        protected:
-            Allocator& m_PersistentAllocator;
+        ComPtr<IDXGIFactory6> m_Factory;
+        ShaderManager* m_ShaderManager;
 
-            ComPtr<IDXGIFactory6> m_Factory;
-            ShaderManager* m_ShaderManager;
-
-            util::VirtualPoolAllocator<Buffer> m_BufferAllocator;
-            util::VirtualPoolAllocator<Texture> m_TextureAllocator;
-        };
-    }
+        VirtualPoolAllocator<GfxBuffer> m_BufferAllocator;
+        VirtualPoolAllocator<Texture> m_TextureAllocator;
+    };
 }
 
 #endif

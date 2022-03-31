@@ -1,6 +1,6 @@
-#include "../Development/Source/Shaders/Engine/Common.hlsl"
-#include "../Development/Source/Shaders/Engine/PBRUtils.hlsl"
-#include "../Development/Source/Shaders/Engine/GeometryUtils.hlsl"
+#include "../Source/Shaders/Shared/Common.hlsl"
+#include "../Source/Shaders/Shared/PBRUtils.hlsl"
+#include "../Source/Shaders/Shared/GeometryUtils.hlsl"
 
 struct FrameData
 {

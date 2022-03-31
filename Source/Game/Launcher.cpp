@@ -5,11 +5,11 @@
 
 int main(int argc, char* argv[])
 {
-    SampleGame* game = hdNew(hd::mem::Persistent(), SampleGame)();
+    SampleGame* game = hdNew(hd::Persistent(), SampleGame)();
 
     game->Run();
 
-    hdSafeDelete(hd::mem::Persistent(), game);
+    hdSafeDelete(hd::Persistent(), game);
 
     return 0;
 }

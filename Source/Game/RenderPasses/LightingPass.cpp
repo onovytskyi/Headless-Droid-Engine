@@ -7,27 +7,27 @@
 
 struct FrameData
 {
-    hd::math::Matrix4x4 ProjInv;
-    hd::math::Matrix4x4 ViewInv;
-    hd::math::Vectorf3 EyePositionWorld;
+    hd::Matrix4x4 ProjInv;
+    hd::Matrix4x4 ViewInv;
+    hd::Vectorf3 EyePositionWorld;
     float SunIntensity;
-    hd::math::Vectorf3 SunDirection;
+    hd::Vectorf3 SunDirection;
 };
 
-LightingPass::LightingPass(hd::gfx::Backend& backend, hd::gfx::Device& device, hd::gfx::GraphicFormat targetFormat)
+LightingPass::LightingPass(hd::Backend& backend, hd::Device& device, hd::GraphicFormat targetFormat)
     : m_Device{ device }
     , m_RenderState{ backend }
     , m_FrameConstants{}
 {
-    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), hd::gfx::BufferFlagsBits::ConstantBuffer);
+    m_FrameConstants = m_Device.CreateBuffer(1, sizeof(FrameData), hd::BufferFlagsBits::ConstantBuffer);
 
     m_RenderState.SetVS(u8"FullscreenTriangle.hlsl", u8"MainVS");
     m_RenderState.SetPS(u8"Lighting.hlsl", u8"MainPS");
     m_RenderState.SetRenderTargetFormat(0, targetFormat);
     m_RenderState.SetDepthEnable(false);
     m_RenderState.SetStencilEnable(false);
-    m_RenderState.SetBlendType(hd::gfx::BlendType::Alpha, hd::gfx::BlendType::None);
-    m_RenderState.SetPrimitiveType(hd::gfx::PrimitiveType::Triangle);
+    m_RenderState.SetBlendType(hd::BlendType::Alpha, hd::BlendType::None);
+    m_RenderState.SetPrimitiveType(hd::PrimitiveType::Triangle);
 }
 
 LightingPass::~LightingPass()
@@ -37,15 +37,15 @@ LightingPass::~LightingPass()
 
 void barbar(unsigned int) {}
 
-void LightingPass::RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::scene::FpsCamera& camera, hd::gfx::TextureHandle surface0, hd::gfx::TextureHandle surface1,
-    hd::gfx::TextureHandle surface2, hd::gfx::TextureHandle depth, hd::gfx::TextureHandle target)
+void LightingPass::RenderFrame(hd::CommandBuffer& graphicsCommands, hd::FpsCamera& camera, hd::TextureHandle surface0, hd::TextureHandle surface1,
+    hd::TextureHandle surface2, hd::TextureHandle depth, hd::TextureHandle target)
 {
-    hd::gfx::GraphicCommandsStream commandStream{ graphicsCommands };
+    hd::GraphicCommandsStream commandStream{ graphicsCommands };
 
     FrameData frameData{};
 
-    frameData.ProjInv = hd::math::MatrixInverseTranspose(camera.GetProjectionMatrix());
-    frameData.ViewInv = hd::math::MatrixInverseTranspose(camera.GetViewMatrix());
+    frameData.ProjInv = hd::MatrixInverseTranspose(camera.GetProjectionMatrix());
+    frameData.ViewInv = hd::MatrixInverseTranspose(camera.GetViewMatrix());
     frameData.EyePositionWorld = camera.GetPosition();
     // #TODO Make SunDirection and SunIntencity configurable
     frameData.SunDirection = { -1.0f, -1.0f, -1.0f };
@@ -58,7 +58,7 @@ void LightingPass::RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::sc
     m_Device.GetTextureDimensions(target, width, height);
 
     commandStream.SetRenderState(&m_RenderState);
-    commandStream.SetTopologyType(hd::gfx::TopologyType::List);
+    commandStream.SetTopologyType(hd::TopologyType::List);
     commandStream.SetViewport({ 0.0f, float(width), 0.0f, float(height), 0.0f, 1.0f });
     commandStream.SetScissorRect({ 0, uint32_t(width), 0, height });
     commandStream.SetRenderTarget(target);

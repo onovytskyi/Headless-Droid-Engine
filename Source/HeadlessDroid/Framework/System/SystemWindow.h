@@ -4,27 +4,21 @@
 
 namespace hd
 {
-    namespace util
+	class CommandBuffer;
+
+    class SystemWindow : public SystemWindowPlatform
     {
-        class CommandBuffer;
-    }
+    public:
+        SystemWindow(char8_t const* title, uint32_t width, uint32_t height);
+        ~SystemWindow();
 
-    namespace sys
-    {
-        class SystemWindow : public SystemWindowPlatform
-        {
-        public:
-            SystemWindow(char8_t const* title, uint32_t width, uint32_t height);
-            ~SystemWindow();
+        hdNoncopyable(SystemWindow)
 
-            hdNoncopyable(SystemWindow)
+        void SetVisible(bool value);
 
-            void SetVisible(bool value);
+        void ProcessSystemEvents(CommandBuffer& systemCommands);
 
-            void ProcessSystemEvents(util::CommandBuffer& systemCommands);
-
-            uint32_t const& GetWidth();
-            uint32_t const& GetHeight();
-        };
-    }
+        uint32_t const& GetWidth();
+        uint32_t const& GetHeight();
+    };
 }

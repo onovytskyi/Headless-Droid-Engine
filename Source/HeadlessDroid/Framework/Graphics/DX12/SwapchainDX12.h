@@ -6,42 +6,35 @@
 
 namespace hd
 {
-    namespace sys
+    class Backend;
+    class Device;
+    class Fence;
+    class Queue;
+	class SystemWindow;
+
+    class SwapchainPlatform
     {
-        class SystemWindow;
-    }
+    public:
+        SwapchainPlatform(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, SystemWindow& window, GraphicFormat format);
+        ~SwapchainPlatform();
 
-    namespace gfx
-    {
-        class Backend;
-        class Device;
-        class Fence;
-        class Queue;
+    protected:
+        void UpdateGPUFrame();
 
-        class SwapchainPlatform
-        {
-        public:
-            SwapchainPlatform(Allocator& persistentAllocator, Backend& backend, Device& device, Queue& queue, sys::SystemWindow& window, GraphicFormat format);
-            ~SwapchainPlatform();
+        void CreateFramebufferTextures();
+        void ReleaseFrameBufferTextures();
 
-        protected:
-            void UpdateGPUFrame();
-
-            void CreateFramebufferTextures();
-            void ReleaseFrameBufferTextures();
-
-            Allocator& m_PersistentAllocator;
-            ComPtr<IDXGISwapChain3> m_SwapChain;
-            Device* m_OwnerDevice;
-            Queue* m_FlipQueue;
-            GraphicFormat m_Format;
-            uint32_t m_FramebufferIndex;
-            TextureHandle m_FramebufferTextures[cfg::MaxFrameLatency()];
-            Fence* m_FrameFence;
-            uint64_t m_CPUFrame;
-            uint64_t m_GPUFrame;
-        };
-    }
+        Allocator& m_PersistentAllocator;
+        ComPtr<IDXGISwapChain3> m_SwapChain;
+        Device* m_OwnerDevice;
+        Queue* m_FlipQueue;
+        GraphicFormat m_Format;
+        uint32_t m_FramebufferIndex;
+        TextureHandle m_FramebufferTextures[cfg::MaxFrameLatency()];
+        Fence* m_FrameFence;
+        uint64_t m_CPUFrame;
+        uint64_t m_GPUFrame;
+    };
 }
 
 #endif

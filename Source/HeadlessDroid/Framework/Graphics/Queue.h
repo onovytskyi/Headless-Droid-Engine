@@ -7,37 +7,29 @@
 namespace hd
 {
     class Allocator;
+	class CommandBuffer;
+	class Device;
+	class Fence;
 
-    namespace util
+    class Queue : public QueuePlatform
     {
-        class CommandBuffer;
-    }
+    public:
+        Queue(Allocator& persistentAllocator, Device& device, QueueType type);
+        ~Queue();
 
-    namespace gfx
-    {
-        class Device;
-        class Fence;
+        hdNoncopyable(Queue)
 
-        class Queue : public QueuePlatform
-        {
-        public:
-            Queue(Allocator& persistentAllocator, Device& device, QueueType type);
-            ~Queue();
+        void Signal(Fence& fence, uint64_t value);
 
-            hdNoncopyable(Queue)
+        void Submit(CommandBuffer& commandBuffer);
 
-            void Signal(Fence& fence, uint64_t value);
+        void Flush();
 
-            void Submit(util::CommandBuffer& commandBuffer);
+    private:
+        Allocator& m_PersistentAllocator;
 
-            void Flush();
-
-        private:
-            Allocator& m_PersistentAllocator;
-
-            QueueType m_Type;
-            uint64_t m_LastFlushValue;
-            Fence* m_FlushFence;
-        };
-    }
+        QueueType m_Type;
+        uint64_t m_LastFlushValue;
+        Fence* m_FlushFence;
+    };
 }

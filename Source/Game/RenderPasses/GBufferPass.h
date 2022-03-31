@@ -11,29 +11,29 @@
 class GBufferPass
 {
 public:
-    GBufferPass(hd::gfx::Backend& backend, hd::gfx::Device& device, uint32_t width, uint32_t height);
+    GBufferPass(hd::Backend& backend, hd::Device& device, uint32_t width, uint32_t height);
     ~GBufferPass();
 
-    void RenderFrame(hd::util::CommandBuffer& graphicsCommands, hd::scene::FpsCamera& camera, hd::render::MeshCollection& meshes);
+    void RenderFrame(hd::CommandBuffer& graphicsCommands, hd::FpsCamera& camera, hd::MeshCollection& meshes);
     void ResizeTextures(uint32_t width, uint32_t height);
 
-    hd::gfx::TextureHandle GetSurface0() const;
-    hd::gfx::TextureHandle GetSurface1() const;
-    hd::gfx::TextureHandle GetSurface2() const;
-    hd::gfx::TextureHandle GetDepth() const;
+    hd::TextureHandle GetSurface0() const;
+    hd::TextureHandle GetSurface1() const;
+    hd::TextureHandle GetSurface2() const;
+    hd::TextureHandle GetDepth() const;
 
 private:
-    hd::gfx::Device& m_Device;
+    hd::Device& m_Device;
 
     uint32_t m_Width;
     uint32_t m_Height;
 
-    hd::gfx::RenderState m_RenderState;
-    hd::gfx::BufferHandle m_FrameConstants;
-    hd::gfx::TextureHandle m_Surface0;
-    hd::gfx::TextureHandle m_Surface1;
-    hd::gfx::TextureHandle m_Surface2;
-    hd::gfx::TextureHandle m_Depth;
+    hd::RenderState m_RenderState;
+    hd::BufferHandle m_FrameConstants;
+    hd::TextureHandle m_Surface0;
+    hd::TextureHandle m_Surface1;
+    hd::TextureHandle m_Surface2;
+    hd::TextureHandle m_Depth;
 
     std::array<float, 4> m_DepthClearColor;
     std::array<float, 4> m_GBufferClearColor;

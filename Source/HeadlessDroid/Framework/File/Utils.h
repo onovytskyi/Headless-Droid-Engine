@@ -4,17 +4,14 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class VirtualBuffer;
-    }
+	class VirtualBuffer;
 
     namespace file
     {
         void ReadWholeFile(std::pmr::u8string const& filePath, PlainDataArray<std::byte>& output);
-        void ReadWholeFile(std::pmr::u8string const& filePath, mem::VirtualBuffer& output);
+        void ReadWholeFile(std::pmr::u8string const& filePath, VirtualBuffer& output);
         void WriteWholeFile(std::pmr::u8string const& filePath, PlainDataArray<std::byte> const& data);
-        void WriteWholeFile(std::pmr::u8string const& filePath, mem::VirtualBuffer const& data);
+        void WriteWholeFile(std::pmr::u8string const& filePath, VirtualBuffer const& data);
         void WriteWholeFile(std::pmr::u8string const& filePath, std::byte const* data, size_t size);
 
         void CreateDirectories(std::pmr::u8string const& dirPath);

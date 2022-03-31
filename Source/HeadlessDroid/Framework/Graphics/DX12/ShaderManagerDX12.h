@@ -8,41 +8,35 @@
 
 namespace hd
 {
-    namespace mem
-    {
-        class Buffer;
-    }
+	class GfxBuffer;
 
     enum class ShaderFlagsBits
     {
         GenerateSymbols,
         IgnoreCache
     };
-    using ShaderFlags = hd::util::Flags<ShaderFlagsBits>;
+    using ShaderFlags = Flags<ShaderFlagsBits>;
     hdAllowFlagsForEnum(ShaderFlagsBits);
 
-    namespace gfx
+    class ShaderManager
     {
-        class ShaderManager
-        {
-        public:
-            ShaderManager();
-            ~ShaderManager();
+    public:
+        ShaderManager();
+        ~ShaderManager();
 
-            PlainDataArray<std::byte> const& GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags);
+        PlainDataArray<std::byte> const& GetShader(char8_t const* shaderName, char8_t const* entryPoint, char8_t const* profile, ShaderFlags flags);
 
-            void ResetShaderCache();
+        void ResetShaderCache();
 
-        private:
+    private:
 #if defined(HD_ENABLE_RESOURCE_COOKING)
-            void CookShader(std::pmr::u8string const& shaderFilePath, std::pmr::u8string const& entryPoint, std::pmr::u8string const& profile, std::pmr::u8string const& cookedFilePath,
-                ShaderFlags flags);
+        void CookShader(std::pmr::u8string const& shaderFilePath, std::pmr::u8string const& entryPoint, std::pmr::u8string const& profile, std::pmr::u8string const& cookedFilePath,
+            ShaderFlags flags);
 #endif
 
-            mem::VirtualLinearAllocator m_LocalAllocator;
-            std::pmr::unordered_map<std::pmr::u8string, PlainDataArray<std::byte>> m_Shaders;
-        };
-    }
+        VirtualLinearAllocator m_LocalAllocator;
+        std::pmr::unordered_map<std::pmr::u8string, PlainDataArray<std::byte>> m_Shaders;
+    };
 }
 
 #endif

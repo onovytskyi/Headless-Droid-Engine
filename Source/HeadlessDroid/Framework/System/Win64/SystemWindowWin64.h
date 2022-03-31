@@ -4,40 +4,34 @@
 
 namespace hd
 {
-    namespace util
-    {
-        class CommandBuffer;
-    }
+	class CommandBuffer;
 
-    namespace sys
+    class SystemWindowPlatform
     {
-        class SystemWindowPlatform
+    public:
+        SystemWindowPlatform(char8_t const* title, uint32_t width, uint32_t height);
+        ~SystemWindowPlatform();
+
+        HWND GetNativeHandle() const;
+
+    protected:
+        static LRESULT CALLBACK HandleMessageInternal(HWND windowHandle, UINT messageCode, WPARAM wParameter, LPARAM lParameter);
+
+        struct WindowParameters
         {
-        public:
-            SystemWindowPlatform(char8_t const* title, uint32_t width, uint32_t height);
-            ~SystemWindowPlatform();
-
-            HWND GetNativeHandle() const;
-
-        protected:
-            static LRESULT CALLBACK HandleMessageInternal(HWND windowHandle, UINT messageCode, WPARAM wParameter, LPARAM lParameter);
-
-            struct WindowParameters
-            {
-                uint32_t Width;
-                uint32_t Height;
-                bool IsResizing;
-                bool WasResized;
-                bool IsMinimized;
-                uint32_t StoredWidth;
-                uint32_t StoredHeight;
-                util::CommandBuffer* Commands;
-            };
-
-            HWND m_Handle;
-            WindowParameters m_Params;
+            uint32_t Width;
+            uint32_t Height;
+            bool IsResizing;
+            bool WasResized;
+            bool IsMinimized;
+            uint32_t StoredWidth;
+            uint32_t StoredHeight;
+            CommandBuffer* Commands;
         };
-    }
+
+        HWND m_Handle;
+        WindowParameters m_Params;
+    };
 }
 
 #endif

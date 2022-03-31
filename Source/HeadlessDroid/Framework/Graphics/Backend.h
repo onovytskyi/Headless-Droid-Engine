@@ -6,15 +6,12 @@ namespace hd
 {
     class Allocator;
 
-    namespace gfx
+    class Backend : public BackendPlatform
     {
-        class Backend : public BackendPlatform
-        {
-        public:
-            Backend(Allocator& persistentAllocator);
-            ~Backend();
+    public:
+        Backend(Allocator& persistentAllocator);
+        ~Backend();
 
-            hdNoncopyable(Backend)
-        };
-    }
+        hdNoncopyable(Backend)
+    };
 }

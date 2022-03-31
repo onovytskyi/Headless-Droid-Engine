@@ -4,17 +4,14 @@
 
 namespace hd
 {
-    namespace gfx
-    {
-        Backend::Backend(Allocator& persistentAllocator)
-            : BackendPlatform{ persistentAllocator }
-        {
+	Backend::Backend(Allocator& persistentAllocator)
+		: BackendPlatform{ persistentAllocator }
+	{
 
-        }
+	}
 
-        Backend::~Backend()
-        {
+	Backend::~Backend()
+	{
 
-        }
-    }
+	}
 }
