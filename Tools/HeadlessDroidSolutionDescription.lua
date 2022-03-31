@@ -63,25 +63,25 @@ project "Externals"
 	files { "../Source/Externals/**.h", "../Source/Externals/**.hpp", "../Source/Externals/**.inl", "../Source/Externals/**.cpp", "../Source/Externals/**.asm" }
 	buildoptions { "/bigobj" }
 	
-project "Engine"
-	location "../Source/Engine"
-	objdir "../Build/Engine/%{cfg.platform}%{cfg.buildcfg}"
+project "HeadlessDroid"
+	location "../Source/HeadlessDroid"
+	objdir "../Build/HeadlessDroid/%{cfg.platform}%{cfg.buildcfg}"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++latest"
 	targetdir "../Lib"
-	includedirs { "$(SolutionDir)/Source/", "$(SolutionDir)/packages/Microsoft.Direct3D.D3D12.1.4.9/build/native/include/" }
-	files { "../Source/Engine/**.h", "../Source/Engine/**.cpp", "../Source/Engine/**.hpp" }
+	includedirs { "$(SolutionDir)/Source/", "$(SolutionDir)/Source/HeadlessDroid/", "$(SolutionDir)/packages/Microsoft.Direct3D.D3D12.1.4.9/build/native/include/" }
+	files { "../Source/HeadlessDroid/**.h", "../Source/HeadlessDroid/**.cpp", "../Source/HeadlessDroid/**.hpp" }
 	removefiles { "SystemWindowLinux.cpp" }
 	vpaths {
-	   ["00_Config/*"] = {"../Source/Engine/Config/**.h", "../Source/Engine/Config/**.hpp", "../Source/Engine/Config/**.cpp" },
-	   ["01_Foundation/*"] = {"../Source/Engine/Foundation/**.h", "../Source/Engine/Foundation/**.hpp", "../Source/Engine/Foundation/**.cpp" },
-	   ["02_Debug/*"] = {"../Source/Engine/Debug/**.h", "../Source/Engine/Debug/**.hpp", "../Source/Engine/Debug/**.cpp" },
-	   ["03_Framework/*"] = {"../Source/Engine/Framework/**.h", "../Source/Engine/Framework/**.hpp", "../Source/Engine/Framework/**.cpp" },
-	   ["04_Engine/*"] = {"../Source/Engine/Engine/**.h", "../Source/Engine/Engine/**.hpp", "../Source/Engine/Engine/**.cpp" },
+	   ["00_Config/*"] = {"../Source/HeadlessDroid/Config/**.h", "../Source/HeadlessDroid/Config/**.hpp", "../Source/HeadlessDroid/Config/**.cpp" },
+	   ["01_Foundation/*"] = {"../Source/HeadlessDroid/Foundation/**.h", "../Source/HeadlessDroid/Foundation/**.hpp", "../Source/HeadlessDroid/Foundation/**.cpp" },
+	   ["02_Debug/*"] = {"../Source/HeadlessDroid/Debug/**.h", "../Source/HeadlessDroid/Debug/**.hpp", "../Source/HeadlessDroid/Debug/**.cpp" },
+	   ["03_Framework/*"] = {"../Source/HeadlessDroid/Framework/**.h", "../Source/HeadlessDroid/Framework/**.hpp", "../Source/HeadlessDroid/Framework/**.cpp" },
+	   ["04_Engine/*"] = {"../Source/HeadlessDroid/Engine/**.h", "../Source/HeadlessDroid/Engine/**.hpp", "../Source/HeadlessDroid/Engine/**.cpp" },
 	}
-	pchheader ("Engine/Config/Bootstrap.h")
-	pchsource ("../Source/Engine/Config/Bootstrap.cpp")
+	pchheader ("Config/Bootstrap.h")
+	pchsource ("../Source/HeadlessDroid/Config/Bootstrap.cpp")
 	buildoptions { "/bigobj" }
 	defines { "HD_ENGINE_PROJECT" }
 	nuget { "Microsoft.Direct3D.D3D12:1.4.9" }
@@ -93,9 +93,9 @@ project "Game"
 	cppdialect "C++latest"
 	targetdir "../Bin"
     debugdir "../Bin"
-	includedirs { "$(SolutionDir)/Source/" }
+	includedirs { "$(SolutionDir)/Source/", "$(SolutionDir)/Source/HeadlessDroid/" }
 	libdirs { "../Lib/", }
-	links { "Externals", "Engine" }
+	links { "Externals", "HeadlessDroid" }
 	files { "../Source/Game/**.h", "../Source/Game/**.hpp", "../Source/Game/**.cpp", "../Source/Shaders/**.hlsl", "../Source/Shaders/**.hlsli" }
 	vpaths {
 	   ["Shaders/*"] = {"../Source/Shaders/**.hlsl", "../Source/Shaders/**.hlsli"}
@@ -114,7 +114,7 @@ project "Test"
     debugdir "../Bin"
 	includedirs { "$(SolutionDir)/Source/" }
 	libdirs { "../Lib/" }
-	links { "Externals", "Engine" }
+	links { "Externals", "HeadlessDroid" }
 	files { "../Source/Test/**.h", "../Source/Test/**.hpp", "../Source/Test/**.cpp" }
     buildoptions { "/Zm256" }
 	kind "ConsoleApp"

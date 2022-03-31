@@ -2,14 +2,14 @@
 
 #include "Game/SampleGame.h"
 
-#include "Engine/Debug/Log.h"
-#include "Engine/Engine/Memory/EngineMemoryInterface.h"
-#include "Engine/Engine/Utils/ResourceLoader.h"
-#include "Engine/Foundation/Memory/Utils.h"
-#include "Engine/Framework/Graphics/GraphicCommands.h"
-#include "Engine/Framework/Graphics/GraphicsTypes.h"
-#include "Engine/Framework/Math/Math.h"
-#include "Engine/Framework/Utils/CommandBufferReader.h"
+#include "Debug/Log.h"
+#include "Engine/Memory/EngineMemoryInterface.h"
+#include "Engine/Utils/ResourceLoader.h"
+#include "Foundation/Memory/Utils.h"
+#include "Framework/Graphics/GraphicCommands.h"
+#include "Framework/Graphics/GraphicsTypes.h"
+#include "Framework/Math/Math.h"
+#include "Framework/Utils/CommandBufferReader.h"
 #include "Game/RenderPasses/GBufferPass.h"
 #include "Game/RenderPasses/LightingPass.h"
 

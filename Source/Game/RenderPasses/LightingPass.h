@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Engine/Engine/Render/MeshCollection.h"
-#include "Engine/Engine/Scene/FpsCamera.h"
-#include "Engine/Framework/Graphics/Backend.h"
-#include "Engine/Framework/Graphics/Device.h"
-#include "Engine/Framework/Graphics/GraphicsTypes.h"
-#include "Engine/Framework/Graphics/RenderState.h"
-#include "Engine/Framework/Utils/CommandBuffer.h"
+#include "Engine/Render/MeshCollection.h"
+#include "Engine/Scene/FpsCamera.h"
+#include "Framework/Graphics/Backend.h"
+#include "Framework/Graphics/Device.h"
+#include "Framework/Graphics/GraphicsTypes.h"
+#include "Framework/Graphics/RenderState.h"
+#include "Framework/Utils/CommandBuffer.h"
 
 class LightingPass
 {

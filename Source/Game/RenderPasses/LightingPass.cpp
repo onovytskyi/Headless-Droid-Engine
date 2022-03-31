@@ -2,8 +2,8 @@
 
 #include "Game/RenderPasses/LightingPass.h"
 
-#include "Engine/Framework/Graphics/GraphicCommands.h"
-#include "Engine/Framework/Math/Math.h"
+#include "Framework/Graphics/GraphicCommands.h"
+#include "Framework/Math/Math.h"
 
 struct FrameData
 {

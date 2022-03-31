@@ -1,19 +1,19 @@
 #pragma once
 
-#include "Engine/Engine/DebugOverlay/DebugOverlay.h"
-#include "Engine/Engine/DebugOverlay/Tools/CommandsDebugTool.h"
-#include "Engine/Engine/DebugOverlay/Tools/StatsDebugTool.h"
-#include "Engine/Engine/Render/MeshCollection.h"
-#include "Engine/Engine/Render/TextureCollection.h"
-#include "Engine/Engine/Scene/FpsCamera.h"
-#include "Engine/Framework/Graphics/Backend.h"
-#include "Engine/Framework/Graphics/Device.h"
-#include "Engine/Framework/Graphics/Queue.h"
-#include "Engine/Framework/Graphics/Swapchain.h"
-#include "Engine/Framework/System/SystemCommands.h"
-#include "Engine/Framework/System/SystemWindow.h"
-#include "Engine/Framework/System/Timer.h"
-#include "Engine/Framework/Utils/CommandBuffer.h"
+#include "Engine/DebugOverlay/DebugOverlay.h"
+#include "Engine/DebugOverlay/Tools/CommandsDebugTool.h"
+#include "Engine/DebugOverlay/Tools/StatsDebugTool.h"
+#include "Engine/Render/MeshCollection.h"
+#include "Engine/Render/TextureCollection.h"
+#include "Engine/Scene/FpsCamera.h"
+#include "Framework/Graphics/Backend.h"
+#include "Framework/Graphics/Device.h"
+#include "Framework/Graphics/Queue.h"
+#include "Framework/Graphics/Swapchain.h"
+#include "Framework/System/SystemCommands.h"
+#include "Framework/System/SystemWindow.h"
+#include "Framework/System/Timer.h"
+#include "Framework/Utils/CommandBuffer.h"
 
 class GBufferPass;
 class LightingPass;

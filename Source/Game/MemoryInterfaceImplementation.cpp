@@ -1,11 +1,11 @@
 #include "Game/Bootstrap.h"
 
-#include "Engine/Engine/Memory/EngineMemoryInterface.h"
-#include "Engine/Foundation/Memory/FixedLinearAllocator.h"
-#include "Engine/Foundation/Memory/SystemAllocator.h"
-#include "Engine/Foundation/Memory/Utils.h"
-#include "Engine/Framework/Memory/AllocatorConcurrentAdapter.h"
-#include "Engine/Framework/Memory/VirtualLinearAllocator.h"
+#include "Engine/Memory/EngineMemoryInterface.h"
+#include "Foundation/Memory/FixedLinearAllocator.h"
+#include "Foundation/Memory/SystemAllocator.h"
+#include "Foundation/Memory/Utils.h"
+#include "Framework/Memory/AllocatorConcurrentAdapter.h"
+#include "Framework/Memory/VirtualLinearAllocator.h"
 
 static const size_t scratchArenaSize = hd::mem::MB(50);
 static thread_local std::byte scratchArena[scratchArenaSize];
