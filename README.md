@@ -8,7 +8,7 @@ Prototyping rendering framework served as a playground for my experiments
 ## Goals
 * Layered architecture
 * Custom allocators for memory management
-* No STL
+* STL with PMR
 * Windows only
 * Vulkan + DX12
 * Heterogeneous Multi-GPU
